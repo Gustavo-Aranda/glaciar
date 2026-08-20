@@ -44,7 +44,7 @@ ul {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.5rem 4rem;
+    padding: 1.2rem 4rem;
     background-color: var(--branco);
     border-bottom: 1px solid #EAEAEA;
     position: sticky;
@@ -52,10 +52,17 @@ ul {
     z-index: 100;
 }
 
-.logo h1 {
-    font-size: 1.5rem;
-    font-weight: 800;
-    letter-spacing: 2px;
+.logo {
+    display: flex;
+    align-items: center;
+    width: 180px;
+    height: auto;
+}
+
+.logo img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
 }
 
 .nav-links ul {
