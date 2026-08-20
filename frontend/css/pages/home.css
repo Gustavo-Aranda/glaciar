@@ -87,16 +87,33 @@
 }
 
 .shop-link {
+    position: relative;
+    display: inline-block;
     font-size: 0.9rem;
     font-weight: 600;
-    border-bottom: 1px solid var(--cinza-rocha);
+    color: inherit;
     padding-bottom: 2px;
     text-transform: uppercase;
+    text-decoration: none;
 }
 
 .shop-link:hover {
     color: var(--laranja-alpinista);
-    border-bottom-color: var(--laranja-alpinista);
+}
+
+.shop-link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: 2px;
+    background: var(--laranja-alpinista);
+    transition: width 0.3s ease;
+}
+
+.shop-link:hover::after {
+    width: 100%;
 }
 
 .link-group {
