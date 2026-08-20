@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/glaciar.API/glaciar.API.csproj" />
+    <Project Path="src/glaciar.Application/glaciar.Application.csproj" />
+    <Project Path="src/glaciar.Domain/glaciar.Domain.csproj" />
+    <Project Path="src/glaciar.Infrastructure/glaciar.Infrastructure.csproj" />
+  </Folder>
+</Solution>

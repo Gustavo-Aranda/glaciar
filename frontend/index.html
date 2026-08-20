@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glaciar | Outdoor Brand</title>
+    
+    <link rel="stylesheet" href="./css/global.css">
+    <link rel="stylesheet" href="./css/pages/home.css">
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="logo">
+            <h1>GLACIAR</h1>
+        </div>
+        <nav class="nav-links">
+            <ul>
+                <li><a href="#masculino">MASCULINO</a></li>
+                <li><a href="#feminino">FEMININO</a></li>
+                <li><a href="#calcados">CALÇADOS</a></li>
+                <li><a href="#equipamentos">EQUIPAMENTOS</a></li>
+            </ul>
+        </nav>
+        <div class="nav-icons">
+            <button aria-label="Buscar"><img src="./assets/icons/search.svg" alt="Buscar"></button>
+            <a href="admin.html" aria-label="Administrativo"><img src="./assets/icons/user.svg" alt="Admin"></a>
+            <a href="carrinho.html" aria-label="Carrinho"><img src="./assets/icons/cart.svg" alt="Carrinho"></a>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero-section">
+            <div class="hero-content">
+                <h2>EXPEDIÇÃO EXTREMA</h2>
+                <p>Novos equipamentos de alta montanha</p>
+                <div class="hero-actions">
+                    <a href="#masculino" class="btn-link">Masculino</a>
+                    <a href="#feminino" class="btn-link">Feminino</a>
+                    <a href="#colecao" class="btn-link">Ver Coleção</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="featured-highlights">
+
+            <article class="highlight-card">
+                <div class="highlight-img" style="background-image: url('./assets/img/destaque-1.jpg');"></div>
+                <div class="highlight-info">
+                    <h3>A Nova Jaqueta Alpine Pro</h3>
+                    <p>Fleece técnico e durável para aquecimento nas trilhas.</p>
+                    <a href="produto.html?id=1" class="shop-link">Comprar Masculino</a>
+                </div>
+            </article>
+
+            <article class="highlight-card">
+                <div class="highlight-img" style="background-image: url('./assets/img/destaque-2.jpg');"></div>
+                <div class="highlight-info">
+                    <h3>Família Covert Atualizada</h3>
+                    <p>Mochilas de hidratação ultraleves para hiking de velocidade.</p>
+                    <div class="link-group">
+                        <a href="produto.html?categoria=mochilas&genero=fem" class="shop-link">Feminino</a>
+                        <a href="produto.html?categoria=mochilas&genero=masc" class="shop-link">Masculino</a>
+                    </div>
+                </div>
+            </article>
+
+            <article class="highlight-card">
+                <div class="highlight-img" style="background-image: url('./assets/img/destaque-3.jpg');"></div>
+                <div class="highlight-info">
+                    <h3>Calça Ascent XT</h3>
+                    <p>Calça de escalada resistente com elasticidade máxima.</p>
+                    <a href="produto.html?id=3" class="shop-link">Comprar Feminino</a>
+                </div>
+            </article>
+        </section>
+
+        <section class="product-catalog">
+            <div class="catalog-header">
+                <h2>Novidades Glaciar</h2>
+            </div>
+            <div class="catalog-grid" id="product-grid">
+                <p>Carregando catálogo de produtos...</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Glaciar Outdoor. Projeto Acadêmico - Laboratório de Engenharia de Software.</p>
+    </footer>
+
+    <script src="./js/pages/home.js"></script>
+</body>
+</html>
