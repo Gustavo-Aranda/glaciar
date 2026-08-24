@@ -1,0 +1,47 @@
+.chart-container {
+    background-color: var(--branco);
+    border: 1px solid var(--borda-rocha);
+    border-radius: 8px;
+    padding: 1.5rem;
+    height: 350px;
+    margin-bottom: 2rem;
+}
+
+.filter-bar {
+    display: flex;
+    align-items: flex-end;
+    gap: 1.5rem;
+    background-color: var(--branco);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--borda-rocha);
+    margin-bottom: 2rem;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.input-group label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--cinza-rocha-claro);
+    text-transform: uppercase;
+}
+
+.date-input {
+    padding: 0.8rem;
+    border: 1px solid var(--borda-rocha);
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    background-color: var(--fundo-app);
+    min-width: 180px;
+}
+
+.btn-filter {
+    padding: 0.8rem 2rem;
+    height: fit-content;
+}

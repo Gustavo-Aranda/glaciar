@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Devoluções | Glaciar Admin</title>
+
+    <link rel="stylesheet" href="../user/css/global.css">
+    <link rel="stylesheet" href="./css/global.css">
+    <link rel="stylesheet" href="./css/pages/devolucoes.css">
+</head>
+<body>
+    <div id="navbar-placeholder"></div>
+
+    <main class="admin-container">
+        <div id="sidebar-placeholder"></div>
+
+        <section class="admin-content">
+            <div class="content-wrapper">
+                <div class="content-header">
+                    <h2>Gestão de Devoluções</h2>
+                    <p>Gerencie as devoluções de produtos e aprovação de reembolsos.</p>
+                </div>
+
+                <section class="admin-section">
+                    <div class="search-bar-container">
+                        <input type="text" class="admin-search-input" placeholder="Buscar pedido por número, cliente ou status...">
+                        <button class="btn btn-secondary">Buscar</button>
+                    </div>
+                    <article class="admin-card">
+                        <div class="card-header">
+                            <div class="card-info">
+                                <span class="card-title">Pedido #89020</span>
+                                <span class="card-subtitle">Cliente: João Silva | R$ 850,00</span>
+                            </div>
+                            <span class="status status-atencao">Troca Solicitada</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="status-updater">
+                                <label>Avançar Status:</label>
+                                <select class="status-select">
+                                    <option value="processamento">Troca Aceita</option>
+                                    <option value="processamento">Troca Negada</option>
+                                </select>
+                                <button class="btn btn-primary">Aplicar</button>
+                            </div>
+                        </div>
+                    </article>
+                    <article class="admin-card">
+                        <div class="card-header">
+                            <div class="card-info">
+                                <span class="card-title">Pedido #89021</span>
+                                <span class="card-subtitle">Cliente: Lionel Jorge | R$ 250,00</span>
+                            </div>
+                            <span class="status status-atencao">Item Enviado</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="status-updater">
+                                <label>Avançar Status:</label>
+                                <select class="status-select">
+                                    <option value="processamento">Item Recebido</option>
+                                </select>
+                                <button class="btn btn-primary">Aplicar</button>
+                            </div>
+                        </div>
+                    </article>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <script src="./js/components/layout.js"></script>
+</body>
+</html>

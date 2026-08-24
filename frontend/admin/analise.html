@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise Financeira | Glaciar Admin</title>
+    <!-- Importações isoladas de CSS -->
+    <link rel="stylesheet" href="../user/css/global.css">
+    <link rel="stylesheet" href="./css/global.css">
+    <link rel="stylesheet" href="./css/pages/analise.css">
+    <!-- Chart.js via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div id="navbar-placeholder"></div>
+
+    <main class="admin-container">
+        <div id="sidebar-placeholder"></div>
+
+        <!-- CONTEÚDO CENTRAL ENCAPSULADO -->
+        <section class="admin-content">
+            <div class="content-wrapper">
+                
+                <div class="content-header">
+                    <!-- BREADCRUMB (Caminho de Navegação) -->
+                    <nav class="breadcrumb" aria-label="Breadcrumb">
+                        <a href="index.html">Painel Administrativo</a>
+                        <span class="separator">&gt;</span>
+                        <span class="current">Análise Financeira</span>
+                    </nav>
+
+                    <h2>Análise de Volume Financeiro</h2>
+                    <p>Filtre o faturamento por período para analisar o desempenho de vendas.</p>
+                </div>
+
+                <!-- FILTRO DE DATAS -->
+                <div class="filter-bar">
+                    <div class="input-group">
+                        <label>Data Inicial:</label>
+                        <input type="date" class="date-input" value="2026-08-01">
+                    </div>
+                    <div class="input-group">
+                        <label>Data Final:</label>
+                        <input type="date" class="date-input" value="2026-08-31">
+                    </div>
+                    <button class="btn btn-primary btn-filter">Gerar Gráfico</button>
+                </div>
+
+                <!-- GRÁFICO -->
+                <section class="admin-section">
+                    <div class="chart-container">
+                        <canvas id="financeChart"></canvas>
+                    </div>
+                </section>
+
+            </div>
+        </section>
+    </main>
+
+    <!-- Script de Layout -->
+    <script src="./js/components/layout.js"></script>
+    
+    <!-- Script do Gráfico -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const ctx = document.getElementById('financeChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['01/Ago', '05/Ago', '10/Ago', '15/Ago', '20/Ago', '25/Ago', '31/Ago'],
+                    datasets: [{
+                        label: 'Volume Financeiro (R$)',
+                        data: [15000, 22000, 18000, 35000, 29000, 42000, 48000],
+                        borderColor: '#E67E22', /* Laranja Alpinista */
+                        backgroundColor: 'rgba(230, 126, 34, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

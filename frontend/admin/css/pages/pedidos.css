@@ -1,0 +1,37 @@
+.status-updater { 
+    display: flex; 
+    align-items: center; 
+    justify-content: flex-end; 
+    gap: 1rem; 
+}
+
+.status-updater label { 
+    font-size: 0.9rem; 
+    font-weight: 600; 
+    color: var(--cinza-rocha-claro); 
+}
+
+.status-select { 
+    padding: 0.6rem 1rem; 
+    border: 1px solid var(--borda-rocha); 
+    border-radius: 4px; 
+    font-family: inherit; 
+    font-size: 0.9rem; 
+    min-width: 250px; 
+    background-color: var(--branco);
+}
+
+.search-bar-container {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+}
+
+.admin-search-input {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    border: 1px solid var(--borda-rocha);
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 1rem;
+}

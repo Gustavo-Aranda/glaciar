@@ -1,0 +1,254 @@
+/* Layout Base e Componentes */
+
+.navbar-admin {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 3rem;
+    background-color: #000;
+    color: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.navbar-admin h2 {
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+}
+
+.btn-text {
+    background: none;
+    border: none;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.admin-container {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: calc(100vh - 65px);
+    background-color: var(--fundo-app);
+    font-family: var(--fonte-principal);
+}
+
+
+/* Sidebar */
+
+.sidebar {
+    background-color: var(--branco);
+    padding: 2.5rem 1.5rem;
+    border-right: 1px solid var(--borda-rocha);
+    height: 100%;
+}
+
+.admin-greeting {
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--borda-rocha);
+}
+
+.admin-greeting h2 {
+    font-size: 1.2rem;
+    color: var(--cinza-rocha);
+    margin-bottom: 0.3rem;
+}
+
+.admin-greeting p {
+    font-size: 0.85rem;
+    color: var(--laranja-alpinista);
+    font-weight: bold;
+}
+
+.sidebar-group h3 {
+    font-size: 0.8rem;
+    color: var(--cinza-rocha-claro);
+    margin-bottom: 1rem;
+    letter-spacing: 1px;
+}
+
+.sidebar-menu li {
+    margin-bottom: 0.5rem;
+    list-style: none;
+}
+
+.sidebar-menu a {
+    display: block;
+    padding: 0.8rem 1rem;
+    border-radius: 4px;
+    color: var(--cinza-rocha-claro);
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.sidebar-menu a:hover,
+.sidebar-menu li.active a {
+    background-color: var(--fundo-app);
+    color: var(--azul-gelo);
+}
+
+
+/* Miolo Central */
+
+.admin-content {
+    padding: 3rem 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.content-wrapper {
+    width: 100%;
+    max-width: 950px;
+}
+
+.content-header {
+    margin-bottom: 3rem;
+}
+
+.content-header h2 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--cinza-rocha);
+}
+
+.content-header p {
+    color: var(--cinza-rocha-claro);
+    font-size: 1rem;
+}
+
+
+/* Cards Genéricos */
+
+.admin-card {
+    background-color: var(--branco);
+    border: 1px solid var(--borda-rocha);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--borda-rocha);
+}
+
+.card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.card-title {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--cinza-rocha);
+}
+
+.card-subtitle {
+    font-size: 0.85rem;
+    color: var(--cinza-rocha-claro);
+}
+
+.card-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+}
+
+
+/* Botões Globais */
+
+.status {
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.status-neutro {
+    background-color: var(--azul-gelo-fundo);
+    color: var(--azul-gelo);
+}
+
+.status-atencao {
+    background-color: var(--laranja-alpinista-fundo);
+    color: var(--laranja-alpinista);
+}
+
+.btn {
+    padding: 0.8rem 1.5rem;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    text-align: center;
+    border: none;
+}
+
+.btn-primary {
+    background-color: var(--laranja-alpinista);
+    color: var(--branco);
+}
+
+.btn-secondary {
+    background-color: transparent;
+    color: var(--cinza-rocha);
+    border: 1px solid var(--cinza-rocha);
+}
+
+.btn-secondary:hover {
+    background-color: var(--fundo-app);
+}
+
+.btn-warning {
+    background-color: transparent;
+    color: var(--laranja-alpinista);
+    border: 1px solid var(--laranja-alpinista);
+}
+
+.btn-warning:hover {
+    background-color: var(--laranja-alpinista-fundo);
+}
+
+/* =========================================
+   BREADCRUMB (Caminho de Navegação)
+   ========================================= */
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+    color: var(--cinza-rocha-claro);
+}
+
+.breadcrumb a {
+    color: var(--cinza-rocha);
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.breadcrumb a:hover {
+    color: var(--azul-gelo);
+    text-decoration: underline;
+}
+
+.breadcrumb .separator {
+    color: var(--borda-rocha);
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.breadcrumb .current {
+    color: var(--cinza-rocha-claro);
+}
