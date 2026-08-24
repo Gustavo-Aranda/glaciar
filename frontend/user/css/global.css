@@ -3,11 +3,18 @@
    ========================================= */
 :root {
     --branco: #FFFFFF;
-    --cinza-fundo: #F7F7F7;
-    --cinza-rocha: #2C2C2C;
-    --cinza-texto: #555555;
-    --azul-gelo: #4A90E2;
+    --fundo-app: #F4F6F8; 
+
+    --cinza-rocha: #2C3E50;
+    --cinza-rocha-claro: #596A7A;
+    --borda-rocha: #D5DBE0;
+
+    --azul-gelo: #5DADE2;
+    --azul-gelo-fundo: #EBF5FB; 
+
+
     --laranja-alpinista: #E67E22;
+    --laranja-alpinista-fundo: #FEF5E7;
     
     --fonte-principal: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
@@ -95,12 +102,83 @@ ul {
     background: none;
     border: none;
     cursor: pointer;
+    padding: 0.3rem;
     display: flex;
+}
+
+.nav-icons a:hover, .nav-icons button:hover {
+    background-color: var(--fundo-app);
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 .nav-icons img {
     width: 22px;
     height: 22px;
+}
+
+.shop-link {
+    position: relative;
+    display: inline-block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: inherit;
+    padding-bottom: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+}
+
+.shop-link:hover {
+    color: var(--laranja-alpinista);
+}
+
+.shop-link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: 2px;
+    background: var(--laranja-alpinista);
+    transition: width 0.3s ease;
+}
+
+.shop-link:hover::after {
+    width: 100%;
+}
+/* =========================================
+   BREADCRUMB (Caminho de Navegação)
+   ========================================= */
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+    color: var(--cinza-rocha-claro);
+}
+
+.breadcrumb a {
+    color: var(--cinza-rocha);
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.breadcrumb a:hover {
+    color: var(--azul-gelo); /* Feedback visual na cor da marca Glaciar */
+    text-decoration: underline;
+}
+
+.breadcrumb .separator {
+    color: var(--borda-rocha);
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.breadcrumb .current {
+    color: var(--cinza-rocha-claro);
 }
 
 /* =========================================

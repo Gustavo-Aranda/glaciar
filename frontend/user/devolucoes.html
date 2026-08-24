@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhas Devoluções | Glaciar</title>
+    <link rel="stylesheet" href="./css/global.css">
+    <link rel="stylesheet" href="./css/pages/devolucoes.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="logo">
+            <a href="index.html"><img src="./assets/img/logo-lettering.png" alt="Logo da marca Glaciar"></a>
+        </div>
+        <nav class="nav-links">
+            <ul>
+                <li><a href="index.html#masculino" class="shop-link">MASCULINO</a></li>
+                <li><a href="index.html#feminino" class="shop-link">FEMININO</a></li>
+                <li><a href="index.html#calcados" class="shop-link">CALÇADOS</a></li>
+                <li><a href="index.html#equipamentos" class="shop-link">EQUIPAMENTOS</a></li>
+            </ul>
+        </nav>
+        <div class="nav-icons">
+            <button aria-label="Buscar"><img src="./assets/icons/search.svg" alt="Buscar"></button>
+            <a href="conta.html" aria-label="Minha Conta"><img src="./assets/icons/user.svg" alt="Minha Conta"></a>
+            <a href="carrinho.html" aria-label="Carrinho"><img src="./assets/icons/cart.svg" alt="Carrinho"></a>
+        </div>
+    </header>
+
+    <main class="returns-page">
+        <div class="content-header">
+
+            <nav class="breadcrumb" aria-label="Breadcrumb">
+                <a href="conta.html">Minha Conta</a>
+                <span class="separator">&gt;</span>
+                <span class="current">Devoluções</span>
+            </nav>
+
+            <h2>Minhas Devoluções e Trocas</h2>
+            <p>Acompanhe os processos de logística reversa e geração de reembolso/cupons.</p>
+        </div>
+
+        <section class="returns-list">
+            <!-- Devolução: Aguardando envio (Requer Atenção do Cliente) -->
+            <article class="return-card">
+                <div class="return-header">
+                    <div class="return-info">
+                        <span class="return-number">Refound #DEV-88750</span>
+                        <span class="return-date">Ref. ao Pedido: #88750</span>
+                    </div>
+                    <span class="status status-atencao">Aguardando Despacho</span>
+                </div>
+                <div class="return-body">
+                    <div class="product-img" style="background-image: url('https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80');"></div>
+                    <div class="product-details">
+                        <p class="product-title">1x Calça Ascent XT - M</p>
+                        <p class="product-reason">Motivo: Defeito</p>
+                        <p class="alert-text">Vá aos Correios com o código reverso <strong>987654321</strong>.</p>
+                    </div>
+                </div>
+                <div class="return-actions">
+                    <button class="btn btn-primary">Informar Rastreio de Despacho</button>
+                    <button class="btn btn-warning">Cancelar Devolução</button>
+                </div>
+            </article>
+
+            <!-- Devolução: Recebido (Status Neutro/Informativo) -->
+            <article class="return-card">
+                <div class="return-header">
+                    <div class="return-info">
+                        <span class="return-number">Refound #DEV-88600</span>
+                        <span class="return-date">Ref. ao Pedido: #88600</span>
+                    </div>
+                    <span class="status status-neutro">Em Análise Técnica</span>
+                </div>
+                <div class="return-body">
+                    <div class="product-img" style="background-image: url('https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80');"></div>
+                    <div class="product-details">
+                        <p class="product-title">1x Bota de Neve Arctica - 41</p>
+                        <p class="product-reason">Motivo: Tamanho</p>
+                        <p class="info-text">Status: Item recebido na Glaciar. Avaliando condição.</p>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Devolução: Finalizada (Sucesso/Neutro) -->
+            <article class="return-card">
+                <div class="return-header">
+                    <div class="return-info">
+                        <span class="return-number">Refound #DEV-88220</span>
+                        <span class="return-date">Finalizado em: 10/07/2026</span>
+                    </div>
+                    <span class="status status-neutro">Devolução Concluída</span>
+                </div>
+                <div class="return-body">
+                    <div class="product-img" style="background-image: url('https://images.unsplash.com/photo-1551028719-00167b16eac5?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80');"></div>
+                    <div class="product-details">
+                        <p class="product-title">1x Fleece Midlayer - P</p>
+                        <p class="success-text"><strong>Reembolso Processado:</strong> Cupom de Troca emitido com sucesso.</p>
+                    </div>
+                </div>
+                <div class="return-actions">
+                    <button class="btn btn-info">Ver Código do Cupom</button>
+                </div>
+            </article>
+        </section>
+    </main>
+
+    <!-- Importa o JS da navbar isolada -->
+    <script src="./js/components/navbar.js"></script>
+</body>
+</html>

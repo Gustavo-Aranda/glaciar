@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus Pedidos | Glaciar</title>
+    <link rel="stylesheet" href="./css/global.css">
+    <link rel="stylesheet" href="./css/pages/pedidos.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="logo">
+            <a href="index.html"><img src="./assets/img/logo-lettering.png" alt="Logo da marca Glaciar"></a>
+        </div>
+        <nav class="nav-links">
+            <ul>
+                <li><a href="index.html#masculino" class="shop-link">MASCULINO</a></li>
+                <li><a href="index.html#feminino" class="shop-link">FEMININO</a></li>
+                <li><a href="index.html#calcados" class="shop-link">CALÇADOS</a></li>
+                <li><a href="index.html#equipamentos" class="shop-link">EQUIPAMENTOS</a></li>
+            </ul>
+        </nav>
+        <div class="nav-icons">
+            <button aria-label="Buscar"><img src="./assets/icons/search.svg" alt="Buscar"></button>
+            <a href="conta.html" aria-label="Minha Conta"><img src="./assets/icons/user.svg" alt="Minha Conta"></a>
+            <a href="carrinho.html" aria-label="Carrinho"><img src="./assets/icons/cart.svg" alt="Carrinho"></a>
+        </div>
+    </header>
+
+    <main class="orders-page">
+        <div class="content-header">
+            <nav class="breadcrumb" aria-label="Breadcrumb">
+                <a href="conta.html">Minha Conta</a>
+                <span class="separator">&gt;</span>
+                <span class="current">Meus Pedidos</span>
+            </nav>
+            <h2>Meus Pedidos</h2>
+            <p>Acompanhe a entrega de seus equipamentos e confirme o recebimento.</p>
+        </div>
+
+        <section class="orders-list">
+            <!-- Pedido: Em Processamento -->
+            <article class="order-card">
+                <div class="order-header">
+                    <div class="order-info">
+                        <span class="order-number">Pedido #89015</span>
+                        <span class="order-date">Realizado hoje</span>
+                    </div>
+                    <span class="status status-atencao">Em Processamento</span>
+                </div>
+                <div class="order-body">
+                    <div class="product-img" style="background-image: url('https://images.unsplash.com/photo-1551028719-00167b16eac5?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80');"></div>
+                    <div class="product-details">
+                        <p class="product-title">1x Lanterna de Cabeça</p>
+                        <p class="product-price">R$ 300,00</p>
+                    </div>
+                </div>
+                <div class="order-actions">
+                    <button class="btn btn-secondary">Detalhes</button>
+                    <button class="btn btn-warning">Cancelar Pedido</button>
+                </div>
+            </article>
+
+            <!-- Pedido: Em Trânsito -->
+            <article class="order-card">
+                <div class="order-header">
+                    <div class="order-info">
+                        <span class="order-number">Pedido #89012</span>
+                        <span class="order-date">Realizado em: 15/08/2026</span>
+                    </div>
+                    <span class="status status-neutro">Em Trânsito</span>
+                </div>
+                <div class="order-body">
+                    <div class="product-img" style="background-image: url('https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80');"></div>
+                    <div class="product-details">
+                        <p class="product-title">1x Jaqueta Alpine Pro - G</p>
+                        <p class="product-price">R$ 850,00</p>
+                    </div>
+                </div>
+                <div class="order-actions">
+                    <button class="btn btn-secondary">Rastrear Entrega</button>
+                    <button class="btn btn-primary">Confirmar Recebimento</button>
+                </div>
+            </article>
+
+            <!-- Pedido: Entregue -->
+            <article class="order-card">
+                <div class="order-header">
+                    <div class="order-info">
+                        <span class="order-number">Pedido #88900</span>
+                        <span class="order-date">Recebido em: 05/08/2026</span>
+                    </div>
+                    <span class="status status-neutro">Entregue</span>
+                </div>
+                <div class="order-body">
+                    <div class="product-img" style="background-image: url('https://images.unsplash.com/photo-1554651347-8a4bf57b6f68?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80');"></div>
+                    <div class="product-details">
+                        <p class="product-title">1x Mochila Covert 30L</p>
+                        <p class="product-price">R$ 600,00</p>
+                    </div>
+                </div>
+                <div class="order-actions">
+                    <button class="btn btn-secondary">Detalhes</button>
+                    <button class="btn btn-warning">Solicitar Troca / Devolução</button>
+                </div>
+            </article>
+        </section>
+    </main>
+
+    <!-- Importa o JS da navbar isolada -->
+    <script src="./js/components/navbar.js"></script>
+</body>
+</html>

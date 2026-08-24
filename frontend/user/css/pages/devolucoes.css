@@ -1,0 +1,152 @@
+/* =========================================
+   LAYOUT CENTRALIZADO DA PÁGINA
+   ========================================= */
+.returns-page {
+    max-width: 900px;
+    margin: 4rem auto;
+    padding: 0 2rem;
+    font-family: var(--fonte-principal);
+}
+
+.content-header {
+    margin-bottom: 3rem;
+}
+
+.content-header h2 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--cinza-rocha);
+}
+
+.content-header p {
+    color: var(--cinza-rocha-claro);
+    font-size: 1rem;
+}
+
+/* =========================================
+   CARDS DE DEVOLUÇÃO
+   ========================================= */
+.return-card {
+    background-color: var(--branco);
+    border: 1px solid var(--borda-rocha);
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    overflow: hidden;
+}
+
+.return-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #FAFAFA;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--borda-rocha);
+}
+
+.return-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.return-number {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--cinza-rocha);
+}
+
+.return-date {
+    font-size: 0.85rem;
+    color: var(--cinza-rocha-claro);
+}
+
+/* =========================================
+   CORPO DA DEVOLUÇÃO (PRODUTO COM IMAGEM)
+   ========================================= */
+.return-body {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+}
+
+.product-img {
+    width: 80px;
+    height: 80px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 4px;
+    background-color: var(--fundo-app);
+    border: 1px solid var(--borda-rocha);
+}
+
+.product-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.product-title {
+    font-weight: 700;
+    color: var(--cinza-rocha);
+}
+
+.product-reason {
+    color: var(--cinza-rocha-claro);
+    font-size: 0.9rem;
+}
+
+/* Tipografia de Feedbacks */
+.alert-text { color: var(--laranja-alpinista); font-size: 0.9rem; font-weight: 700; margin-top: 0.3rem; }
+.info-text { color: var(--azul-gelo); font-size: 0.9rem; font-weight: 700; margin-top: 0.3rem; }
+.success-text { color: #27ae60; font-size: 0.9rem; margin-top: 0.3rem; }
+
+/* =========================================
+   BOTÕES DE AÇÃO & STATUS
+   ========================================= */
+.return-actions {
+    display: flex;
+    gap: 1rem;
+    padding: 0 1.5rem 1.5rem 1.5rem;
+}
+
+.status {
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.status-neutro { background-color: var(--azul-gelo-fundo); color: var(--azul-gelo); }
+.status-atencao { background-color: var(--laranja-alpinista-fundo); color: var(--laranja-alpinista); }
+
+.btn {
+    padding: 0.6rem 1.5rem;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background-color: var(--laranja-alpinista);
+    color: var(--branco);
+    border: 1px solid var(--laranja-alpinista);
+}
+.btn-primary:hover { opacity: 0.85; }
+
+.btn-info {
+    background-color: var(--azul-gelo);
+    color: var(--branco);
+    border: 1px solid var(--azul-gelo);
+}
+.btn-info:hover { opacity: 0.85; }
+
+.btn-warning {
+    background-color: transparent;
+    color: var(--laranja-alpinista);
+    border: 1px solid var(--laranja-alpinista);
+}
+.btn-warning:hover { background-color: var(--laranja-alpinista-fundo); }

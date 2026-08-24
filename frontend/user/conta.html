@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha Conta | Glaciar</title>
+    <link rel="stylesheet" href="./css/global.css">
+    <link rel="stylesheet" href="./css/pages/conta.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="logo">
+            <a href="index.html"><img src="./assets/img/logo-lettering.png" alt="Logo da marca Glaciar"></a>
+        </div>
+        <nav class="nav-links">
+            <ul>
+                <li><a href="index.html#masculino" class="shop-link">MASCULINO</a></li>
+                <li><a href="index.html#feminino" class="shop-link">FEMININO</a></li>
+                <li><a href="index.html#calcados" class="shop-link">CALÇADOS</a></li>
+                <li><a href="index.html#equipamentos" class="shop-link">EQUIPAMENTOS</a></li>
+            </ul>
+        </nav>
+        <div class="nav-icons">
+            <button aria-label="Buscar"><img src="./assets/icons/search.svg" alt="Buscar"></button>
+            <a href="conta.html" aria-label="Minha Conta"><img src="./assets/icons/user.svg" alt="Minha Conta"></a>
+            <a href="carrinho.html" aria-label="Carrinho"><img src="./assets/icons/cart.svg" alt="Carrinho"></a>
+        </div>
+    </header>
+    
+
+    <main class="account-page">
+        <h1>Minha Conta</h1>
+
+        <div class="account-grid">
+            
+            <!-- COLUNA ESQUERDA: Perfil (Ocupa 2 linhas) -->
+            <article class="account-card card-profile">
+                <h2>Perfil</h2>
+                
+                <div class="info-group">
+                    <span class="info-label">Nome</span>
+                    <p class="info-value">Zé</p>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">Sobrenome</span>
+                    <p class="info-value">da Silva</p>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">E-mail</span>
+                    <p class="info-value">ze.silva@gmail.com</p>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">Senha</span>
+                    <p class="info-value">********</p>
+                </div>
+
+                <div class="card-actions">
+                    <button class="btn-black">Sair da Conta</button>
+                    <button class="btn-text">Editar</button>
+                </div>
+            </article>
+
+            <!-- COLUNA DIREITA: Endereços e Pagamentos -->
+            <article class="account-card">
+                <h2>Meus Endereços</h2>
+                <div class="info-group">
+                    <span class="info-label">Atual</span>
+                    <p class="info-value">Rua José da Silva, 123 - Mogi das Cruzes, São Paulo</p>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-black">Adicionar Novo</button>
+                </div>
+            </article>
+
+            <article class="account-card">
+                <h2>Pagamento e Cupons</h2>
+                <div class="card-actions">
+                    <button class="btn-black">Gerenciar</button>
+                </div>
+            </article>
+
+            <!-- LINHA INFERIOR: Redirecionamento de Pedidos -->
+            <article class="account-card card-full">
+                <div>
+                    <h2>Seus Pedidos e Devoluções</h2>
+                    <p>Acompanhe entregas, cancele compras ou solicite logística reversa</p>
+                </div>
+                <div class="card-actions">
+                    <a href="pedidos.html" class="btn-black">Ver Pedidos</a>
+                    <a href="devolucoes.html" class="btn-outline">Ver Devoluções</a>
+                </div>
+            </article>
+
+            <!-- BANNER DE AJUDA -->
+            <section class="help-banner">
+                <h2>Precisa de ajuda com alguma expedição?</h2>
+                <button class="btn-white">Falar com Especialista (IA)</button>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Importa o JS da navbar isolada -->
+    <script src="./js/components/navbar.js"></script>
+</body>
+</html>
