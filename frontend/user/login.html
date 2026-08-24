@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrar | Glaciar</title>
+    <link rel="stylesheet" href="./css/global.css">
+    <link rel="stylesheet" href="./css/pages/login.css">
+</head>
+<body>
+
+    <!-- A Navbar isolada será injetada aqui automaticamente pelo JS -->
+    <div id="navbar-placeholder"></div>
+
+    <main class="login-page">
+        <div class="login-container">
+            
+            <!-- COLUNA ESQUERDA: Formulário de Login -->
+            <section class="login-section">
+                <h1>Entrar.</h1>
+                
+                <form id="loginForm" class="login-form">
+                    <div class="input-group">
+                        <label for="email">E-mail *</label>
+                        <!-- Simulando o fundo amarelo claro de autocompletar da sua imagem -->
+                        <input type="email" id="email" value="gusta.aranda777@gmail.com" class="autofill-simulated" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="password">Senha *</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="password" value="••••••••••••" class="autofill-simulated" required>
+                            <button type="button" class="btn-toggle-pass" aria-label="Mostrar senha">
+                                <img src="./assets/icons/eye.svg" alt="Visualizar">
+                            </button>
+                        </div>
+                    </div>
+
+                    <a href="#recuperar" class="forgot-password">Esqueceu a senha?</a>
+
+                    <button type="submit" class="btn-login-black">Entrar</button>
+                </form>
+
+                <div class="create-account-prompt">
+                    <p>Não tem uma conta?</p>
+                    <a href="cadastro.html">Crie Uma Agora</a>
+                </div>
+            </section>
+
+            <!-- COLUNA DIREITA: Rastreio de Visitante -->
+            <section class="guest-section">
+                <div class="guest-box">
+                    <h2>Procurando seu pedido?</h2>
+                    <p>Veja o status do seu equipamento mesmo se você não for um usuário cadastrado. Informe o número do pedido e seu sobrenome.</p>
+                    <a href="#rastreio-visitante" class="btn-guest-outline">Encontrar Pedido</a>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Importa o JS da navbar isolada -->
+    <script src="./js/components/navbar.js"></script>
+    <script src="./js/components/navbar.js"></script>
+    <script src="./js/pages/login.js"></script>
+</body>
+</html>

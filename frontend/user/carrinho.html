@@ -9,25 +9,7 @@
     <link rel="stylesheet" href="./css/pages/carrinho.css">
 </head>
 <body>
-    <header class="navbar">
-        <div class="logo">
-            <a href="index.html"><img src="./assets/img/logo-lettering.png" alt="Logo da marca Glaciar"></a>
-        </div>
-        <nav class="nav-links">
-            <ul>
-                <li><a href="index.html#masculino" class="shop-link">MASCULINO</a></li>
-                <li><a href="index.html#feminino" class="shop-link">FEMININO</a></li>
-                <li><a href="index.html#calcados" class="shop-link">CALÇADOS</a></li>
-                <li><a href="index.html#equipamentos" class="shop-link">EQUIPAMENTOS</a></li>
-            </ul>
-        </nav>
-        <div class="nav-icons">
-            <button aria-label="Buscar"><img src="./assets/icons/search.svg" alt="Buscar"></button>
-            <a href="conta.html" aria-label="Minha Conta"><img src="./assets/icons/user.svg" alt="Minha Conta"></a>
-            <a href="carrinho.html" aria-label="Carrinho"><img src="./assets/icons/cart.svg" alt="Carrinho"></a>
-        </div>
-    </header>
-
+    <div id="navbar-placeholder"></div>
     <main class="cart-page">
         <!-- AVISO SUPERIOR -->
         <div class="cart-alert">
@@ -88,7 +70,7 @@
                                 <input type="checkbox" checked> 
                                 Cartão Final 4321 (Visa)
                             </label>
-                            <input type="number" value="325" min="0" step="0.01">
+                            <input type="number" value="325.00" min="0" step="0.01">
                         </div>
                         
                         <div class="card-item">
@@ -139,7 +121,7 @@
 
                 <!-- Botão de Checkout (Leva para a tela de pagamento e endereço) -->
                 <button class="btn-checkout-black">
-                    Continuar para o checkout <img src="./assets/icons/lock.svg" alt="" width="12" style="margin-left:8px; filter: invert(1);">
+                    Continuar para o checkout
                 </button>
 
                 <div class="payment-methods">
@@ -154,5 +136,6 @@
             </aside>
         </div>
     </main>
+    <script src="./js/components/layout.js"></script>
 </body>
 </html>

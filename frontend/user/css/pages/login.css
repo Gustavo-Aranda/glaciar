@@ -1,0 +1,175 @@
+/* =========================================
+   ESTRUTURA DA PÁGINA (SPLIT SCREEN)
+   ========================================= */
+.login-page {
+    max-width: 1100px;
+    margin: 6rem auto;
+    padding: 0 2rem;
+    font-family: var(--fonte-principal);
+}
+
+.login-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem;
+    align-items: flex-start;
+}
+
+/* =========================================
+   COLUNA ESQUERDA: LOGIN
+   ========================================= */
+.login-section {
+    background-color: #F2F2F2;
+    padding: 2.5rem;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.login-section h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    color: #000;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1.5rem;
+}
+
+.input-group label {
+    font-size: 0.85rem;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.input-group input {
+    padding: 1rem;
+    border: 1px solid #000; /* Borda preta sólida como na referência */
+    font-family: inherit;
+    font-size: 1rem;
+    width: 100%;
+}
+
+/* Simulando o fundo de preenchimento automático (amarelado) da referência */
+.autofill-simulated {
+    background-color: #fdfae5;
+}
+
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.btn-toggle-pass {
+    position: absolute;
+    right: 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-toggle-pass img {
+    width: 20px;
+    height: 20px;
+}
+
+.forgot-password {
+    font-size: 0.9rem;
+    color: #000;
+    font-weight: 700;
+    text-decoration: none;
+    margin-bottom: 2rem;
+    align-self: flex-start;
+}
+
+.forgot-password:hover {
+    text-decoration: underline;
+}
+
+/* Botão de Entrar Preto (Pill-shaped) */
+.btn-login-black {
+    background-color: #000;
+    color: #fff;
+    padding: 1rem 3rem;
+    border-radius: 30px; /* Bordas totalmente arredondadas */
+    font-weight: 700;
+    font-size: 1rem;
+    border: none;
+    cursor: pointer;
+    align-self: flex-start;
+    transition: background 0.2s;
+    margin-bottom: 2.5rem;
+}
+
+.btn-login-black:hover {
+    background-color: #333;
+}
+
+/* Área de Criar Conta */
+.create-account-prompt p {
+    font-size: 1rem;
+    color: #000;
+    margin-bottom: 0.3rem;
+}
+
+.create-account-prompt a {
+    font-size: 1rem;
+    color: #000;
+    text-decoration: underline;
+}
+
+/* =========================================
+   COLUNA DIREITA: CAIXA DE VISITANTE
+   ========================================= */
+.guest-section {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.guest-box {
+    background-color: #000;
+    color: #fff;
+    padding: 3.5rem;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 450px;
+}
+
+.guest-box h2 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+}
+
+.guest-box p {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 3rem;
+    color: #eaeaea;
+}
+
+.btn-guest-outline {
+    display: block;
+    text-align: center;
+    background-color: transparent;
+    color: #fff;
+    border: 2px solid #fff;
+    padding: 1rem 2rem;
+    border-radius: 30px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn-guest-outline:hover {
+    background-color: #fff;
+    color: #000;
+}

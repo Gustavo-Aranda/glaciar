@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Perfil | Glaciar</title>
+    <link rel="stylesheet" href="./css/global.css">
+    <link rel="stylesheet" href="./css/pages/editar-perfil.css">
+</head>
+<body>
+    <!-- A Navbar isolada será injetada aqui -->
+    <div id="navbar-placeholder"></div>
+
+    <main class="edit-profile-page">
+        <div class="content-header">
+            <nav class="breadcrumb" aria-label="Breadcrumb">
+                <a href="conta.html">Minha Conta</a>
+                <span class="separator">&gt;</span>
+                <span class="current">Editar Perfil</span>
+            </nav>
+            <h2>Editar Perfil</h2>
+            <p>Atualize seus dados pessoais de acesso à Glaciar.</p>
+        </div>
+
+        <section class="form-section">
+            <form action="conta.html" class="edit-form">
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="nome">Nome</label>
+                        <input type="text" id="nome" value="Zé" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="sobrenome">Sobrenome</label>
+                        <input type="text" id="sobrenome" value="da Silva" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" value="ze.silva@gmail.com" required>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-black">Salvar Alterações</button>
+                    <a href="conta.html" class="btn-text">Cancelar</a>
+                </div>
+            </form>
+        </section>
+
+        <!-- Zona de Perigo: Inativação da Conta -->
+        <section class="danger-zone">
+            <h3>Área de Perigo</h3>
+            <p>Ao inativar sua conta, você perderá acesso ao histórico de pedidos e cupons ativos. Essa ação poderá ser revertida futuramente entrando em contato com o suporte.</p>
+            <button class="btn-outline-danger">Inativar minha conta</button>
+        </section>
+    </main>
+
+    <!-- Importa o JS da navbar isolada -->
+    <script src="./js/components/navbar.js"></script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+/* =========================================
+   LAYOUT CENTRALIZADO DA PÁGINA
+   ========================================= */
+.edit-profile-page {
+    max-width: 800px; /* Mais estreito para formulários ficarem elegantes */
+    margin: 4rem auto;
+    padding: 0 2rem;
+    font-family: var(--fonte-principal);
+}
+
+.content-header {
+    margin-bottom: 3rem;
+}
+
+.content-header h2 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--cinza-rocha, #333);
+}
+
+.content-header p {
+    color: var(--cinza-rocha-claro, #666);
+}
+
+/* =========================================
+   FORMULÁRIO DE EDIÇÃO
+   ========================================= */
+.form-section {
+    background-color: #F2F2F2;
+    padding: 2.5rem;
+    border-radius: 8px;
+    margin-bottom: 3rem;
+}
+
+.input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1.5rem;
+}
+
+.input-group label {
+    font-size: 0.85rem;
+    color: #555;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.input-group input {
+    padding: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 1rem;
+    background-color: #fff;
+    transition: border-color 0.2s;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: #000;
+}
+
+/* Botões do Formulário */
+.form-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.btn-black {
+    background-color: #000;
+    color: #fff;
+    padding: 1rem 2.5rem;
+    border-radius: 30px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-black:hover { background-color: #333; }
+
+.btn-text {
+    color: #000;
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* =========================================
+   ZONA DE PERIGO (Inativação)
+   ========================================= */
+.danger-zone {
+    border: 1px solid #e74c3c;
+    border-radius: 8px;
+    padding: 2rem;
+    background-color: #fdfaf9;
+}
+
+.danger-zone h3 {
+    color: #e74c3c;
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.danger-zone p {
+    color: #555;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.btn-outline-danger {
+    background-color: transparent;
+    color: #e74c3c;
+    border: 1px solid #e74c3c;
+    padding: 0.8rem 2rem;
+    border-radius: 30px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-outline-danger:hover {
+    background-color: #e74c3c;
+    color: #fff;
+}
