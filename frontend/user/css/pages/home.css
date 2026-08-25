@@ -111,7 +111,6 @@
     gap: 2rem;
 }
 
-/* Estilos para os cards que o JS vai criar */
 .product-item {
     background: var(--branco);
     padding: 1rem;

@@ -41,7 +41,7 @@
     flex-direction: column;
     overflow: hidden;
     z-index: 9998;
-    border: 1px solid var(--borda-rocha);
+    border: 1px solid var(--borda-cinza);
     transition: opacity 0.3s ease, transform 0.3s ease;
     transform-origin: bottom right;
 }
@@ -124,12 +124,12 @@
     display: flex;
     padding: 1rem;
     background-color: var(--branco);
-    border-top: 1px solid var(--borda-rocha);
+    border-top: 1px solid var(--borda-cinza);
 }
 
 #chat-input {
     flex: 1;
-    border: 1px solid var(--borda-rocha);
+    border: 1px solid var(--borda-cinza);
     border-radius: 20px;
     padding: 0.6rem 1rem;
     font-family: inherit;

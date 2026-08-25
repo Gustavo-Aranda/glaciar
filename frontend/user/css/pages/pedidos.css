@@ -28,20 +28,20 @@
    ========================================= */
 .order-card {
     background-color: var(--branco);
-    border: 1px solid var(--borda-rocha);
+    border: 1px solid var(--borda-cinza);
     border-radius: 8px;
     margin-bottom: 2rem;
     box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-    overflow: hidden; /* Para respeitar o border-radius no cabeçalho */
+    overflow: hidden;
 }
 
 .order-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #FAFAFA; /* Fundo sutil para destacar o cabeçalho */
+    background-color: #FAFAFA;
     padding: 1.5rem;
-    border-bottom: 1px solid var(--borda-rocha);
+    border-bottom: 1px solid var(--borda-cinza);
 }
 
 .order-info {
@@ -78,7 +78,7 @@
     background-position: center;
     border-radius: 4px;
     background-color: var(--fundo-app);
-    border: 1px solid var(--borda-rocha);
+    border: 1px solid var(--borda-cinza);
 }
 
 .product-details {
@@ -140,8 +140,8 @@
 .btn-secondary:hover { background-color: var(--fundo-app); }
 
 .btn-warning {
-    background-color: transparent;
-    color: var(--laranja-alpinista);
-    border: 1px solid var(--laranja-alpinista);
+    background-color: var(--preto);
+    color: var(--branco);
+    border: 1px solid var(--preto);
 }
-.btn-warning:hover { background-color: var(--laranja-alpinista-fundo); }
+.btn-warning:hover { background-color: var(--preto-hover); }

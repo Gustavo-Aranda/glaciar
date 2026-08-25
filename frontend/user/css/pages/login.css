@@ -52,13 +52,12 @@
 
 .input-group input {
     padding: 1rem;
-    border: 1px solid #000; /* Borda preta sólida como na referência */
+    border: 1px solid #000;
     font-family: inherit;
     font-size: 1rem;
     width: 100%;
 }
 
-/* Simulando o fundo de preenchimento automático (amarelado) da referência */
 .autofill-simulated {
     background-color: #fdfae5;
 }
@@ -100,7 +99,7 @@
     background-color: #000;
     color: #fff;
     padding: 1rem 3rem;
-    border-radius: 30px; /* Bordas totalmente arredondadas */
+    border-radius: 30px;
     font-weight: 700;
     font-size: 1rem;
     border: none;

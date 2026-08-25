@@ -13,7 +13,7 @@
 
 .status-select { 
     padding: 0.6rem 1rem; 
-    border: 1px solid var(--borda-rocha); 
+    border: 1px solid var(--borda-cinza); 
     border-radius: 4px; 
     font-family: inherit; 
     font-size: 0.9rem; 
@@ -30,7 +30,7 @@
 .admin-search-input {
     flex: 1;
     padding: 1rem 1.5rem;
-    border: 1px solid var(--borda-rocha);
+    border: 1px solid var(--borda-cinza);
     border-radius: 4px;
     font-family: inherit;
     font-size: 1rem;

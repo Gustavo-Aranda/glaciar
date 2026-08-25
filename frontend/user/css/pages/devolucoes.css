@@ -28,7 +28,7 @@
    ========================================= */
 .return-card {
     background-color: var(--branco);
-    border: 1px solid var(--borda-rocha);
+    border: 1px solid var(--borda-cinza);
     border-radius: 8px;
     margin-bottom: 2rem;
     box-shadow: 0 2px 8px rgba(0,0,0,0.03);
@@ -41,7 +41,7 @@
     align-items: center;
     background-color: #FAFAFA;
     padding: 1.5rem;
-    border-bottom: 1px solid var(--borda-rocha);
+    border-bottom: 1px solid var(--borda-cinza);
 }
 
 .return-info {
@@ -78,7 +78,7 @@
     background-position: center;
     border-radius: 4px;
     background-color: var(--fundo-app);
-    border: 1px solid var(--borda-rocha);
+    border: 1px solid var(--borda-cinza);
 }
 
 .product-details {
@@ -97,10 +97,23 @@
     font-size: 0.9rem;
 }
 
-/* Tipografia de Feedbacks */
-.alert-text { color: var(--laranja-alpinista); font-size: 0.9rem; font-weight: 700; margin-top: 0.3rem; }
-.info-text { color: var(--azul-gelo); font-size: 0.9rem; font-weight: 700; margin-top: 0.3rem; }
-.success-text { color: #27ae60; font-size: 0.9rem; margin-top: 0.3rem; }
+.alert-text { 
+    color: var(--laranja-alpinista); 
+    font-size: 0.9rem; 
+    font-weight: 700; 
+    margin-top: 0.3rem; 
+}
+.info-text { 
+    color: var(--azul-gelo); 
+    font-size: 0.9rem; 
+    font-weight: 700; 
+    margin-top: 0.3rem; 
+}
+.success-text { 
+    color: #27ae60; 
+    font-size: 0.9rem; 
+    margin-top: 0.3rem; 
+}
 
 /* =========================================
    BOTÕES DE AÇÃO & STATUS
@@ -118,8 +131,14 @@
     font-weight: 700;
 }
 
-.status-neutro { background-color: var(--azul-gelo-fundo); color: var(--azul-gelo); }
-.status-atencao { background-color: var(--laranja-alpinista-fundo); color: var(--laranja-alpinista); }
+.status-neutro { 
+    background-color: var(--azul-gelo-fundo); 
+    color: var(--azul-gelo); 
+}
+.status-atencao { 
+    background-color: var(--laranja-alpinista-fundo); 
+    color: var(--laranja-alpinista); 
+}
 
 .btn {
     padding: 0.6rem 1.5rem;
@@ -127,7 +146,7 @@
     font-weight: 600;
     cursor: pointer;
     font-size: 0.9rem;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
 }
 
 .btn-primary {
@@ -138,15 +157,17 @@
 .btn-primary:hover { opacity: 0.85; }
 
 .btn-info {
-    background-color: var(--azul-gelo);
+    background-color: var(--preto);
     color: var(--branco);
-    border: 1px solid var(--azul-gelo);
+    border: 1px solid var(--preto);
 }
-.btn-info:hover { opacity: 0.85; }
+.btn-info:hover { background-color: var(--preto-hover); }
 
 .btn-warning {
     background-color: transparent;
-    color: var(--laranja-alpinista);
-    border: 1px solid var(--laranja-alpinista);
+    color: var(--cinza-rocha);
+    border: 1px solid var(--cinza-rocha);
 }
-.btn-warning:hover { background-color: var(--laranja-alpinista-fundo); }
+.btn-warning:hover { 
+    background-color: var(--fundo-app); 
+}

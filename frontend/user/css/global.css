@@ -3,15 +3,17 @@
    ========================================= */
 :root {
     --branco: #FFFFFF;
-    --fundo-app: #F4F6F8; 
+    --fundo-app: #F4F6F8;
+
+    --preto: #000;
+    --preto-hover: #333;
 
     --cinza-rocha: #2C3E50;
     --cinza-rocha-claro: #596A7A;
-    --borda-rocha: #D5DBE0;
+    --borda-cinza: #D5DBE0;
 
     --azul-gelo: #5DADE2;
     --azul-gelo-fundo: #EBF5FB; 
-
 
     --laranja-alpinista: #E67E22;
     --laranja-alpinista-fundo: #FEF5E7;
@@ -163,16 +165,16 @@ ul {
     color: var(--cinza-rocha);
     font-weight: 600;
     text-decoration: none;
-    transition: color 0.2s ease;
+    transition: all 0.3s ease;
 }
 
 .breadcrumb a:hover {
-    color: var(--azul-gelo);
+    color: var(--laranja-alpinista);
     text-decoration: underline;
 }
 
 .breadcrumb .separator {
-    color: var(--borda-rocha);
+    color: var(--borda-cinza);
     font-size: 0.8rem;
     font-weight: bold;
 }

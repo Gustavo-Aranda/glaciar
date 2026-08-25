@@ -2,7 +2,7 @@
    LAYOUT CENTRALIZADO DA PÁGINA
    ========================================= */
 .edit-profile-page {
-    max-width: 800px; /* Mais estreito para formulários ficarem elegantes */
+    max-width: 800px;
     margin: 4rem auto;
     padding: 0 2rem;
     font-family: var(--fonte-principal);

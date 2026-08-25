@@ -44,13 +44,13 @@
 .sidebar {
     background-color: var(--branco);
     padding: 2.5rem 1.5rem;
-    border-right: 1px solid var(--borda-rocha);
+    border-right: 1px solid var(--borda-cinza);
 }
 
 .admin-greeting {
     margin-bottom: 2.5rem;
     padding-bottom: 1.5rem;
-    border-bottom: 1px solid var(--borda-rocha);
+    border-bottom: 1px solid var(--borda-cinza);
 }
 
 .admin-greeting h2 {
@@ -121,7 +121,7 @@
 .admin-search-input {
     flex: 1; 
     padding: 1rem 1.5rem; 
-    border: 1px solid var(--borda-rocha);
+    border: 1px solid var(--borda-cinza);
     border-radius: 4px; 
     font-family: inherit; 
     font-size: 1rem;
@@ -142,7 +142,7 @@
    ========================================= */
 .admin-card {
     background-color: var(--branco); 
-    border: 1px solid var(--borda-rocha);
+    border: 1px solid var(--borda-cinza);
     border-radius: 8px; 
     margin-bottom: 1.5rem;
     box-shadow: 0 4px 12px rgba(0,0,0,0.02);
@@ -158,7 +158,7 @@
     align-items: center;
     background-color: transparent;
     padding: 1.5rem;
-    border-bottom: 1px solid var(--borda-rocha);
+    border-bottom: 1px solid var(--borda-cinza);
 }
 
 .card-info { 
@@ -203,7 +203,7 @@
 }
 .status-select {
     padding: 0.6rem 1rem; 
-    border: 1px solid var(--borda-rocha);
+    border: 1px solid var(--borda-cinza);
     border-radius: 4px; 
     font-family: inherit; 
     font-size: 0.9rem; 
