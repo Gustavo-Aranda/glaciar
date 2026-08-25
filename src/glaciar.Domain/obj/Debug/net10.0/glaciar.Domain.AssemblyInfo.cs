@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("glaciar.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cf871d3a799a3c201d972297ec26b7567fcbc8b9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+511e20240aaade48436ca661a90d3d6aedc5b619")]
 [assembly: System.Reflection.AssemblyProductAttribute("glaciar.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("glaciar.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
