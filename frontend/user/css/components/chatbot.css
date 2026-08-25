@@ -1,0 +1,153 @@
+/* =========================================
+   BOTÃO FLUTUANTE (MESSENGER STYLE)
+   ========================================= */
+.chatbot-toggle-btn {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 60px;
+    height: 60px;
+    background-color: var(--azul-gelo);
+    color: var(--branco);
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.chatbot-toggle-btn:hover {
+    transform: scale(1.05);
+    background-color: #4a9bd9; /* Azul Gelo levemente mais escuro */
+}
+
+/* =========================================
+   JANELA DO CHAT
+   ========================================= */
+.chatbot-window {
+    position: fixed;
+    bottom: 6rem; /* Fica acima do botão flutuante */
+    right: 2rem;
+    width: 350px;
+    height: 500px;
+    background-color: var(--branco);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 9998;
+    border: 1px solid var(--borda-rocha);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    transform-origin: bottom right;
+}
+
+/* Classe para esconder a janela animadamente */
+.chatbot-window.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.9);
+}
+
+/* Cabeçalho */
+.chat-header {
+    background-color: var(--cinza-rocha);
+    color: var(--branco);
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-title-group h4 {
+    font-size: 1rem;
+    margin: 0;
+}
+
+.chat-title-group span {
+    font-size: 0.75rem;
+    color: var(--azul-gelo);
+    font-weight: 700;
+}
+
+.btn-close-chat {
+    background: none;
+    border: none;
+    color: var(--branco);
+    font-size: 1.5rem;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.btn-close-chat:hover { opacity: 1; }
+
+/* Corpo (Área de Mensagens) */
+.chat-body {
+    flex: 1;
+    background-color: var(--fundo-app);
+    padding: 1.5rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.message {
+    max-width: 85%;
+    padding: 0.8rem 1rem;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.bot-message {
+    background-color: var(--azul-gelo-fundo);
+    color: var(--cinza-rocha);
+    border-radius: 12px 12px 12px 0;
+    align-self: flex-start;
+    border: 1px solid var(--azul-gelo);
+}
+
+.user-message {
+    background-color: var(--cinza-rocha);
+    color: var(--branco);
+    border-radius: 12px 12px 0 12px;
+    align-self: flex-end;
+}
+
+/* Área de Digitação */
+.chat-input-area {
+    display: flex;
+    padding: 1rem;
+    background-color: var(--branco);
+    border-top: 1px solid var(--borda-rocha);
+}
+
+#chat-input {
+    flex: 1;
+    border: 1px solid var(--borda-rocha);
+    border-radius: 20px;
+    padding: 0.6rem 1rem;
+    font-family: inherit;
+    font-size: 0.9rem;
+    outline: none;
+}
+
+#chat-input:focus { border-color: var(--azul-gelo); }
+
+.btn-send-chat {
+    background: none;
+    border: none;
+    color: var(--laranja-alpinista);
+    padding: 0 0.5rem 0 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: opacity 0.2s;
+}
+
+.btn-send-chat:hover { opacity: 0.7; }
