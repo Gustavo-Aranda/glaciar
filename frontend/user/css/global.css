@@ -148,7 +148,7 @@ ul {
     width: 100%;
 }
 /* =========================================
-   BREADCRUMB (Caminho de Navegação)
+   BREADCRUMB
    ========================================= */
 .breadcrumb {
     display: flex;
@@ -167,7 +167,7 @@ ul {
 }
 
 .breadcrumb a:hover {
-    color: var(--azul-gelo); /* Feedback visual na cor da marca Glaciar */
+    color: var(--azul-gelo);
     text-decoration: underline;
 }
 

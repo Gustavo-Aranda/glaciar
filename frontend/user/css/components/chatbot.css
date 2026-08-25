@@ -1,5 +1,5 @@
 /* =========================================
-   BOTÃO FLUTUANTE (MESSENGER STYLE)
+   BOTÃO FLUTUANTE
    ========================================= */
 .chatbot-toggle-btn {
     position: fixed;
@@ -22,7 +22,7 @@
 
 .chatbot-toggle-btn:hover {
     transform: scale(1.05);
-    background-color: #4a9bd9; /* Azul Gelo levemente mais escuro */
+    background-color: #4a9bd9;
 }
 
 /* =========================================
@@ -30,7 +30,7 @@
    ========================================= */
 .chatbot-window {
     position: fixed;
-    bottom: 6rem; /* Fica acima do botão flutuante */
+    bottom: 6rem;
     right: 2rem;
     width: 350px;
     height: 500px;
@@ -86,7 +86,7 @@
 
 .btn-close-chat:hover { opacity: 1; }
 
-/* Corpo (Área de Mensagens) */
+/* Corpo */
 .chat-body {
     flex: 1;
     background-color: var(--fundo-app);

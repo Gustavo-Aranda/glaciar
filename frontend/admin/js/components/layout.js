@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 
                 // Lógica para marcar o menu ativo baseado na URL
                 let currentPage = window.location.pathname.split('/').pop();
-                if (currentPage === '' || currentPage === '/') currentPage = 'index.html';
+                if (currentPage === '' || currentPage === '/') currentPage = 'analise.html';
 
                 const activeLink = document.querySelector(`.sidebar-menu a[href="${currentPage}"]`);
                 if (activeLink) {
