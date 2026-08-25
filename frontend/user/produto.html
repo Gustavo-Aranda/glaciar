@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpine Pro SV | Glaciar</title>
+    <link rel="stylesheet" href="./css/global.css">
+    <link rel="stylesheet" href="./css/pages/catalogo.css">
+    <link rel="stylesheet" href="./css/pages/produto.css">
+    <link rel="stylesheet" href="./css/components/chatbot.css">
+</head>
+<body>
+    <div id="navbar-placeholder"></div>
+
+    <main class="product-page">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+            <a href="index.html">Home</a>
+            <span class="separator">&gt;</span>
+            <a href="masculino.html">Masculino</a>
+            <span class="separator">&gt;</span>
+            <span class="current">Alpine Pro SV</span>
+        </nav>
+
+        <div class="product-layout">
+            
+            <!-- COLUNA ESQUERDA: GALERIA DE IMAGENS -->
+            <section class="product-gallery">
+                <!-- Imagem Principal -->
+                <div class="gallery-item large" style="background-image: url('./assets/img/destaque-1.jpg');">
+                </div>
+                <!-- Imagens Secundárias -->
+                <div class="gallery-item" style="background-image: url('./assets/img/destaque-1.jpg');">
+                </div>
+                <div class="gallery-item" style="background-image: url('./assets/img/destaque-1.jpg');"></div>
+            </section>
+
+            <!-- COLUNA DIREITA: INFORMAÇÕES E COMPRA -->
+            <aside class="product-sidebar">
+                <div class="sidebar-sticky">
+                    
+                    <h1 class="product-title">Alpine Pro SV</h1>
+                    <!-- <div class="product-rating">
+                        ★★★★☆ <span class="review-count">70 Avaliações</span>
+                    </div>
+                    -->
+                    <p class="product-price">R$ 490,00</p>
+
+                    <!-- Seletor de Cor -->
+                    <div class="selector-group">
+                        <span class="selector-label">Cor: <strong>Berry Fig</strong></span>
+                        <div class="color-swatches">
+                            <span class="swatch checked" style="background: #6a2e41;"></span>
+                            <span class="swatch" style="background: #111;"></span>
+                            <span class="swatch" style="background: #2c3e50;"></span>
+                            <span class="swatch" style="background: #405d45;"></span>
+                        </div>
+                    </div>
+
+                    <!-- Seletor de Tamanho -->
+                    <div class="selector-group">
+                        <div class="selector-header">
+                            <span class="selector-label">Tamanho</span>
+                            <a href="#" class="size-guide-link">Guia de Tamanhos</a>
+                        </div>
+                        <div class="size-grid">
+                            <button class="btn-size">P</button>
+                            <button class="btn-size selected">M</button>
+                            <button class="btn-size">G</button>
+                            <button class="btn-size">GG</button>
+                            <button class="btn-size disabled" disabled>2GG</button>
+                        </div>
+                    </div>
+
+                    <!-- Botão Adicionar ao Carrinho -->
+                    <button class="btn-add-to-bag" onclick="mockAddToBag()">Adicionar ao Carrinho</button>
+
+                    <!-- Descrição Curta -->
+                    <p class="product-description">
+                        Nossa blusa fleece versátil e confortável. Quente, leve e respirável, ideal para trilhas, viagens e os dias mais frios.
+                    </p>
+
+                    <!-- Sanfonas (Accordions) de Detalhes -->
+                    <div class="product-accordions">
+                        <details class="accordion">
+                            <summary>Caimento (Fit)</summary>
+                            <div class="accordion-content">
+                                Caimento regular, com modelagem confortável e punhos elásticos para melhor ajuste.
+                            </div>
+                        </details>
+
+                        <details class="accordion">
+                            <summary>Especificações e Funcionalidades</summary>
+                            <div class="accordion-content">
+                                Tecido fleece macio, isolamento térmico, secagem rápida e gola alta para maior proteção contra o frio.
+                            </div>
+                        </details>
+
+                        <details class="accordion">
+                            <summary>Materiais e Cuidados</summary>
+                            <div class="accordion-content">
+                                100% Algodão Reciclado. Lavar à máquina em água fria e não usar alvejante.
+                            </div>
+                        </details>
+                    </div>
+
+                </div>
+            </aside>
+        </div>
+
+        <div id="cart-toast" class="cart-toast hidden">
+            <div class="toast-header">
+                <h3>Adicionado ao Carrinho <span class="check-icon">✓</span></h3>
+                <button class="btn-close-toast" onclick="closeToast()">&times;</button>
+            </div>
+            <div class="toast-body">
+                <div class="toast-img" style="background-image: url('./assets/img/destaque-1.jpg');"></div>
+                <div class="toast-details">
+                    <p class="toast-title">1x Jaqueta Alpine Pro SV</p>
+                    <p class="toast-price">R$ 490,00</p>
+                    <p class="toast-attr">Cor: Berry Fig</p>
+                    <p class="toast-attr">Tamanho: <span id="toast-size">M</span></p>
+                </div>
+            </div>
+            <div class="toast-actions">
+                <a href="carrinho.html" class="btn-black-full">Checkout</a>
+                <button class="btn-outline-full" onclick="closeToast()">Continue Comprando</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="./js/components/layout.js"></script>
+    <script src="./js/pages/produto.js"></script>
+    <script src="./js/pages/catalog.js"></script>
+    <script src="./js/components/chatbot.js"></script>
+</body>
+</html>

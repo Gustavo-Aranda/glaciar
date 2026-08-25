@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("glaciar.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+511e20240aaade48436ca661a90d3d6aedc5b619")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8178d2ea0fa99c457b41c3fa239e087097d53b62")]
 [assembly: System.Reflection.AssemblyProductAttribute("glaciar.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("glaciar.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

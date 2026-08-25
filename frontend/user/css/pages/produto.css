@@ -1,0 +1,238 @@
+/* =========================================
+   LAYOUT GERAL DA PÁGINA DO PRODUTO
+   ========================================= */
+.product-page {
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 0 4rem;
+    font-family: var(--fonte-principal);
+}
+
+.product-layout {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr; /* Esquerda (fotos) maior que a direita (compra) */
+    gap: 4rem;
+    margin-top: 1rem;
+}
+
+/* =========================================
+   GALERIA DE IMAGENS (ESQUERDA)
+   ========================================= */
+.product-gallery {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.gallery-item {
+    width: 100%;
+    aspect-ratio: 4/5;
+    background-color: #f6f6f6;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+/* Faz a primeira imagem ocupar as duas colunas */
+.gallery-item.large {
+    grid-column: span 2;
+    aspect-ratio: 16/9; /* Proporção mais horizontal para destaque */
+}
+
+.badge-white {
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    background-color: var(--branco);
+    color: var(--cinza-rocha);
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 4px;
+}
+
+/* =========================================
+   PAINEL DE COMPRA (DIREITA - STICKY)
+   ========================================= */
+.product-sidebar {
+    position: relative;
+}
+
+.sidebar-sticky {
+    position: sticky;
+    top: 100px; /* Fica fixo ao rolar a página */
+}
+
+.product-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--cinza-rocha);
+    margin-bottom: 0.5rem;
+}
+
+.product-rating {
+    color: var(--cinza-rocha);
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
+
+.review-count {
+    font-size: 0.85rem;
+    color: var(--cinza-rocha-claro);
+    margin-left: 0.5rem;
+    text-decoration: underline;
+}
+
+.product-price {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--cinza-rocha);
+    margin-bottom: 2.5rem;
+}
+
+/* Seletores (Cor e Tamanho) */
+.selector-group {
+    margin-bottom: 2rem;
+}
+
+.selector-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.selector-label {
+    font-size: 0.9rem;
+    color: var(--cinza-rocha);
+    display: block;
+    margin-bottom: 0.8rem;
+}
+
+.size-guide-link {
+    font-size: 0.85rem;
+    color: var(--cinza-rocha-claro);
+    text-decoration: underline;
+}
+
+/* Cores */
+.color-swatches { 
+    display: flex; 
+    gap: 0.8rem; 
+}
+.swatch {
+    width: 30px; 
+    height: 30px; 
+    border-radius: 50%; 
+    display: inline-block;
+    border: 1px solid var(--borda-cinza); 
+    position: relative; 
+    cursor: pointer;
+}
+
+.swatch:hover {
+    transform: scale(1.05);
+    transition: transform 0.3s ease;
+}
+
+.swatch.checked::after {
+    content: "✓"; 
+    position: absolute; 
+    top: 3px; 
+    left: 8px; 
+    color: var(--branco); 
+    font-size: 1rem;
+}
+
+/* Tamanhos */
+.size-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+}
+
+.btn-size {
+    background-color: var(--fundo-app); 
+    border: 1px solid var(--borda-cinza);
+    border-radius: 4px; 
+    padding: 1rem 0; 
+    font-weight: 700;   
+    font-size: 0.95rem;
+    color: var(--cinza-rocha); 
+    cursor: pointer; 
+    display: flex; 
+    flex-direction: column;
+    align-items: center; 
+    justify-content: center; 
+    transition: all 0.2s;
+}
+
+.btn-size:hover:not(.disabled) {
+    border-color: var(--cinza-rocha); 
+}
+.btn-size.selected { 
+    border-color: var(--cinza-rocha); 
+    border-width: 2px; 
+}
+
+.btn-size.disabled {
+    color: #aaa; 
+    cursor: not-allowed;
+    background-image: linear-gradient(to top right, transparent calc(50% - 1px), #aaa, transparent calc(50% + 1px));
+}
+
+/* Botão de Compra */
+.btn-add-to-bag {
+    width: 100%; 
+    background-color: #000; 
+    color: #fff; 
+    border: none;
+    padding: 1.2rem; 
+    font-size: 1.1rem; 
+    font-weight: 700; 
+    border-radius: 30px;
+    cursor: pointer; 
+    transition: background 0.2s; 
+    margin-bottom: 2rem;
+}
+.btn-add-to-bag:hover { 
+    background-color: #333; 
+}
+
+/* Descrição e Accordions */
+.product-description {
+    font-size: 0.95rem; 
+    line-height: 1.5; 
+    color: var(--cinza-rocha); 
+    margin-bottom: 2rem;
+}
+
+.product-accordions { 
+    border-top: 1px solid var(--borda-cinza);
+}
+
+.accordion {
+    border-bottom: 1px solid var(--borda-cinza);
+}
+.accordion summary {
+    padding: 1.2rem 0; 
+    font-weight: 700; 
+    font-size: 0.95rem; 
+    color: var(--cinza-rocha);
+    list-style: none;
+    cursor: pointer; 
+    outline: none; 
+    list-style: none; 
+    display: flex; 
+    justify-content: space-between;
+}
+.accordion summary::after { 
+    content: "+"; 
+    font-size: 1.2rem; 
+    transition: transform 0.3s ease;
+}
+.accordion[open] summary::after { 
+    transform: rotate(45deg); 
+}
+.accordion-content {
+    padding-bottom: 1.2rem; font-size: 0.9rem; color: var(--cinza-rocha-claro); line-height: 1.5;
+}

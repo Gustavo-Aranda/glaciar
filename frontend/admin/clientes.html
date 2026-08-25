@@ -32,6 +32,7 @@
                     <div class="search-bar-container">
                         <input type="text" class="admin-search-input" placeholder="Buscar cliente por nome, CPF ou e-mail...">
                         <button class="btn btn-secondary">Buscar</button>
+                        <button class="btn btn-primary" id="btn-novo-cliente">+ Criar Cliente</button>
                     </div>
 
                     <div class="clients-list">
@@ -39,8 +40,8 @@
                         <article class="admin-card">
                             <div class="card-header">
                                 <div class="card-info">
-                                    <span class="card-title">Gustavo Aranda</span>
-                                    <span class="card-subtitle">E-mail: gusta.aranda777@gmail.com | CPF: 123.456.789-00</span>
+                                    <span class="card-title">Gustavo Jose</span>
+                                    <span class="card-subtitle">E-mail: gustavo.jose@gmail.com | CPF: 123.456.789-00</span>
                                 </div>
                                 <span class="status status-neutro">Conta Ativa</span>
                             </div>
@@ -80,8 +81,85 @@
             </div>
         </section>
     </main>
+    <div id="modal-criar-cliente" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Cadastrar Novo Cliente</h3>
+                <button class="btn-close-modal" id="btn-close-modal">&times;</button>
+            </div>
+            
+            <form class="admin-form">
+                <!-- Dados Pessoais -->
+                <div class="form-row">
+                    <div class="input-group">
+                        <label>Nome *</label>
+                        <input type="text" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Sobrenome *</label>
+                        <input type="text" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="input-group">
+                        <label>CPF *</label>
+                        <input type="text" placeholder="000.000.000-00" required>
+                    </div>
+                    <div class="input-group">
+                        <label>E-mail *</label>
+                        <input type="email" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Telefone *</label>
+                        <input type="text" placeholder="(00) 00000-0000" required>
+                    </div>
+                </div>
 
+                <h4 class="form-subtitle">Endereço de Entrega Base</h4>
+
+                <div class="form-row">
+                    <div class="input-group">
+                        <label>CEP *</label>
+                        <input type="text" placeholder="00000-000" required>
+                    </div>
+                    <div class="input-group" style="flex: 2;">
+                        <label>Logradouro *</label>
+                        <input type="text" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Número *</label>
+                        <input type="text" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="input-group">
+                        <label>Complemento</label>
+                        <input type="text">
+                    </div>
+                    <div class="input-group">
+                        <label>Cidade *</label>
+                        <input type="text" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Estado / País *</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="text" placeholder="UF" style="width: 60px;" required>
+                            <input type="text" value="Brasil" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="btn-cancelar-modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Cliente</button>
+                </div>
+            </form>
+        </div>
+    </div>
     <!-- Script que constrói o layout -->
     <script src="./js/components/layout.js"></script>
+    <script src="./js/pages/create-client.js"></script>
 </body>
 </html>
