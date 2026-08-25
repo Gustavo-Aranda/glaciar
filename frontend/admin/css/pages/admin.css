@@ -32,7 +32,7 @@
    ========================================= */
 .admin-container {
     display: grid;
-    grid-template-columns: 260px 1fr; /* Sidebar um pouco mais enxuta */
+    grid-template-columns: 260px 1fr;
     min-height: calc(100vh - 65px);
     background-color: var(--fundo-app);
     font-family: var(--fonte-principal);
@@ -96,13 +96,13 @@
 .admin-content {
     padding: 3rem 2rem;
     display: flex;
-    justify-content: center; /* Centraliza o wrapper no espaço restante */
+    justify-content: center;
     align-items: flex-start;
 }
 
 .content-wrapper {
     width: 100%;
-    max-width: 950px; /* Impede que o conteúdo se espalhe horizontalmente */
+    max-width: 950px;
 }
 
 .content-header { margin-bottom: 3rem; }
@@ -145,7 +145,7 @@
     border: 1px solid var(--borda-rocha);
     border-radius: 8px; 
     margin-bottom: 1.5rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.02); /* Sombra mais sutil */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
 }
 
 .inactive-card { 
@@ -156,15 +156,25 @@
     display: flex; 
     justify-content: space-between; 
     align-items: center;
-    background-color: transparent; /* Fundo limpo como na referência */
+    background-color: transparent;
     padding: 1.5rem;
     border-bottom: 1px solid var(--borda-rocha);
 }
 
-.card-info { display: flex; flex-direction: column; gap: 0.3rem; }
-.card-title { font-weight: 700; font-size: 1.1rem; color: var(--cinza-rocha); }
-.card-subtitle { font-size: 0.85rem; color: var(--cinza-rocha-claro); }
-
+.card-info { 
+    display: flex; 
+    flex-direction: column;
+    gap: 0.3rem; 
+}
+.card-title { 
+    font-weight: 700; 
+    font-size: 1.1rem;
+    color: var(--cinza-rocha); 
+}
+.card-subtitle { 
+    font-size: 0.85rem; 
+    color: var(--cinza-rocha-claro); 
+}
 .card-body {
     display: flex; 
     justify-content: space-between; 
@@ -174,27 +184,81 @@
 
 /* Detalhes do Cliente/Pedido */
 .client-details p {
-    font-size: 0.95rem; color: var(--cinza-rocha); margin-bottom: 0.4rem;
+    font-size: 0.95rem; 
+    color: var(--cinza-rocha); 
+    margin-bottom: 0.4rem;
 }
 
 /* Controles de Status */
-.status-updater { display: flex; align-items: center; justify-content: flex-end; gap: 1rem; }
-.status-updater label { font-size: 0.9rem; font-weight: 600; color: var(--cinza-rocha-claro); }
+.status-updater { 
+    display: flex; 
+    align-items: center; 
+    justify-content: flex-end; 
+    gap: 1rem; 
+}
+.status-updater label { 
+    font-size: 0.9rem; 
+    font-weight: 600; 
+    color: var(--cinza-rocha-claro); 
+}
 .status-select {
-    padding: 0.6rem 1rem; border: 1px solid var(--borda-rocha);
-    border-radius: 4px; font-family: inherit; font-size: 0.9rem; min-width: 250px;
+    padding: 0.6rem 1rem; 
+    border: 1px solid var(--borda-rocha);
+    border-radius: 4px; 
+    font-family: inherit; 
+    font-size: 0.9rem; 
+    min-width: 250px;
 }
 
 /* Botões e Badges da Glaciar */
-.action-buttons { display: flex; gap: 1rem; }
-.status { padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 700; }
-.status-neutro { background-color: var(--azul-gelo-fundo); color: var(--azul-gelo); }
-.status-atencao { background-color: var(--laranja-alpinista-fundo); color: var(--laranja-alpinista); }
+.action-buttons { 
+    display: flex; 
+    gap: 1rem; 
+}
+.status { 
+    padding: 0.4rem 1rem; 
+    border-radius: 20px; 
+    font-size: 0.85rem; 
+    font-weight: 700; 
+}
+.status-neutro { 
+    background-color: var(--azul-gelo-fundo); 
+    color: var(--azul-gelo); 
+}
+.status-atencao { 
+    background-color: var(--laranja-alpinista-fundo); 
+    color: var(--laranja-alpinista); 
+}
 
-.btn { padding: 0.8rem 1.5rem; border-radius: 4px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; text-align: center; }
-.btn-primary { background-color: var(--laranja-alpinista); color: var(--branco); border: 1px solid var(--laranja-alpinista); }
-.btn-primary:hover { opacity: 0.85; }
-.btn-secondary { background-color: transparent; color: var(--cinza-rocha); border: 1px solid var(--cinza-rocha); }
-.btn-secondary:hover { background-color: var(--fundo-app); }
-.btn-warning { background-color: transparent; color: var(--laranja-alpinista); border: 1px solid var(--laranja-alpinista); }
-.btn-warning:hover { background-color: var(--laranja-alpinista-fundo); }
+.btn { 
+    padding: 0.8rem 1.5rem; 
+    border-radius: 4px; 
+    font-weight: 600; 
+    cursor: pointer; 
+    transition: opacity 0.2s; 
+    text-align: center; 
+}
+.btn-primary { 
+    background-color: var(--laranja-alpinista); 
+    color: var(--branco); 
+    border: 1px solid var(--laranja-alpinista); 
+}
+.btn-primary:hover { 
+    opacity: 0.85; 
+}
+.btn-secondary { 
+    background-color: transparent; 
+    color: var(--cinza-rocha); 
+    border: 1px solid var(--cinza-rocha); 
+}
+.btn-secondary:hover { 
+    background-color: var(--fundo-app); 
+}
+.btn-warning { 
+    background-color: transparent; 
+    color: var(--laranja-alpinista);
+    border: 1px solid var(--laranja-alpinista); 
+}
+.btn-warning:hover { 
+    background-color: var(--laranja-alpinista-fundo); 
+}

@@ -3,13 +3,13 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // Gráfico de Volume Financeiro (Mock)
     new Chart(ctx, {
-        type: 'bar', // Tipo de gráfico (barras)
+        type: 'bar',
         data: {
             labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
             datasets: [{
                 label: 'Volume de Vendas (R$)',
                 data: [1200, 1900, 800, 2400, 3100, 4500, 3800],
-                backgroundColor: '#5DADE2', // Azul Gelo da Glaciar
+                backgroundColor: '#5DADE2',
                 borderRadius: 4
             }]
         },
