@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamentos e Cupons | Glaciar</title>
+    <link rel="stylesheet" href="./css/global.css">
+    <link rel="stylesheet" href="./css/pages/pagamentos.css">
+    <link rel="stylesheet" href="./css/pages/editar-perfil.css">
+    <link rel="stylesheet" href="./css/components/chatbot.css">
+</head>
+<body>
+    <div id="navbar-placeholder"></div>
+
+    <main class="edit-profile-page">
+        <div class="content-header">
+            <nav class="breadcrumb" aria-label="Breadcrumb">
+                <a href="conta.html">Minha Conta</a>
+                <span class="separator">&gt;</span>
+                <span class="current">Pagamento e Cupons</span>
+            </nav>
+            <h2>Gerenciar Pagamentos</h2>
+            <p>Adicione, remova ou edite seus cartões de crédito e acompanhe seus cupons.</p>
+        </div>
+
+        <section class="form-section">
+            
+            <!-- ÁREA DE PAGAMENTO -->
+            <div class="wallet-area">
+                <div class="area-header">
+                    <h3>Cartões Salvos</h3>
+                    <button class="btn-text-add">+ Adicionar Novo</button>
+                </div>
+
+                <div class="wallet-list">
+                    <div class="wallet-item">
+                        <div class="wallet-info">
+                            <span class="card-icon">Visa</span>
+                            <div>
+                                <strong>Cartão final 4321</strong>
+                                <p>Expira em 12/2028</p>
+                            </div>
+                        </div>
+                        <div class="wallet-actions">
+                            <button class="btn-text-edit">Editar</button>
+                            <button class="btn-text-remove">Remover</button>
+                        </div>
+                    </div>
+
+                    <div class="wallet-item">
+                        <div class="wallet-info">
+                            <span class="card-icon">Master</span>
+                            <div>
+                                <strong>Cartão final 8899</strong>
+                                <p>Expira em 05/2027</p>
+                            </div>
+                        </div>
+                        <div class="wallet-actions">
+                            <button class="btn-text-edit">Editar</button>
+                            <button class="btn-text-remove">Remover</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEPARAÇÃO VISUAL -->
+            <hr class="wallet-separator">
+
+            <!-- ÁREA DE CUPONS -->
+            <div class="wallet-area">
+                <div class="area-header">
+                    <h3>Meus Cupons</h3>
+                </div>
+
+                <div class="wallet-list">
+                    <div class="wallet-item coupon-item">
+                        <div class="wallet-info">
+                            <span class="coupon-badge exchange">Troca</span>
+                            <div>
+                                <strong>TROCA-XT89</strong>
+                                <p>Saldo disponível: R$ 250,00</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wallet-item coupon-item">
+                        <div class="wallet-info">
+                            <span class="coupon-badge promo">Promo</span>
+                            <div>
+                                <strong>GLACIAR10</strong>
+                                <p>10% OFF em toda a loja</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <script src="./js/components/layout.js"></script>
+    <script src="./js/components/chatbot.js"></script>
+</body>
+</html>
