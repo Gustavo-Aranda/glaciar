@@ -1,0 +1,17 @@
+[Bb]in/
+[Oo]bj/
+
+*.user
+*.suo
+.vs/
+
+appsettings.Development.json
+appsettings.Local.json
+
+node_modules/
+
+cypress/videos/
+cypress/screenshots/
+
+.DS_Store
+Thumbs.db
