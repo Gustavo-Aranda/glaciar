@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using glaciar.Domain.Entities.Logisticas;
 using glaciar.Domain.Entities.Clientes;
+using glaciar.Domain.Entities.Vendas.Enum;
 
 namespace glaciar.Domain.Entities.Vendas
 {
@@ -21,8 +22,14 @@ namespace glaciar.Domain.Entities.Vendas
         public DateTime Data { get; set; }
 
         [Required]
-        [MaxLength(100)]
-        public string Status { get; set; } = null!;
+        public Status Status { get; set; }
+
+
+        [Required]
+        public DateTime CreatedAt { get; set; }
+
+        [Required]
+        public DateTime UpdatedAt { get; set; }
 
         [Required]
         public int UsuarioId { get; set; }
@@ -33,13 +40,7 @@ namespace glaciar.Domain.Entities.Vendas
         public int EnderecoId { get; set; }
         [ForeignKey("EnderecoId")]
         public Endereco Endereco { get; set; } = null!;
-
-        [Required]
-        public DateTime CreatedAt { get; set; }
-
-        [Required]
-        public DateTime UpdatedAt { get; set; }
-
+        
         public int? CupomId { get; set; }
         [ForeignKey("CupomId")]
         public Cupom? Cupom { get; set; }
