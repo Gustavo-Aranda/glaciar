@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using glaciar.Domain.Entities.Vendas;
+using glaciar.Domain.Entities.Logisticas.Enum;
 
 namespace glaciar.Domain.Entities.Logisticas
 {
@@ -32,8 +33,7 @@ namespace glaciar.Domain.Entities.Logisticas
         public PedidoProduto PedidoProduto { get; set; } = null!;
 
         [Required]
-        [MaxLength(100)]
-        public string Status { get; set; } = null!;
+        public StatusDevolucao Status { get; set; }
 
         [Required]
         public DateTime CreatedAt { get; set; }

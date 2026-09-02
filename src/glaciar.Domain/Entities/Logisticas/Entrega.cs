@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using glaciar.Domain.Entities.Vendas;
+using glaciar.Domain.Entities.Logisticas.Enum;
 
 namespace glaciar.Domain.Entities.Logisticas
 {
@@ -18,8 +19,7 @@ namespace glaciar.Domain.Entities.Logisticas
         public string CodigoRastreamento { get; set; } = null!;
 
         [Required]
-        [MaxLength(100)]
-        public string Status { get; set; } = null!;
+        public StatusEntrega Status { get; set; }
 
         public DateTime? DataDespacho { get; set; }
         public DateTime? DataEntrega { get; set; }
