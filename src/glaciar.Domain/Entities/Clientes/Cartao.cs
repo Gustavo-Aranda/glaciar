@@ -9,7 +9,7 @@ namespace glaciar.Domain.Entities.Clientes
 
         [Required]
         [MaxLength(4)]
-        public string Ultimos_digitos { get; set; } = null!;
+        public string UltimosDigitos { get; set; } = null!;
 
         [Required]
         [MaxLength(20)]
