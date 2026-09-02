@@ -10,12 +10,12 @@ namespace glaciar.Domain.Entities.Catalogos
         public int Id { get; set; }
 
         [Required]
-        [MaxLength(2)]
+        [MaxLength(10)]
         public string Tamanho { get; set; } = null!; //Tamanho do produto (PP, P, M, G, GG, 36, 37, 38, 39, 40, 41, 42)
 
         [Required]
         [MaxLength(30)]
-        public int Cor { get; set; }
+        public string Cor { get; set; } = null!;
 
         [Required]
         public int Quantidade { get; set; }
