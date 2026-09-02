@@ -26,6 +26,11 @@ namespace glaciar.Domain.Entities.Catalogos
         public string SKU { get; set; } = null!; //SKU do produto (Stock Keeping Unit)
 
         [Required]
+        public int ProdutoId { get; set; }
+        [ForeignKey("ProdutoId")]
+        public Produto Produto { get; set; } = null!;
+
+        [Required]
         public DateTime CreatedAt { get; set; }
 
         [Required]
