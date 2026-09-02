@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using glaciar.Domain.Entities.Vendas;
 
 namespace glaciar.Domain.Entities.Clientes
 {
@@ -33,5 +34,6 @@ namespace glaciar.Domain.Entities.Clientes
 
         public ICollection<UsuarioCartao> CartoesVinculados { get; set; } = new List<UsuarioCartao>();
         public ICollection<UsuarioEndereco> EnderecosVinculados { get; set; } = new List<UsuarioEndereco>();
+        public ICollection<Pedido> Pedidos { get; set; } = new List<Pedido>();
     }
 }
