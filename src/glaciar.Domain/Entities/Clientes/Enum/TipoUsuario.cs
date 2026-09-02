@@ -1,5 +1,8 @@
-public enum TipoUsuario
+namespace glaciar.Domain.Entities.Clientes.Enum
 {
-    Cliente,
-    Administrador
+    public enum TipoUsuario
+    {
+        Cliente,
+        Administrador
+    }
 }

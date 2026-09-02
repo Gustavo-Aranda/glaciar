@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using glaciar.Domain.Entities.Catalogos.Enum;
 
 namespace glaciar.Domain.Entities.Catalogos
 {
@@ -17,8 +18,7 @@ namespace glaciar.Domain.Entities.Catalogos
         public string Descricao { get; set; } = null!;
 
         [Required]
-        [MaxLength(50)]
-        public string Tipo { get; set; } = null!; //Tipo do produto (roupas, equipamento, calçado)
+        public TipoProduto Tipo { get; set; }
 
         [Required]
         [Column(TypeName = "decimal(18,2)")]

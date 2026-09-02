@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using glaciar.Domain.Entities.Clientes.Enum;
 
 namespace glaciar.Domain.Entities.Clientes
 {
@@ -12,8 +13,7 @@ namespace glaciar.Domain.Entities.Clientes
         public string UltimosDigitos { get; set; } = null!;
 
         [Required]
-        [MaxLength(20)]
-        public string Bandeira { get; set; } = null!;
+        public BandeiraCartao Bandeira { get; set; }
 
         public ICollection<UsuarioCartao> UsuariosVinculados { get; set; } = new List<UsuarioCartao>();
     }

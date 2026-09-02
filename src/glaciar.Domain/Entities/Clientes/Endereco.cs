@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using glaciar.Domain.Entities.Clientes.Enum;
 using glaciar.Domain.Entities.Vendas;
 
 namespace glaciar.Domain.Entities.Clientes
@@ -32,8 +33,7 @@ namespace glaciar.Domain.Entities.Clientes
         public string Cidade { get; set; } = null!;
 
         [Required]
-        [MaxLength(2)]
-        public string Estado { get; set; } = null!;
+        public Estados Estado { get; set; }
 
         public ICollection<UsuarioEndereco> UsuariosVinculados { get; set; } = new List<UsuarioEndereco>();
         public ICollection<Pedido> Pedidos { get; set; } = new List<Pedido>();

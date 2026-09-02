@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using glaciar.Domain.Entities.Vendas;
+using glaciar.Domain.Entities.Clientes.Enum;
 
 namespace glaciar.Domain.Entities.Clientes
 {
