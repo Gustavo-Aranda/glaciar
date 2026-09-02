@@ -1,6 +1,6 @@
 namespace glaciar.Domain.Entities.Vendas.Enum
 {
-    public enum Status
+    public enum StatusPedido
     {
         EmAberto,
         EmProcessamento,

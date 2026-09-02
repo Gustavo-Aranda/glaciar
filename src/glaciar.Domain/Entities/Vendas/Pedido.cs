@@ -22,7 +22,7 @@ namespace glaciar.Domain.Entities.Vendas
         public DateTime Data { get; set; }
 
         [Required]
-        public Status Status { get; set; }
+        public StatusPedido Status { get; set; }
 
 
         [Required]

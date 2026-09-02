@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using glaciar.Domain.Entities.Clientes;
+using glaciar.Domain.Entities.Vendas.Enum;
 
 namespace glaciar.Domain.Entities.Vendas
 {
@@ -14,8 +15,7 @@ namespace glaciar.Domain.Entities.Vendas
         public decimal Valor { get; set; }
 
         [Required]
-        [MaxLength(100)]
-        public string Status { get; set; } = null!;
+        public StatusPagamento Status { get; set; }
 
         [Required]
         public int PedidoId { get; set; }
@@ -23,8 +23,7 @@ namespace glaciar.Domain.Entities.Vendas
         public Pedido Pedido { get; set; } = null!;
 
         [Required]
-        [MaxLength(100)]
-        public string Metodo { get; set; } = null!;
+        public MetodoPagamento Metodo { get; set; }
 
         [Required]
         public DateOnly Data { get; set; }
