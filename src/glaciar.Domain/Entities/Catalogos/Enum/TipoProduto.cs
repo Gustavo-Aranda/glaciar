@@ -5,6 +5,7 @@ namespace glaciar.Domain.Entities.Catalogos.Enum
         Vestuario,
         Calcado,
         Equipamento,
-        Acessorio
+        Acessorio,
+        ForaDeMercado
     }
 }
