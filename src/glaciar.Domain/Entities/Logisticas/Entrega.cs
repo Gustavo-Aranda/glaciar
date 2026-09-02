@@ -21,11 +21,8 @@ namespace glaciar.Domain.Entities.Logisticas
         [MaxLength(100)]
         public string Status { get; set; } = null!;
 
-        [Required]
-        public DateTime DataDespacho { get; set; }
-
-        [Required]
-        public DateTime DataEntrega { get; set; }
+        public DateTime? DataDespacho { get; set; }
+        public DateTime? DataEntrega { get; set; }
 
         [Required]
         public int PedidoId { get; set; }

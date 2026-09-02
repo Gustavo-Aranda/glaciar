@@ -20,6 +20,12 @@ namespace glaciar.Domain.Entities.Logisticas
         [Column(TypeName = "decimal(18,2)")]
         public decimal Valor { get; set; }
 
+        [MaxLength(50)]
+        public string? CodigoReverso { get; set; }
+        
+        [MaxLength(50)]
+        public string? CodigoRastreioRetorno { get; set; }
+
         [Required]
         public int PedidoProdutoId { get; set; }
         [ForeignKey("PedidoProdutoId")]
