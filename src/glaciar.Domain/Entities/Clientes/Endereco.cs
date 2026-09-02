@@ -21,11 +21,11 @@ namespace glaciar.Domain.Entities.Clientes
         public string Bairro { get; set; } = null!;
 
         [Required]
-        [MaxLength(4)]
+        [MaxLength(10)]
         public string Numero { get; set; } = null!;
 
         [MaxLength(100)]
-        public string Complemento { get; set; } = null!;
+        public string? Complemento { get; set; }
 
         [Required]
         [MaxLength(100)]
