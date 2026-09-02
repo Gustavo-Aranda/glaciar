@@ -30,9 +30,9 @@ namespace glaciar.Domain.Entities.Vendas
         public DateOnly Data { get; set; }
 
         public int? QuantidadeParcelas { get; set; }
-        public UsuarioCartao? Cartao { get; set; }
-        [ForeignKey("Cartao")]
-        public int? CartaoId { get; set; }
+        public int? UsuarioCartaoId { get; set; }
+        [ForeignKey("UsuarioCartaoId")]
+        public UsuarioCartao? UsuarioCartao { get; set; }
 
         [Required]
         public DateTime CreatedAt { get; set; }

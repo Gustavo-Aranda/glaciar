@@ -40,9 +40,13 @@ namespace glaciar.Domain.Entities.Vendas
         [Required]
         public DateTime UpdatedAt { get; set; }
 
+        public int? CupomId { get; set; }
+        [ForeignKey("CupomId")]
+        public Cupom? Cupom { get; set; }
+
         public ICollection<PedidoProduto> ProdutosDoPedido { get; set; } = new List<PedidoProduto>();
         public ICollection<Pagamento> Pagamentos { get; set; } = new List<Pagamento>();
         public ICollection<Entrega> Entregas { get; set; } = new List<Entrega>();
-        public ICollection<Devolucao>? Devolucaos { get; set; } = new List<Devolucao>();
+        public ICollection<Devolucao> Devolucoes { get; set; } = new List<Devolucao>();
     }
 }
