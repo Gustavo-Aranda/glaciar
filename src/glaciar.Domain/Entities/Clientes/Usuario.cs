@@ -21,16 +21,17 @@ namespace glaciar.Domain.Entities.Clientes
         public string Cpf { get; set; } = null!;
 
         [Required]
+        [EmailAddress]
         [MaxLength(100)]
         public string Email { get; set; } = null!;
 
         [Required]
-        [MaxLength(100)]
-        public string Senha_hash { get; set; } = null!;
+        [MaxLength(255)]
+        public string SenhaHash { get; set; } = null!;
 
         [Required]
         [MaxLength(3)]
-        public string Tipo_usuario { get; set; } = null!;
+        public TipoUsuario TipoUsuario { get; set; }
 
         public ICollection<UsuarioCartao> CartoesVinculados { get; set; } = new List<UsuarioCartao>();
         public ICollection<UsuarioEndereco> EnderecosVinculados { get; set; } = new List<UsuarioEndereco>();
