@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using glaciar.Application.DTOs.Clientes;
 using glaciar.Application.Services.Clientes;
+using glaciar.Domain.Entities.Clientes.Enum;
 using glaciar.Domain.Exceptions;
 
 namespace glaciar.API.Controllers
@@ -21,7 +22,7 @@ namespace glaciar.API.Controllers
         {
             try
             {
-                var novoUsuario = await _usuarioService.CreateUsuarioAsync(dto);
+                var novoUsuario = await _usuarioService.CreateUsuarioAsync(dto, TipoUsuario.CLI);
                 return CreatedAtAction(nameof(GetById), new { id = novoUsuario.Id }, novoUsuario);
             }
             catch (DomainValidationException ex)
@@ -29,6 +30,28 @@ namespace glaciar.API.Controllers
                 return BadRequest(new { erro = ex.Message });
             }
             catch (Exception)
+            {
+                return StatusCode(500, new { message = "Ocorreu um erro interno no servidor." });
+            }
+        }
+
+        [HttpPost("admin/registrar")]
+        public async Task<IActionResult> CreateUsuarioAdmin([FromBody] UsuarioAdminCreateDTO dto)
+        {
+            try
+            {
+                var dtoPadrao = new UsuarioCreateDTO
+                {
+                    Nome = dto.Nome, Sobrenome = dto.Sobrenome, Cpf = dto.Cpf,
+                    Email = dto.Email, Senha = dto.Senha
+                };
+
+                var novoUsuario = await _usuarioService.CreateUsuarioAsync(dtoPadrao, dto.TipoUsuario);
+                return CreatedAtAction(nameof(GetById), new { id = novoUsuario.Id }, novoUsuario);
+            } catch (DomainValidationException ex)
+            {
+                return BadRequest(new { erro = ex.Message });
+            } catch (Exception)
             {
                 return StatusCode(500, new { message = "Ocorreu um erro interno no servidor." });
             }
