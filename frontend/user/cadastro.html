@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro | Glaciar</title>
+    <link rel="stylesheet" href="./css/components/chatbot.css">
+</head>
+<body>
+    <!-- Exemplo da estrutura do seu formulário -->
+    <form id="form-registrar-cliente">
+        <input type="text" id="nome" placeholder="Nome" required>
+        <input type="text" id="sobrenome" placeholder="Sobrenome" required>
+        <input type="text" id="cpf" placeholder="CPF (somente números)" required>
+        <input type="email" id="email" placeholder="E-mail" required>
+        <input type="password" id="senha" placeholder="Senha" required>
+        
+        <!-- O type="submit" é crucial aqui -->
+        <button type="submit" class="btn-primary">Criar Cliente</button>
+    </form>
+
+    <script src="./js/pages/cadastro.js"></script>
+</body>
+</html>
