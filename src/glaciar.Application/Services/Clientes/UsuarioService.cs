@@ -1,5 +1,6 @@
 using glaciar.Application.DTOs.Clientes;
 using glaciar.Domain.Entities.Clientes;
+using glaciar.Domain.Entities.Clientes.Enum;
 using glaciar.Application.Interfaces.Services;
 using glaciar.Domain.Interfaces.Repositories;
 using glaciar.Domain.Exceptions;
@@ -17,19 +18,15 @@ namespace glaciar.Application.Services.Clientes
             _hasher = hasher;
         }
 
-        public async Task<Usuario> CreateUsuarioAsync(UsuarioCreateDTO usuarioCreateDTO)
+        public async Task<Usuario> CreateUsuarioAsync(UsuarioCreateDTO usuarioCreateDTO, TipoUsuario tipoUsuario = TipoUsuario.CLI)
         {
             if (!await IsCpfUniqueAsync(usuarioCreateDTO.Cpf))
-            {
                 throw new DomainValidationException("CPF já cadastrado.");
-            }
 
             if (!await IsEmailUniqueAsync(usuarioCreateDTO.Email))
-            {
                 throw new DomainValidationException("Email já cadastrado.");
-            }
 
-            string senhaHash = _hasher.Hash(usuarioCreateDTO.Senha);
+            string senhaHash = _hasher.Hash(usuarioCreateDTO.Senha); 
 
             var usuario = new Usuario
             {
@@ -38,7 +35,7 @@ namespace glaciar.Application.Services.Clientes
                 Cpf = usuarioCreateDTO.Cpf,
                 Email = usuarioCreateDTO.Email,
                 SenhaHash = senhaHash,
-                TipoUsuario = Domain.Entities.Clientes.Enum.TipoUsuario.CLI
+                TipoUsuario = tipoUsuario
             };
 
             await _usuarioRepository.AddAsync(usuario);
