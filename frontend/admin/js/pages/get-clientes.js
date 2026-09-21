@@ -92,7 +92,7 @@ async function inativarCliente(id) {
         // Implementar a chamada PUT/DELETE para a rota de inativação
         console.log(`Disparando inativação para o ID: ${id}`);
         // Exemplo: await fetch(`https://localhost:5205/api/conta/${id}/inativar`, { method: 'PUT' });
-        // carregarClientes(); // Recarrega a lista após o sucesso
+        carregarClientes(); // Recarrega a lista após o sucesso
     }
 }
 
