@@ -81,7 +81,7 @@ namespace glaciar.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllUsuarios()
         {
-            var usuarios = await _usuarioService.GetUsuariosAsync();
+            IEnumerable<UsuarioResponseDTO> usuarios = await _usuarioService.GetUsuariosAsync();
             return Ok(usuarios);
         }
         

@@ -29,9 +29,9 @@
                 </div>
 
                 <section class="admin-section">
-                    <div class="search-bar-container">
+                    <div class="search-bar-container" id="input-busca-cliente">
                         <input type="text" id="input-busca" class="admin-search-input" placeholder="Buscar cliente por nome, CPF ou e-mail...">
-                        <button class="btn btn-secondary" onclick="carregarClientes()">Buscar</button>
+                        <button class="btn btn-secondary" id="input-busca-cliente" onclick="carregarClientes()">Buscar</button>
                         <button class="btn btn-primary" id="btn-novo-cliente">+ Criar Cliente</button>
                     </div>
 
@@ -136,5 +136,6 @@
     
     <script src="./js/components/layout.js"></script>
     <script src="./js/pages/create-client.js"></script>
+    <script src="./js/pages/get-clientes.js"></script>
 </body>
 </html>

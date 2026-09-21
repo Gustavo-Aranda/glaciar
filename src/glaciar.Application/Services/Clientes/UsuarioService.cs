@@ -4,6 +4,7 @@ using glaciar.Domain.Entities.Clientes.Enum;
 using glaciar.Application.Interfaces.Services;
 using glaciar.Domain.Interfaces.Repositories;
 using glaciar.Domain.Exceptions;
+using AutoMapper;
 
 namespace glaciar.Application.Services.Clientes
 {
@@ -11,11 +12,13 @@ namespace glaciar.Application.Services.Clientes
     {
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IPasswordHasher _hasher;
+        private readonly IMapper _mapper;
 
-        public UsuarioService(IUsuarioRepository usuarioRepository, IPasswordHasher hasher)
+        public UsuarioService(IUsuarioRepository usuarioRepository, IPasswordHasher hasher, IMapper mapper)
         {
             _usuarioRepository = usuarioRepository;
             _hasher = hasher;
+            _mapper = mapper;
         }
 
         public async Task<Usuario> CreateUsuarioAsync(UsuarioCreateDTO dto, TipoUsuario tipoUsuario = TipoUsuario.CLI)
@@ -42,20 +45,20 @@ namespace glaciar.Application.Services.Clientes
             return usuario;
         }
 
-        public async Task<IEnumerable<Usuario>> GetUsuariosAsync()
+        public async Task<IEnumerable<UsuarioResponseDTO>> GetUsuariosAsync()
         {
             var usuarios = await _usuarioRepository.GetAllAsync();
-            return usuarios;
+            
+            return _mapper.Map<IEnumerable<UsuarioResponseDTO>>(usuarios);
         }
 
-        public async Task<Usuario> GetUsuarioAsync(int id)
+        public async Task<UsuarioResponseDTO> GetUsuarioAsync(int id)
         {
             var usuario = await _usuarioRepository.GetByIdAsync(id);
             if (usuario == null)
-            {
                 throw new DomainValidationException("Usuário não encontrado no sistema.");
-            }
-            return usuario;
+
+            return _mapper.Map<UsuarioResponseDTO>(usuario);
         }
 
         private async Task<bool> IsCpfUniqueAsync(string cpf)

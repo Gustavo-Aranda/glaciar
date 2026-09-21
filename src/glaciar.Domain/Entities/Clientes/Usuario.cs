@@ -31,8 +31,10 @@ namespace glaciar.Domain.Entities.Clientes
         public string SenhaHash { get; set; } = null!;
 
         [Required]
-        [MaxLength(3)]
         public TipoUsuario TipoUsuario { get; set; }
+
+        public bool Ativo { get; set; } = true;
+        public DateTime DataCadastro { get; set; } = DateTime.UtcNow;
 
         public ICollection<UsuarioCartao> CartoesVinculados { get; set; } = new List<UsuarioCartao>();
         public ICollection<UsuarioEndereco> EnderecosVinculados { get; set; } = new List<UsuarioEndereco>();
