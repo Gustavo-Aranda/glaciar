@@ -22,6 +22,8 @@ builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<UsuarioService>();
 builder.Services.AddScoped<IEnderecoRepository, EnderecoRepository>();
 builder.Services.AddScoped<IUsuarioEnderecoRepository, UsuarioEnderecoRepository>();
+builder.Services.AddAutoMapper(config =>
+    config.AddMaps(typeof(glaciar.Application.Mappings.UsuarioProfile).Assembly));
 
 // ==========================================
 // CONFIGURAÇÃO DE CORS (LIBERAR FRONTEND)
