@@ -17,14 +17,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // ==========================================
 // INJEÇÃO DE DEPENDÊNCIAS
 // ==========================================
-// Infrastructure -> Domain:
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
-
-// Application -> Infrastructure: Injetando o Hasher
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>(); 
-
-// API -> Application: Injetando o Serviço
 builder.Services.AddScoped<UsuarioService>();
+builder.Services.AddScoped<IEnderecoRepository, EnderecoRepository>();
+builder.Services.AddScoped<IUsuarioEnderecoRepository, UsuarioEnderecoRepository>();
 
 // ==========================================
 // CONFIGURAÇÃO DE CORS (LIBERAR FRONTEND)

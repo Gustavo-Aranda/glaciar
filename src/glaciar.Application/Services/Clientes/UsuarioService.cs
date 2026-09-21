@@ -18,27 +18,43 @@ namespace glaciar.Application.Services.Clientes
             _hasher = hasher;
         }
 
-        public async Task<Usuario> CreateUsuarioAsync(UsuarioCreateDTO usuarioCreateDTO, TipoUsuario tipoUsuario = TipoUsuario.CLI)
+        public async Task<Usuario> CreateUsuarioAsync(UsuarioCreateDTO dto, TipoUsuario tipoUsuario = TipoUsuario.CLI)
         {
-            if (!await IsCpfUniqueAsync(usuarioCreateDTO.Cpf))
+            if (!await IsCpfUniqueAsync(dto.Cpf))
                 throw new DomainValidationException("CPF já cadastrado.");
 
-            if (!await IsEmailUniqueAsync(usuarioCreateDTO.Email))
+            if (!await IsEmailUniqueAsync(dto.Email))
                 throw new DomainValidationException("Email já cadastrado.");
 
-            string senhaHash = _hasher.Hash(usuarioCreateDTO.Senha); 
+            string senhaHash = _hasher.Hash(dto.Senha); 
 
             var usuario = new Usuario
             {
-                Nome = usuarioCreateDTO.Nome,
-                Sobrenome = usuarioCreateDTO.Sobrenome,
-                Cpf = usuarioCreateDTO.Cpf,
-                Email = usuarioCreateDTO.Email,
+                Nome = dto.Nome,
+                Sobrenome = dto.Sobrenome,
+                Cpf = dto.Cpf,
+                Email = dto.Email,
                 SenhaHash = senhaHash,
                 TipoUsuario = tipoUsuario
             };
 
             await _usuarioRepository.AddAsync(usuario);
+            return usuario;
+        }
+
+        public async Task<IEnumerable<Usuario>> GetUsuariosAsync()
+        {
+            var usuarios = await _usuarioRepository.GetAllAsync();
+            return usuarios;
+        }
+
+        public async Task<Usuario> GetUsuarioAsync(int id)
+        {
+            var usuario = await _usuarioRepository.GetByIdAsync(id);
+            if (usuario == null)
+            {
+                throw new DomainValidationException("Usuário não encontrado no sistema.");
+            }
             return usuario;
         }
 

@@ -65,10 +65,24 @@ namespace glaciar.API.Controllers
         }
         */
         [HttpGet("{id}")]
-        public IActionResult GetById(int id) //TODO
+        public async Task<IActionResult> GetById(int id)
         {
-            // Implement get by id logic here
-            return Ok();
+            try
+            {
+                var usuario = await _usuarioService.GetUsuarioAsync(id);
+                return Ok(usuario);
+            }
+            catch (DomainValidationException ex)
+            {
+                return NotFound(new { erro = ex.Message }); 
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllUsuarios()
+        {
+            var usuarios = await _usuarioService.GetUsuariosAsync();
+            return Ok(usuarios);
         }
         
     }
