@@ -1,4 +1,4 @@
-describe('Cadastro de cliente', () => {
+describe('Cadastrar Cliente (C)', () => {
   beforeEach(() => {
     cy.visit('cadastro.html')
   })

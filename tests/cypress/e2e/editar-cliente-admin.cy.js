@@ -1,4 +1,4 @@
-describe('Edicao de cliente pelo administrador', () => {
+describe('Alterar Cliente (A)', () => {
   const cliente = {
     id: 42,
     nome: 'Maria',
@@ -23,7 +23,7 @@ describe('Edicao de cliente pelo administrador', () => {
     cy.get('#modal-editar-cliente').should('be.visible')
   })
 
-  it('atualiza os dados do cliente pelo modal de edicao', () => {
+  it('altera os dados cadastrais do cliente', () => {
     cy.intercept('PUT', 'http://localhost:5205/api/conta/42', {
       statusCode: 200,
       body: { ...cliente, nome: 'Mariana', email: 'mariana@example.com' }
@@ -31,6 +31,7 @@ describe('Edicao de cliente pelo administrador', () => {
 
     cy.get('#editar-nome').clear().type('Mariana')
     cy.get('#editar-email').clear().type('mariana@example.com')
+    cy.get('#editar-telefone').clear().type('11876543210')
     cy.get('#form-editar-cliente').submit()
 
     cy.wait('@editarCliente').its('request.body').should('deep.include', {
@@ -38,7 +39,7 @@ describe('Edicao de cliente pelo administrador', () => {
       sobrenome: 'Silva',
       cpf: '52998224725',
       email: 'mariana@example.com',
-      telefone: '11987654321',
+      telefone: '11876543210',
       tipoUsuario: 0
     })
     cy.get('#modal-resultado').should('be.visible')

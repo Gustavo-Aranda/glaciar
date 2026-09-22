@@ -1,4 +1,4 @@
-describe('Edicao do proprio perfil do cliente', () => {
+describe('Alterar Cliente (C)', () => {
   const cliente = {
     id: 42,
     nome: 'Maria',
@@ -20,21 +20,35 @@ describe('Edicao do proprio perfil do cliente', () => {
     })
   })
 
-  it('altera os dados pessoais do proprio cliente', () => {
+  it('altera os dados cadastrais do cliente', () => {
     cy.get('#nome').clear().type('Mariana')
     cy.get('#email').clear().type('mariana@example.com')
+    cy.get('#telefone').clear().type('11876543210')
     cy.get('#form-editar-perfil').submit()
 
     cy.wait('@atualizarPerfil').its('request.body').should('deep.equal', {
       nome: 'Mariana',
       sobrenome: 'Silva',
       email: 'mariana@example.com',
-      telefone: '11987654321',
+      telefone: '11876543210',
       senha: ''
     })
     cy.get('#mensagem-editar-perfil')
       .should('be.visible')
       .and('contain', 'Dados atualizados com sucesso.')
+  })
+
+  it('Alteração apenas da senha (C)', () => {
+    cy.get('#senha').type('NovaSenha123!')
+    cy.get('#form-editar-perfil').submit()
+
+    cy.wait('@atualizarPerfil').its('request.body').should('deep.equal', {
+      nome: 'Maria',
+      sobrenome: 'Silva',
+      email: 'maria@example.com',
+      telefone: '11987654321',
+      senha: 'NovaSenha123!'
+    })
   })
 
   it('exibe erro ao tentar salvar sem preencher os dados obrigatorios', () => {
