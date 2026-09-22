@@ -1,5 +1,7 @@
+let dadosOriginaisPerfil = null;
+
 document.addEventListener('DOMContentLoaded', async () => {
-    const id = obterIdUsuario();
+    const id = obterIdUsuarioAtual();
     const form = document.getElementById('form-editar-perfil');
 
     if (!id || !form) {
@@ -10,15 +12,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cancelar = document.getElementById('btn-cancelar-perfil');
     if (cancelar) cancelar.href = `conta.html?id=${encodeURIComponent(id)}`;
 
-    try {
+    const usuarioEmCache = obterUsuarioEmCache(id);
+    if (usuarioEmCache) {
+        preencherFormulario(usuarioEmCache);
+        dadosOriginaisPerfil = criarSnapshotPerfil(usuarioEmCache);
+    } else {
+        mostrarLoadingUsuario('Carregando seus dados...');
+        try {
         const response = await fetch(`http://localhost:5205/api/conta/${id}`);
         if (!response.ok) throw new Error('Não foi possível carregar o perfil.');
 
-        preencherFormulario(await response.json());
-    } catch (error) {
+            const usuario = await response.json();
+            preencherFormulario(usuario);
+            dadosOriginaisPerfil = criarSnapshotPerfil(usuario);
+            salvarUsuarioEmCache(usuario);
+        } catch (error) {
         console.error('Erro ao carregar perfil:', error);
         mostrarMensagem('Não foi possível carregar seus dados.', 'erro');
-        return;
+            return;
+        } finally {
+            esconderLoadingUsuario();
+        }
     }
 
     form.addEventListener('submit', async event => {
@@ -36,7 +50,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
+        if (JSON.stringify(dados) === JSON.stringify(dadosOriginaisPerfil)) {
+            window.location.href = `conta.html?id=${encodeURIComponent(id)}`;
+            return;
+        }
+
         definirEstadoEnvio(true);
+        mostrarLoadingUsuario('Salvando alterações...');
 
         try {
             const response = await fetch(`http://localhost:5205/api/conta/${id}/perfil`, {
@@ -51,7 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             const usuarioAtualizado = await response.json();
-            sessionStorage.setItem('usuarioLogado', JSON.stringify(usuarioAtualizado));
+            salvarUsuarioEmCache(usuarioAtualizado);
             mostrarMensagem('Dados atualizados com sucesso.', 'sucesso');
             setTimeout(() => { window.location.href = `conta.html?id=${encodeURIComponent(id)}`; }, 700);
         } catch (error) {
@@ -59,19 +79,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             mostrarMensagem('Não foi possível conectar ao servidor.', 'erro');
         } finally {
             definirEstadoEnvio(false);
+            esconderLoadingUsuario();
         }
     });
 });
-
-function obterIdUsuario() {
-    const id = Number.parseInt(new URLSearchParams(window.location.search).get('id'), 10);
-    return Number.isInteger(id) && id > 0 ? id : null;
-}
 
 function preencherFormulario(usuario) {
     document.getElementById('nome').value = usuario.nome || '';
     document.getElementById('sobrenome').value = usuario.sobrenome || '';
     document.getElementById('email').value = usuario.email || '';
+}
+
+function criarSnapshotPerfil(usuario) {
+    return {
+        nome: capitalizarNome(usuario.nome),
+        sobrenome: capitalizarNome(usuario.sobrenome),
+        email: String(usuario.email || '').trim().toLowerCase(),
+        senha: ''
+    };
 }
 
 function obterValor(id, preservarEspacos = false) {

@@ -79,7 +79,7 @@ namespace glaciar.Application.Services.Clientes
             return _mapper.Map<UsuarioResponseDTO>(usuario);
         }
 
-        public async Task<UsuarioResponseDTO> AtualizarUsuarioAsync(int id, UsuarioUpdateDTO dto)
+        public async Task<UsuarioResponseDTO> AtualizarUsuarioAsync(int id, UsuarioAdminUpdateDTO dto)
         {
             var usuario = await ObterUsuarioAsync(id);
 
@@ -90,6 +90,34 @@ namespace glaciar.Application.Services.Clientes
 
             await ValidarDadosCadastraisAsync(cpf, email, id);
             AtualizarDadosUsuario(usuario, dto, cpf, email);
+
+            await _usuarioRepository.UpdateAsync(usuario);
+            return _mapper.Map<UsuarioResponseDTO>(usuario);
+        }
+
+        public async Task<UsuarioResponseDTO> AtualizarPerfilAsync(int id, UsuarioPerfilUpdateDTO dto)
+        {
+            var usuario = await ObterUsuarioAsync(id);
+            var email = NormalizarEmail(dto.Email);
+
+            ValidarDadosObrigatorios(
+                dto.Nome,
+                dto.Sobrenome,
+                email,
+                dto.Senha,
+                usuario.TipoUsuario,
+                senhaObrigatoria: false);
+
+            var usuarioEmail = await _usuarioRepository.GetByEmailAsync(email);
+            if (usuarioEmail != null && usuarioEmail.Id != id)
+                throw new DomainValidationException("Email já cadastrado.");
+
+            usuario.Nome = CapitalizarNome(dto.Nome);
+            usuario.Sobrenome = CapitalizarNome(dto.Sobrenome);
+            usuario.Email = email;
+
+            if (!string.IsNullOrWhiteSpace(dto.Senha))
+                usuario.SenhaHash = _hasher.Hash(dto.Senha);
 
             await _usuarioRepository.UpdateAsync(usuario);
             return _mapper.Map<UsuarioResponseDTO>(usuario);
@@ -162,7 +190,7 @@ namespace glaciar.Application.Services.Clientes
                 throw new DomainValidationException("Tipo de usuário inválido.");
         }
 
-        private void AtualizarDadosUsuario(Usuario usuario, UsuarioUpdateDTO dto, string cpf, string email)
+        private void AtualizarDadosUsuario(Usuario usuario, UsuarioAdminUpdateDTO dto, string cpf, string email)
         {
             usuario.Nome = CapitalizarNome(dto.Nome);
             usuario.Sobrenome = CapitalizarNome(dto.Sobrenome);

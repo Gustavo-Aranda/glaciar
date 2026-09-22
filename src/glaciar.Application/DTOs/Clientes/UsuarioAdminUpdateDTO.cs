@@ -2,7 +2,7 @@ using glaciar.Domain.Entities.Clientes.Enum;
 
 namespace glaciar.Application.DTOs.Clientes
 {
-    public class UsuarioUpdateDTO
+    public class UsuarioAdminUpdateDTO
     {
         public string Nome { get; set; } = string.Empty;
         public string Sobrenome { get; set; } = string.Empty;

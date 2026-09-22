@@ -4,6 +4,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (navbarPlaceholder) {
         fetch("./components/navbar.html")
             .then(response => response.text())
-            .then(html => navbarPlaceholder.innerHTML = html);
+            .then(html => {
+                navbarPlaceholder.innerHTML = html;
+                if (typeof atualizarLinksConta === 'function') atualizarLinksConta();
+            });
     }
 });

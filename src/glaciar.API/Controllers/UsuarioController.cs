@@ -95,11 +95,25 @@ namespace glaciar.API.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> AtualizarUsuario(int id, [FromBody] UsuarioUpdateDTO dto)
+        public async Task<IActionResult> AtualizarUsuario(int id, [FromBody] UsuarioAdminUpdateDTO dto)
         {
             try
             {
                 var usuario = await _usuarioService.AtualizarUsuarioAsync(id, dto);
+                return Ok(usuario);
+            }
+            catch (DomainValidationException ex)
+            {
+                return BadRequest(new { erro = ex.Message });
+            }
+        }
+
+        [HttpPut("{id}/perfil")]
+        public async Task<IActionResult> AtualizarPerfil(int id, [FromBody] UsuarioPerfilUpdateDTO dto)
+        {
+            try
+            {
+                var usuario = await _usuarioService.AtualizarPerfilAsync(id, dto);
                 return Ok(usuario);
             }
             catch (DomainValidationException ex)

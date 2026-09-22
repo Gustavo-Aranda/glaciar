@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             const usuario = await resposta.json();
-            sessionStorage.setItem("usuarioLogado", JSON.stringify(usuario));
+            salvarUsuarioEmCache(usuario);
 
             const tipoUsuario = usuario.tipoUsuario;
             window.location.href = tipoUsuario === 1 || tipoUsuario === "ADM"
