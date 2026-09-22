@@ -27,6 +27,7 @@ namespace glaciar.Application.Services.Enderecos
         // ==========================================
         public async Task<Endereco> CreateEnderecoAsync(EnderecoCreateDTO dto)
         {
+            ValidarDadosEndereco(dto.Cep, dto.Logradouro, dto.Numero, dto.Bairro, dto.Cidade, dto.Apelido);
             await ValidarSeClienteExisteAsync(dto.UsuarioId);
 
             var enderecoFisico = await ObterOuRegistrarEnderecoFisicoAsync(dto);
@@ -56,6 +57,7 @@ namespace glaciar.Application.Services.Enderecos
         // ==========================================
         public async Task UpdateEnderecoAsync(EnderecoUpdateDTO dto)
         {
+            ValidarDadosEndereco(dto.Cep, dto.Logradouro, dto.Numero, dto.Bairro, dto.Cidade, dto.Apelido);
             var vinculo = await ObterVinculoValidadoAsync(dto.UsuarioEnderecoId);
 
             await AtualizarRegraDeEnderecoPadraoAsync(vinculo, dto.Padrao);
@@ -94,6 +96,33 @@ namespace glaciar.Application.Services.Enderecos
             var cliente = await _usuarioRepository.GetByIdAsync(usuarioId);
             if (cliente == null)
                 throw new DomainValidationException("O cliente informado não existe no sistema.");
+        }
+
+        private static void ValidarDadosEndereco(
+            string cep,
+            string logradouro,
+            string numero,
+            string bairro,
+            string cidade,
+            string apelido)
+        {
+            if (string.IsNullOrWhiteSpace(cep) || cep.Replace("-", string.Empty).Length != 8)
+                throw new DomainValidationException("O CEP informado é inválido.");
+
+            if (string.IsNullOrWhiteSpace(logradouro))
+                throw new DomainValidationException("O logradouro é obrigatório.");
+
+            if (string.IsNullOrWhiteSpace(numero))
+                throw new DomainValidationException("O número do endereço é obrigatório.");
+
+            if (string.IsNullOrWhiteSpace(bairro))
+                throw new DomainValidationException("O bairro é obrigatório.");
+
+            if (string.IsNullOrWhiteSpace(cidade))
+                throw new DomainValidationException("A cidade é obrigatória.");
+
+            if (string.IsNullOrWhiteSpace(apelido))
+                throw new DomainValidationException("O apelido do endereço é obrigatório.");
         }
 
         private async Task<Endereco> ObterOuRegistrarEnderecoFisicoAsync(EnderecoCreateDTO dto)
