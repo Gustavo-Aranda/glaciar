@@ -32,7 +32,7 @@ namespace glaciar.Infrastructure.Migrations
                 table: "Usuarios",
                 type: "boolean",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: true);
 
             migrationBuilder.AddColumn<DateTime>(
                 name: "DataCadastro",
