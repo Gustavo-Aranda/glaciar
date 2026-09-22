@@ -29,9 +29,9 @@
                 </div>
 
                 <section class="admin-section">
-                    <div class="search-bar-container" id="input-busca-cliente">
-                        <input type="text" id="input-busca" class="admin-search-input" placeholder="Buscar cliente por nome, CPF ou e-mail...">
-                        <button class="btn btn-secondary" id="input-busca-cliente" onclick="carregarClientes()">Buscar</button>
+                    <div class="search-bar-container">
+                        <input type="text" id="input-busca-cliente" class="admin-search-input" placeholder="Buscar cliente por nome, CPF ou e-mail...">
+                        <button class="btn btn-secondary" onclick="filtrarClientes()">Buscar</button>
                         <button class="btn btn-primary" id="btn-novo-cliente">+ Criar Cliente</button>
                     </div>
 
@@ -80,49 +80,11 @@
                 <div class="form-row">
                     <div class="input-group">
                         <label>CPF *</label>
-                        <input type="text" id="cpf" placeholder="000.000.000-00" required>
+                        <input type="text" id="cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" required>
                     </div>
                     <div class="input-group">
                         <label>E-mail *</label>
                         <input type="email" id="email" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Telefone *</label>
-                        <input type="text" id="telefone" placeholder="(00) 00000-0000" required>
-                    </div>
-                </div>
-
-                <h4 class="form-subtitle">Endereço de Entrega Base</h4>
-
-                <div class="form-row">
-                    <div class="input-group">
-                        <label>CEP *</label>
-                        <input type="text" id="cep" placeholder="00000-000" required>
-                    </div>
-                    <div class="input-group" style="flex: 2;">
-                        <label>Logradouro *</label>
-                        <input type="text" id="logradouro" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Número *</label>
-                        <input type="text" id="numero" required>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="input-group">
-                        <label>Complemento</label>
-                        <input type="text" id="complemento">
-                    </div>
-                    <div class="input-group">
-                        <label>Cidade *</label>
-                        <input type="text" id="cidade" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Estado *</label>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <input type="text" id="estado" placeholder="UF" style="width: 60px;" required>
-                        </div>
                     </div>
                 </div>
 
@@ -133,9 +95,74 @@
             </form>
         </div>
     </div>
+
+    <div id="modal-editar-cliente" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Editar Cliente</h3>
+                <button class="btn-close-modal" id="btn-close-edit-modal" type="button">&times;</button>
+            </div>
+
+            <form class="admin-form" id="form-editar-cliente">
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="editar-tipoUsuario">Tipo de Conta *</label>
+                        <select id="editar-tipoUsuario" required>
+                            <option value="0">Cliente Comum (CLI)</option>
+                            <option value="1">Administrador (ADM)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="editar-senha">Nova Senha</label>
+                        <input type="password" id="editar-senha" placeholder="Deixe vazio para manter a atual">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="editar-nome">Nome *</label>
+                        <input type="text" id="editar-nome" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="editar-sobrenome">Sobrenome *</label>
+                        <input type="text" id="editar-sobrenome" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="editar-cpf">CPF *</label>
+                        <input type="text" id="editar-cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="editar-email">E-mail *</label>
+                        <input type="email" id="editar-email" required>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="btn-cancelar-edit-modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Atualizar Cliente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="notificacoes-container" class="notificacoes-container" aria-live="polite"></div>
+
+    <div id="modal-resultado" class="modal-overlay hidden">
+        <div class="resultado-modal" role="dialog" aria-modal="true" aria-labelledby="resultado-titulo">
+            <div class="resultado-icone" aria-hidden="true"></div>
+            <h3 class="resultado-titulo" id="resultado-titulo"></h3>
+            <p class="resultado-mensagem"></p>
+            <button type="button" class="btn btn-primary" id="btn-fechar-resultado">Continuar</button>
+        </div>
+    </div>
     
     <script src="./js/components/layout.js"></script>
+    <script src="./js/components/notifications.js"></script>
     <script src="./js/pages/create-client.js"></script>
     <script src="./js/pages/get-clientes.js"></script>
+    <script src="./js/pages/update-client.js"></script>
 </body>
 </html>

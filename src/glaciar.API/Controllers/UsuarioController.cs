@@ -84,6 +84,48 @@ namespace glaciar.API.Controllers
             IEnumerable<UsuarioResponseDTO> usuarios = await _usuarioService.GetUsuariosAsync();
             return Ok(usuarios);
         }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> AtualizarUsuario(int id, [FromBody] UsuarioUpdateDTO dto)
+        {
+            try
+            {
+                var usuario = await _usuarioService.AtualizarUsuarioAsync(id, dto);
+                return Ok(usuario);
+            }
+            catch (DomainValidationException ex)
+            {
+                return BadRequest(new { erro = ex.Message });
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> ExcluirUsuario(int id)
+        {
+            try
+            {
+                await _usuarioService.ExcluirUsuarioAsync(id);
+                return NoContent();
+            }
+            catch (DomainValidationException ex)
+            {
+                return NotFound(new { erro = ex.Message });
+            }
+        }
+
+        [HttpPatch("{id}/status")]
+        public async Task<IActionResult> AlterarStatus(int id, [FromBody] UsuarioStatusDTO dto)
+        {
+            try
+            {
+                var usuario = await _usuarioService.AlterarStatusUsuarioAsync(id, dto.Ativo);
+                return Ok(usuario);
+            }
+            catch (DomainValidationException ex)
+            {
+                return NotFound(new { erro = ex.Message });
+            }
+        }
         
     }
 }
