@@ -133,6 +133,47 @@
     color: #fff;
 }
 
+.modal-inativar {
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.modal-inativar.hidden {
+    display: none;
+}
+
+.modal-inativar-conteudo {
+    width: min(420px, 100%);
+    padding: 2rem;
+    border-radius: 8px;
+    background: var(--branco);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+
+.modal-inativar-conteudo h3 {
+    margin-bottom: 1rem;
+    color: #e74c3c;
+}
+
+.modal-inativar-conteudo p {
+    margin-bottom: 1.5rem;
+    color: #555;
+    line-height: 1.5;
+}
+
+.modal-inativar-acoes {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
 .mensagem-editar-perfil {
     min-height: 1.25rem;
     margin-top: 1rem;

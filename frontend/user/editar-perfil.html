@@ -55,9 +55,20 @@
         <section class="danger-zone">
             <h3>Área de Perigo</h3>
             <p>Ao inativar sua conta, você perderá acesso ao histórico de pedidos e cupons ativos. Essa ação poderá ser revertida futuramente entrando em contato com o suporte.</p>
-            <button class="btn-outline-danger">Inativar minha conta</button>
+            <button type="button" class="btn-outline-danger" id="btn-inativar-conta">Inativar minha conta</button>
         </section>
     </main>
+
+    <div id="modal-inativar-conta" class="modal-inativar hidden" role="dialog" aria-modal="true" aria-labelledby="titulo-inativar-conta">
+        <div class="modal-inativar-conteudo">
+            <h3 id="titulo-inativar-conta">Inativar minha conta</h3>
+            <p>Tem certeza que deseja inativar sua conta? Você perderá o acesso até que ela seja reativada.</p>
+            <div class="modal-inativar-acoes">
+                <button type="button" class="btn-text" id="btn-cancelar-inativacao">Cancelar</button>
+                <button type="button" class="btn-outline-danger" id="btn-confirmar-inativacao">Inativar conta</button>
+            </div>
+        </div>
+    </div>
 
     <div id="loading-usuario" class="loading-usuario hidden" role="status" aria-live="polite" aria-busy="true">
         <div class="loading-usuario-conteudo">

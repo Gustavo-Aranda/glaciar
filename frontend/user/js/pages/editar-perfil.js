@@ -12,6 +12,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cancelar = document.getElementById('btn-cancelar-perfil');
     if (cancelar) cancelar.href = `conta.html?id=${encodeURIComponent(id)}`;
 
+    const modalInativacao = document.getElementById('modal-inativar-conta');
+    document.getElementById('btn-inativar-conta')?.addEventListener('click', () => {
+        modalInativacao?.classList.remove('hidden');
+    });
+    document.getElementById('btn-cancelar-inativacao')?.addEventListener('click', fecharModalInativacao);
+    document.getElementById('btn-confirmar-inativacao')?.addEventListener('click', () => inativarConta(id));
+    modalInativacao?.addEventListener('click', event => {
+        if (event.target === modalInativacao) fecharModalInativacao();
+    });
+
     const usuarioEmCache = obterUsuarioEmCache(id);
     if (usuarioEmCache) {
         preencherFormulario(usuarioEmCache);
@@ -130,4 +140,34 @@ function definirEstadoEnvio(enviando) {
 async function obterMensagemErro(response) {
     const dados = await response.json().catch(() => null);
     return dados?.erro || dados?.detail || dados?.title || 'Não foi possível atualizar o perfil.';
+}
+
+function fecharModalInativacao() {
+    document.getElementById('modal-inativar-conta')?.classList.add('hidden');
+}
+
+async function inativarConta(id) {
+    fecharModalInativacao();
+    mostrarLoadingUsuario('Inativando sua conta...');
+
+    try {
+        const response = await fetch(`http://localhost:5205/api/conta/${id}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ativo: false })
+        });
+
+        if (!response.ok) {
+            mostrarMensagem(await obterMensagemErro(response), 'erro');
+            return;
+        }
+
+        limparUsuarioEmCache();
+        window.location.href = 'login.html';
+    } catch (error) {
+        console.error('Erro ao inativar conta:', error);
+        mostrarMensagem('Não foi possível conectar ao servidor.', 'erro');
+    } finally {
+        esconderLoadingUsuario();
+    }
 }
