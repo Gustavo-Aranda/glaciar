@@ -132,3 +132,19 @@
     background-color: #e74c3c;
     color: #fff;
 }
+
+.mensagem-editar-perfil {
+    min-height: 1.25rem;
+    margin-top: 1rem;
+    color: #b45309;
+    font-size: 0.9rem;
+}
+
+.mensagem-editar-perfil.sucesso {
+    color: #2e8b57;
+}
+
+.btn-black:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}

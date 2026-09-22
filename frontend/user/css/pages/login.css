@@ -113,6 +113,22 @@
     background-color: #333;
 }
 
+.btn-login-black:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}
+
+.mensagem-login {
+    display: none;
+    margin: -0.75rem 0 1.25rem;
+    color: #b45309;
+    font-size: 0.9rem;
+}
+
+.mensagem-login.visivel {
+    display: block;
+}
+
 /* Área de Criar Conta */
 .create-account-prompt p {
     font-size: 1rem;

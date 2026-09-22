@@ -8,9 +8,6 @@
     <link rel="stylesheet" href="./css/pages/login.css">
 </head>
 <body>
-
-    <div id="navbar-placeholder"></div>
-
     <main class="login-page">
         <div class="login-container">
             
@@ -21,22 +18,23 @@
                 <form id="loginForm" class="login-form">
                     <div class="input-group">
                         <label for="email">E-mail *</label>
-                        <input type="email" id="email" value="ze.silva@gmail.com" class="autofill-simulated" required>
+                        <input type="email" id="email" autocomplete="email" required>
                     </div>
                     
                     <div class="input-group">
                         <label for="password">Senha *</label>
                         <div class="password-wrapper">
-                            <input type="password" id="password" value="••••••••••" class="autofill-simulated" required>
+                            <input type="password" id="password" autocomplete="current-password" required>
                             <button type="button" class="btn-toggle-pass" aria-label="Mostrar senha">
-                                <img src="./assets/icons/eye.svg" alt="Visualizar">
+                                <img src="./assets/icons/eye-slash-regular-full.svg" alt="Visualizar">
                             </button>
                         </div>
                     </div>
 
                     <a href="#recuperar" class="forgot-password">Esqueceu a senha?</a>
 
-                    <button type="submit" class="btn-login-black">Entrar</button>
+                    <p id="mensagem-login" class="mensagem-login" role="alert" aria-live="polite"></p>
+                    <button type="submit" class="btn-login-black" id="btn-login">Entrar</button>
                 </form>
 
                 <div class="create-account-prompt">
@@ -57,8 +55,6 @@
         </div>
     </main>
 
-    <script src="./js/components/navbar.js"></script>
-    <script src="./js/components/navbar.js"></script>
     <script src="./js/pages/login.js"></script>
 </body>
 </html>
