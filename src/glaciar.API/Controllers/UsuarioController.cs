@@ -56,14 +56,23 @@ namespace glaciar.API.Controllers
                 return StatusCode(500, new { message = "Ocorreu um erro interno no servidor." });
             }
         }
-        /*
         [HttpPost("login")]
-        public async Task<IActionResult> LoginUsuario([FromBody] UsuarioLoginDTO dto) //TODO
+        public async Task<IActionResult> LoginUsuario([FromBody] UsuarioLoginDTO dto)
         {
-            // Implement login logic here
-            return Ok();
+            try
+            {
+                var usuario = await _usuarioService.LoginAsync(dto);
+                return Ok(usuario);
+            }
+            catch (DomainValidationException ex)
+            {
+                return Unauthorized(new { erro = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Ocorreu um erro interno no servidor." });
+            }
         }
-        */
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {

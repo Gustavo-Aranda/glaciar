@@ -47,6 +47,24 @@ namespace glaciar.Application.Services.Clientes
             return _mapper.Map<UsuarioResponseDTO>(usuario);
         }
 
+        public async Task<UsuarioResponseDTO> LoginAsync(UsuarioLoginDTO dto)
+        {
+            var email = NormalizarEmail(dto.Email);
+            var usuario = await _usuarioRepository.GetByEmailAsync(email);
+
+            if (usuario == null || !_hasher.Verify(dto.Senha, usuario.SenhaHash))
+            {
+                throw new DomainValidationException("E-mail ou senha inválidos.");
+            }
+
+            if (!usuario.Ativo)
+            {
+                throw new DomainValidationException("Esta conta está inativada. Entre em contato com o suporte.");
+            }
+
+            return _mapper.Map<UsuarioResponseDTO>(usuario);
+        }
+
         public async Task<IEnumerable<UsuarioResponseDTO>> GetUsuariosAsync()
         {
             var usuarios = await _usuarioRepository.GetAllAsync();
