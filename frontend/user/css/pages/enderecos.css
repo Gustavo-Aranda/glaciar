@@ -214,6 +214,68 @@
     width: 100%;
 }
 
+.address-delete-modal-content {
+    background: var(--branco);
+    border-radius: 8px;
+    box-shadow: 0 12px 32px rgba(30, 42, 56, 0.25);
+    max-width: 420px;
+    padding: 2rem;
+    text-align: center;
+    width: 100%;
+}
+
+.address-delete-icon {
+    align-items: center;
+    background: var(--laranja-alpinista-fundo);
+    border-radius: 50%;
+    color: var(--laranja-alpinista);
+    display: flex;
+    font-size: 1.7rem;
+    font-weight: 700;
+    height: 3.5rem;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    width: 3.5rem;
+}
+
+.address-delete-modal-content h3 {
+    color: var(--cinza-rocha);
+    margin-bottom: 1rem;
+}
+
+.address-delete-modal-content p,
+.address-delete-modal-content span {
+    color: var(--cinza-rocha-claro);
+    display: block;
+}
+
+.address-delete-modal-content strong {
+    color: var(--cinza-rocha);
+    display: block;
+    margin: 0.5rem 0 0.25rem;
+}
+
+.address-delete-warning {
+    color: var(--laranja-alpinista) !important;
+    font-weight: 600;
+    margin-top: 1.25rem;
+}
+
+.address-remove-confirm-button {
+    background: var(--preto);
+    border: 0;
+    border-radius: 4px;
+    color: var(--branco);
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 700;
+    padding: 0.75rem 1.25rem;
+}
+
+.address-remove-confirm-button:hover {
+    background: var(--preto-hover);
+}
+
 .address-modal-header {
     align-items: flex-start;
     border-bottom: 1px solid var(--borda-cinza);

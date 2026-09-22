@@ -1,6 +1,9 @@
 const ENDERECOS_API = 'http://localhost:5205/api/enderecos';
+const ENDERECOS_CACHE_PREFIX = 'enderecosUsuario:';
 let enderecos = [];
 let enderecoEmEdicao = null;
+let dadosOriginaisEndereco = null;
+let enderecoParaRemoverId = null;
 
 window.addEventListener('DOMContentLoaded', () => {
     const usuarioId = obterIdUsuarioAtual();
@@ -17,12 +20,27 @@ window.addEventListener('DOMContentLoaded', () => {
     });
     document.getElementById('form-endereco')?.addEventListener('submit', salvarEndereco);
     document.getElementById('endereco-cep')?.addEventListener('input', aplicarMascaraCep);
+    document.getElementById('btn-cancelar-remocao')?.addEventListener('click', fecharModalRemocao);
+    document.getElementById('btn-confirmar-remocao')?.addEventListener('click', confirmarRemocaoEndereco);
+    document.getElementById('modal-remover-endereco')?.addEventListener('click', event => {
+        if (event.target.id === 'modal-remover-endereco') fecharModalRemocao();
+    });
 
     carregarEnderecos(usuarioId);
 });
 
-async function carregarEnderecos(usuarioId) {
+async function carregarEnderecos(usuarioId, ignorarCache = false) {
     const lista = document.getElementById('lista-enderecos');
+
+    if (!ignorarCache) {
+        const enderecosEmCache = obterEnderecosEmCache(usuarioId);
+        if (enderecosEmCache) {
+            enderecos = enderecosEmCache;
+            renderizarEnderecos();
+            return;
+        }
+    }
+
     lista.innerHTML = '<p class="addresses-feedback">Carregando endereços...</p>';
 
     try {
@@ -30,6 +48,7 @@ async function carregarEnderecos(usuarioId) {
         if (!resposta.ok) throw new Error('Não foi possível carregar os endereços.');
 
         enderecos = await resposta.json();
+    salvarEnderecosEmCache(usuarioId, enderecos);
         renderizarEnderecos();
     } catch (error) {
         console.error('Erro ao carregar endereços:', error);
@@ -70,7 +89,7 @@ function renderizarEnderecos() {
             </div>
         `;
         card.querySelector('[data-action="editar"]').addEventListener('click', () => abrirModalEndereco(enderecoUsuario));
-        card.querySelector('[data-action="remover"]').addEventListener('click', () => removerEndereco(enderecoUsuario.id || enderecoUsuario.Id));
+        card.querySelector('[data-action="remover"]').addEventListener('click', () => abrirModalRemocao(enderecoUsuario));
         lista.appendChild(card);
     });
 }
@@ -96,6 +115,7 @@ function abrirModalEndereco(enderecoUsuario = null) {
     preencherCampo('endereco-bairro', endereco.bairro || endereco.Bairro || '');
     preencherCampo('endereco-cidade', endereco.cidade || endereco.Cidade || '');
     preencherCampo('endereco-estado', endereco.estado || endereco.Estado || '');
+    dadosOriginaisEndereco = enderecoUsuario ? obterDadosFormulario() : null;
     modal.classList.remove('hidden');
     document.getElementById('endereco-apelido').focus();
 }
@@ -103,6 +123,7 @@ function abrirModalEndereco(enderecoUsuario = null) {
 function fecharModalEndereco() {
     document.getElementById('modal-endereco')?.classList.add('hidden');
     enderecoEmEdicao = null;
+    dadosOriginaisEndereco = null;
 }
 
 async function salvarEndereco(event) {
@@ -113,6 +134,11 @@ async function salvarEndereco(event) {
 
     if (!dados.apelido || !dados.cep || !dados.logradouro || !dados.numero || !dados.bairro || !dados.cidade || !dados.estado) {
         mostrarMensagemEndereco('Preencha todos os campos obrigatórios.');
+        return;
+    }
+
+    if (enderecoEmEdicao && JSON.stringify(dados) === JSON.stringify(dadosOriginaisEndereco)) {
+        fecharModalEndereco();
         return;
     }
 
@@ -138,7 +164,7 @@ async function salvarEndereco(event) {
         }
 
         fecharModalEndereco();
-        await carregarEnderecos(usuarioId);
+        await carregarEnderecos(usuarioId, true);
     } catch (error) {
         mostrarMensagemEndereco(error.message);
     } finally {
@@ -147,13 +173,31 @@ async function salvarEndereco(event) {
     }
 }
 
-async function removerEndereco(id) {
-    if (!window.confirm('Deseja remover este endereço?')) return;
+function abrirModalRemocao(enderecoUsuario) {
+    enderecoParaRemoverId = enderecoUsuario.id || enderecoUsuario.Id;
+    const endereco = enderecoUsuario.endereco || enderecoUsuario.Endereco || {};
+    const apelido = enderecoUsuario.apelido || enderecoUsuario.Apelido || 'Endereço';
+
+    document.getElementById('nome-remover-endereco').textContent = apelido;
+    document.getElementById('detalhes-remover-endereco').textContent = formatarEnderecoTexto(endereco);
+    document.getElementById('modal-remover-endereco').classList.remove('hidden');
+}
+
+function fecharModalRemocao() {
+    enderecoParaRemoverId = null;
+    document.getElementById('modal-remover-endereco')?.classList.add('hidden');
+}
+
+async function confirmarRemocaoEndereco() {
+    if (!enderecoParaRemoverId) return;
+
+    const id = enderecoParaRemoverId;
+    fecharModalRemocao();
 
     try {
         const resposta = await fetch(`${ENDERECOS_API}/${id}`, { method: 'DELETE' });
         if (!resposta.ok) throw new Error('Não foi possível remover o endereço.');
-        await carregarEnderecos(obterIdUsuarioAtual());
+        await carregarEnderecos(obterIdUsuarioAtual(), true);
     } catch (error) {
         document.getElementById('lista-enderecos').insertAdjacentHTML('afterbegin', `<p class="addresses-feedback">${escaparHtml(error.message)}</p>`);
     }
@@ -193,10 +237,14 @@ function formatarCep(cep) {
 }
 
 function formatarEndereco(endereco) {
+    return escaparHtml(formatarEnderecoTexto(endereco));
+}
+
+function formatarEnderecoTexto(endereco) {
     const rua = `${endereco.logradouro || endereco.Logradouro || ''}, ${endereco.numero || endereco.Numero || ''}`;
     const complemento = endereco.complemento || endereco.Complemento;
     const localidade = `${endereco.bairro || endereco.Bairro || ''} - ${endereco.cidade || endereco.Cidade || ''}/${endereco.estado || endereco.Estado || ''}`;
-    return escaparHtml(`${rua}${complemento ? `, ${complemento}` : ''} | ${localidade} | CEP ${formatarCep(endereco.cep || endereco.Cep || '')}`);
+    return `${rua}${complemento ? `, ${complemento}` : ''} | ${localidade} | CEP ${formatarCep(endereco.cep || endereco.Cep || '')}`;
 }
 
 function escaparHtml(valor) {
@@ -211,4 +259,22 @@ function escaparHtml(valor) {
 
 function mostrarMensagemEndereco(mensagem) {
     document.getElementById('mensagem-endereco').textContent = mensagem;
+}
+
+function obterChaveCacheEnderecos(usuarioId) {
+    return `${ENDERECOS_CACHE_PREFIX}${usuarioId}`;
+}
+
+function obterEnderecosEmCache(usuarioId) {
+    try {
+        const cache = sessionStorage.getItem(obterChaveCacheEnderecos(usuarioId));
+        return cache === null ? null : JSON.parse(cache);
+    } catch {
+        sessionStorage.removeItem(obterChaveCacheEnderecos(usuarioId));
+        return null;
+    }
+}
+
+function salvarEnderecosEmCache(usuarioId, dados) {
+    sessionStorage.setItem(obterChaveCacheEnderecos(usuarioId), JSON.stringify(dados));
 }

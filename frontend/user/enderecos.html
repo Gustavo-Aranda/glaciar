@@ -100,6 +100,21 @@
         </div>
     </div>
 
+    <div class="address-modal hidden" id="modal-remover-endereco" role="dialog" aria-modal="true" aria-labelledby="titulo-remover-endereco">
+        <div class="address-delete-modal-content">
+            <div class="address-delete-icon" aria-hidden="true">!</div>
+            <h3 id="titulo-remover-endereco">Remover endereço</h3>
+            <p>Você está prestes a remover permanentemente:</p>
+            <strong id="nome-remover-endereco"></strong>
+            <span id="detalhes-remover-endereco"></span>
+            <p class="address-delete-warning">Essa ação não poderá ser desfeita.</p>
+            <div class="address-modal-actions">
+                <button type="button" class="address-cancel-button" id="btn-cancelar-remocao">Cancelar</button>
+                <button type="button" class="address-remove-confirm-button" id="btn-confirmar-remocao">Remover endereço</button>
+            </div>
+        </div>
+    </div>
+
     <script src="./js/components/usuario-session.js"></script>
     <script src="./js/components/layout.js"></script>
     <script src="./js/components/chatbot.js"></script>
