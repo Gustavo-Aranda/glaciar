@@ -22,5 +22,7 @@ namespace glaciar.Domain.Entities.Clientes
 
         [Required]
         public bool Padrao { get; set; }
+
+        public bool Ativo { get; set; } = true;
     }
 }

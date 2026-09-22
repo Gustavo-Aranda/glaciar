@@ -15,6 +15,14 @@ namespace glaciar.Domain.Entities.Clientes
         [Required]
         public BandeiraCartao Bandeira { get; set; }
 
+        [Required]
+        [Range(1, 12)]
+        public int MesValidade { get; set; }
+
+        [Required]
+        [Range(2000, 9999)]
+        public int AnoValidade { get; set; }
+
         public ICollection<UsuarioCartao> UsuariosVinculados { get; set; } = new List<UsuarioCartao>();
     }
 }

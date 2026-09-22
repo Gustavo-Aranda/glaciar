@@ -84,6 +84,22 @@ namespace glaciar.Infrastructure.Data
                 .Property(u => u.TipoUsuario)
                 .HasConversion<string>();
 
+            modelBuilder.Entity<Cartao>()
+                .HasMany(c => c.UsuariosVinculados)
+                .WithOne(uc => uc.Cartao)
+                .HasForeignKey(uc => uc.CartaoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Usuario>()
+                .HasMany(u => u.CartoesVinculados)
+                .WithOne(uc => uc.Usuario)
+                .HasForeignKey(uc => uc.UsuarioId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UsuarioCartao>()
+                .HasIndex(uc => new { uc.UsuarioId, uc.CartaoId })
+                .IsUnique();
+
         }
     }
 }
