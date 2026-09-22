@@ -35,7 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
             sobrenome: capitalizarNomeEdicao(obterValorEdicao('editar-sobrenome')),
             cpf: obterValorEdicao('editar-cpf').replace(/\D/g, ''),
             email: obterValorEdicao('editar-email').toLowerCase(),
-            senha: obterValorEdicao('editar-senha', false),
             tipoUsuario: Number.parseInt(obterValorEdicao('editar-tipoUsuario', false), 10)
         };
 
@@ -90,7 +89,6 @@ function abrirEdicaoCliente(id) {
     document.getElementById('editar-cpf').value = formatarCPFEdicao(cliente.cpf);
     document.getElementById('editar-email').value = cliente.email || '';
     document.getElementById('editar-tipoUsuario').value = String(cliente.tipoUsuario);
-    document.getElementById('editar-senha').value = '';
     dadosOriginaisCliente = {
         nome: capitalizarNomeEdicao(cliente.nome),
         sobrenome: capitalizarNomeEdicao(cliente.sobrenome),

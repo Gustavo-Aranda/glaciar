@@ -106,20 +106,6 @@
             <form class="admin-form" id="form-editar-cliente">
                 <div class="form-row">
                     <div class="input-group">
-                        <label for="editar-tipoUsuario">Tipo de Conta *</label>
-                        <select id="editar-tipoUsuario" required>
-                            <option value="0">Cliente Comum (CLI)</option>
-                            <option value="1">Administrador (ADM)</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label for="editar-senha">Nova Senha</label>
-                        <input type="password" id="editar-senha" placeholder="Deixe vazio para manter a atual">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="input-group">
                         <label for="editar-nome">Nome *</label>
                         <input type="text" id="editar-nome" required>
                     </div>
@@ -137,6 +123,13 @@
                     <div class="input-group">
                         <label for="editar-email">E-mail *</label>
                         <input type="email" id="editar-email" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="editar-tipoUsuario">Tipo de Conta *</label>
+                        <select id="editar-tipoUsuario" required>
+                            <option value="0">Cliente Comum (CLI)</option>
+                            <option value="1">Administrador (ADM)</option>
+                        </select>
                     </div>
                 </div>
 
