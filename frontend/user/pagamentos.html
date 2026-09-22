@@ -6,6 +6,7 @@
     <title>Pagamentos e Cupons | Glaciar</title>
     <link rel="stylesheet" href="./css/global.css">
     <link rel="stylesheet" href="./css/pages/pagamentos.css">
+    <link rel="stylesheet" href="./css/pages/enderecos.css">
     <link rel="stylesheet" href="./css/pages/editar-perfil.css">
     <link rel="stylesheet" href="./css/components/chatbot.css">
 </head>
@@ -32,34 +33,8 @@
                     <button class="btn-text-add">+ Adicionar Novo</button>
                 </div>
 
-                <div class="wallet-list">
-                    <div class="wallet-item">
-                        <div class="wallet-info">
-                            <span class="card-icon">Visa</span>
-                            <div>
-                                <strong>Cartão final 4321</strong>
-                                <p>Expira em 12/2028</p>
-                            </div>
-                        </div>
-                        <div class="wallet-actions">
-                            <button class="btn-text-edit">Editar</button>
-                            <button class="btn-text-remove">Remover</button>
-                        </div>
-                    </div>
-
-                    <div class="wallet-item">
-                        <div class="wallet-info">
-                            <span class="card-icon">Master</span>
-                            <div>
-                                <strong>Cartão final 8899</strong>
-                                <p>Expira em 05/2027</p>
-                            </div>
-                        </div>
-                        <div class="wallet-actions">
-                            <button class="btn-text-edit">Editar</button>
-                            <button class="btn-text-remove">Remover</button>
-                        </div>
-                    </div>
+                <div class="wallet-list" id="lista-cartoes">
+                    <p class="addresses-feedback">Carregando cartões...</p>
                 </div>
             </div>
 
@@ -98,8 +73,79 @@
         </section>
     </main>
 
+    <div class="address-modal hidden" id="modal-cartao" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-cartao">
+        <div class="address-modal-content card-modal-content">
+            <div class="address-modal-header">
+                <div>
+                    <span class="address-modal-kicker" id="cartao-modal-kicker">Cadastro</span>
+                    <h3 id="titulo-modal-cartao">Adicionar cartão</h3>
+                </div>
+                <button type="button" class="address-close-button" id="btn-fechar-modal-cartao" aria-label="Fechar modal">&times;</button>
+            </div>
+
+            <form id="form-cartao" class="address-form">
+                <div class="address-form-row">
+                    <div class="address-field address-field-wide">
+                        <label for="cartao-numero">Número do cartão *</label>
+                        <input type="text" id="cartao-numero" inputmode="numeric" autocomplete="cc-number" maxlength="19" placeholder="0000 0000 0000 0000" required>
+                    </div>
+                    <div class="address-field">
+                        <label for="cartao-cvv">CVV *</label>
+                        <input type="password" id="cartao-cvv" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="123" required>
+                    </div>
+                </div>
+                <div class="address-form-row">
+                    <div class="address-field address-field-wide">
+                        <label for="cartao-bandeira">Bandeira *</label>
+                        <select id="cartao-bandeira" autocomplete="cc-type" required>
+                            <option value="">Selecione</option>
+                            <option value="Visa">Visa</option>
+                            <option value="Mastercard">Mastercard</option>
+                            <option value="AmericanExpress">American Express</option>
+                            <option value="Elo">Elo</option>
+                            <option value="Hipercard">Hipercard</option>
+                        </select>
+                    </div>
+                    <div class="address-field">
+                        <label for="cartao-mes">Mês *</label>
+                        <input type="number" id="cartao-mes" min="1" max="12" placeholder="MM" autocomplete="cc-exp-month" required>
+                    </div>
+                    <div class="address-field">
+                        <label for="cartao-ano">Ano *</label>
+                        <input type="number" id="cartao-ano" min="2026" max="9999" placeholder="AAAA" autocomplete="cc-exp-year" required>
+                    </div>
+                </div>
+                <label class="address-default-field" for="cartao-padrao">
+                    <input type="checkbox" id="cartao-padrao">
+                    <span>Usar como cartão padrão</span>
+                </label>
+                <p class="address-form-message" id="mensagem-cartao" role="alert" aria-live="polite"></p>
+                <div class="address-modal-actions">
+                    <button type="button" class="address-cancel-button" id="btn-cancelar-cartao">Cancelar</button>
+                    <button type="submit" class="address-save-button" id="btn-salvar-cartao">Salvar cartão</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="address-modal hidden" id="modal-remover-cartao" role="dialog" aria-modal="true" aria-labelledby="titulo-remover-cartao">
+        <div class="address-delete-modal-content">
+            <div class="address-delete-icon" aria-hidden="true">!</div>
+            <h3 id="titulo-remover-cartao">Remover cartão</h3>
+            <p>Você está prestes a remover:</p>
+            <strong id="cartao-remover-nome"></strong>
+            <span id="cartao-remover-detalhes"></span>
+            <p class="address-delete-warning">Essa ação não poderá ser desfeita.</p>
+            <div class="address-modal-actions">
+                <button type="button" class="address-cancel-button" id="btn-cancelar-remocao-cartao">Cancelar</button>
+                <button type="button" class="address-remove-confirm-button" id="btn-confirmar-remocao-cartao">Remover cartão</button>
+            </div>
+        </div>
+    </div>
+
     <script src="./js/components/usuario-session.js"></script>
     <script src="./js/components/layout.js"></script>
     <script src="./js/components/chatbot.js"></script>
+    <script src="./js/pages/pagamentos.js"></script>
 </body>
 </html>
