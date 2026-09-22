@@ -43,7 +43,7 @@ namespace glaciar.API.Controllers
                 var dtoPadrao = new UsuarioCreateDTO
                 {
                     Nome = dto.Nome, Sobrenome = dto.Sobrenome, Cpf = dto.Cpf,
-                    Email = dto.Email, Senha = dto.Senha
+                    Email = dto.Email, Telefone = dto.Telefone, Senha = dto.Senha
                 };
 
                 var novoUsuario = await _usuarioService.CreateUsuarioAsync(dtoPadrao, dto.TipoUsuario);

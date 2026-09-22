@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnClose = document.getElementById('btn-close-edit-modal');
     const btnCancel = document.getElementById('btn-cancelar-edit-modal');
     const campoCpf = document.getElementById('editar-cpf');
+    const campoTelefone = document.getElementById('editar-telefone');
 
     if (!modal || !form) return;
 
@@ -20,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnClose?.addEventListener('click', fecharModal);
     btnCancel?.addEventListener('click', fecharModal);
     campoCpf?.addEventListener('input', atualizarMascaraCpfEdicao);
+    campoTelefone?.addEventListener('input', atualizarMascaraTelefoneEdicao);
 
     modal.addEventListener('click', event => {
         if (event.target === modal) fecharModal();
@@ -35,11 +37,17 @@ document.addEventListener('DOMContentLoaded', () => {
             sobrenome: capitalizarNomeEdicao(obterValorEdicao('editar-sobrenome')),
             cpf: obterValorEdicao('editar-cpf').replace(/\D/g, ''),
             email: obterValorEdicao('editar-email').toLowerCase(),
+            telefone: obterValorEdicao('editar-telefone').replace(/\D/g, ''),
             tipoUsuario: Number.parseInt(obterValorEdicao('editar-tipoUsuario', false), 10)
         };
 
-        if (!dados.nome || !dados.sobrenome || !dados.email || !validarCPFEdicao(dados.cpf)) {
+        if (!dados.nome || !dados.sobrenome || !dados.email || !dados.telefone || !validarCPFEdicao(dados.cpf)) {
             mostrarNotificacao('Preencha os campos corretamente e informe um CPF válido.');
+            return;
+        }
+
+        if (dados.telefone.length < 10 || dados.telefone.length > 11) {
+            mostrarNotificacao('Informe um telefone válido com DDD.');
             return;
         }
 
@@ -88,12 +96,14 @@ function abrirEdicaoCliente(id) {
     document.getElementById('editar-sobrenome').value = capitalizarNomeEdicao(cliente.sobrenome);
     document.getElementById('editar-cpf').value = formatarCPFEdicao(cliente.cpf);
     document.getElementById('editar-email').value = cliente.email || '';
+    document.getElementById('editar-telefone').value = formatarTelefoneEdicao(cliente.telefone || '');
     document.getElementById('editar-tipoUsuario').value = String(cliente.tipoUsuario);
     dadosOriginaisCliente = {
         nome: capitalizarNomeEdicao(cliente.nome),
         sobrenome: capitalizarNomeEdicao(cliente.sobrenome),
         cpf: String(cliente.cpf || '').replace(/\D/g, ''),
         email: String(cliente.email || '').trim().toLowerCase(),
+        telefone: String(cliente.telefone || '').replace(/\D/g, ''),
         senha: '',
         tipoUsuario: Number(cliente.tipoUsuario)
     };
@@ -113,6 +123,17 @@ function atualizarMascaraCpfEdicao(event) {
         .replace(/(\d{3})(\d)/, '$1.$2')
         .replace(/(\d{3})(\d)/, '$1.$2')
         .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+}
+
+function atualizarMascaraTelefoneEdicao(event) {
+    event.target.value = formatarTelefoneEdicao(event.target.value);
+}
+
+function formatarTelefoneEdicao(telefone) {
+    const numeros = String(telefone).replace(/\D/g, '').slice(0, 11);
+    return numeros.length > 10
+        ? numeros.replace(/(\d{2})(\d{5})(\d{1,4})/, '($1) $2-$3')
+        : numeros.replace(/(\d{2})(\d{4})(\d{1,4})/, '($1) $2-$3');
 }
 
 function formatarCPFEdicao(cpf) {

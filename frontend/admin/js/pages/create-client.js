@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnClose = document.getElementById('btn-close-modal');
     const btnCancel = document.getElementById('btn-cancelar-modal');
     const campoCpf = document.getElementById('cpf');
+    const campoTelefone = document.getElementById('telefone');
 
     if (modal) {
         const openModal = () => modal.classList.remove('hidden');
@@ -14,6 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (btnClose) btnClose.addEventListener('click', closeModal);
         if (btnCancel) btnCancel.addEventListener('click', closeModal);
         if (campoCpf) campoCpf.addEventListener('input', atualizarMascaraCpf);
+        if (campoTelefone) campoTelefone.addEventListener('input', atualizarMascaraTelefone);
         modal.addEventListener('click', (event) => {
             if (event.target === modal) {
                 closeModal();
@@ -29,11 +31,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 const sobrenome = capitalizarNome(obterValorCampo('sobrenome'));
                 const cpf = obterValorCampo('cpf').replace(/\D/g, '');
                 const email = obterValorCampo('email');
+                const telefone = obterValorCampo('telefone').replace(/\D/g, '');
                 const senha = obterValorCampo('senha', false);
                 const tipoUsuario = Number.parseInt(obterValorCampo('tipoUsuario', false), 10);
 
-                if (!nome || !sobrenome || !email || !senha) {
+                if (!nome || !sobrenome || !email || !telefone || !senha) {
                     mostrarNotificacao('Preencha todos os campos obrigatórios.');
+                    return;
+                }
+
+                if (telefone.length < 10 || telefone.length > 11) {
+                    mostrarNotificacao('Informe um telefone válido com DDD.');
                     return;
                 }
 
@@ -52,6 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     sobrenome,
                     cpf,
                     email,
+                    telefone,
                     senha,
                     tipoUsuario
                 };
@@ -131,4 +140,11 @@ function validarCPF(cpfInput) {
 
     return Number(cpf[9]) === calcularDigito(9) &&
         Number(cpf[10]) === calcularDigito(10);
+}
+
+function atualizarMascaraTelefone(event) {
+    const telefone = event.target.value.replace(/\D/g, '').slice(0, 11);
+    event.target.value = telefone.length > 10
+        ? telefone.replace(/(\d{2})(\d{5})(\d{1,4})/, '($1) $2-$3')
+        : telefone.replace(/(\d{2})(\d{4})(\d{1,4})/, '($1) $2-$3');
 }

@@ -1,10 +1,12 @@
 document.addEventListener("DOMContentLoaded", () => {
     const formCadastro = document.getElementById("form-registrar-cliente");
     const campoCpf = document.getElementById("cpf");
+    const campoTelefone = document.getElementById("telefone");
 
     if (!formCadastro) return;
 
     campoCpf?.addEventListener("input", aplicarMascaraCPF);
+    campoTelefone?.addEventListener("input", aplicarMascaraTelefone);
 
     formCadastro.addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -14,11 +16,17 @@ document.addEventListener("DOMContentLoaded", () => {
             sobrenome: capitalizarNome(obterValor("sobrenome")),
             cpf: obterValor("cpf").replace(/\D/g, ""),
             email: obterValor("email").toLowerCase(),
+            telefone: obterValor("telefone").replace(/\D/g, ""),
             senha: obterValor("senha", false)
         };
 
-        if (!dadosCliente.nome || !dadosCliente.sobrenome || !dadosCliente.email || !dadosCliente.senha) {
+        if (!dadosCliente.nome || !dadosCliente.sobrenome || !dadosCliente.email || !dadosCliente.telefone || !dadosCliente.senha) {
             mostrarMensagem("Preencha todos os campos obrigatórios.", "erro");
+            return;
+        }
+
+        if (dadosCliente.telefone.length < 10 || dadosCliente.telefone.length > 11) {
+            mostrarMensagem("Informe um telefone válido com DDD.", "erro");
             return;
         }
 
@@ -115,4 +123,11 @@ async function obterMensagemErro(resposta) {
     const dados = await resposta.json().catch(() => null);
     return dados?.erro || dados?.detail || dados?.title ||
         "Não foi possível criar a conta.";
+}
+
+function aplicarMascaraTelefone(event) {
+    const telefone = event.target.value.replace(/\D/g, "").slice(0, 11);
+    event.target.value = telefone.length > 10
+        ? telefone.replace(/(\d{2})(\d{5})(\d{1,4})/, "($1) $2-$3")
+        : telefone.replace(/(\d{2})(\d{4})(\d{1,4})/, "($1) $2-$3");
 }

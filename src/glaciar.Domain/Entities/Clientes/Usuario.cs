@@ -27,6 +27,10 @@ namespace glaciar.Domain.Entities.Clientes
         public string Email { get; set; } = null!;
 
         [Required]
+        [MaxLength(11)]
+        public string Telefone { get; set; } = null!;
+
+        [Required]
         [MaxLength(255)]
         public string SenhaHash { get; set; } = null!;
 

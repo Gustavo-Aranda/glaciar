@@ -11,6 +11,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const cancelar = document.getElementById('btn-cancelar-perfil');
     if (cancelar) cancelar.href = `conta.html?id=${encodeURIComponent(id)}`;
+    document.getElementById('telefone')?.addEventListener('input', event => {
+        event.target.value = formatarTelefone(event.target.value);
+    });
 
     const modalInativacao = document.getElementById('modal-inativar-conta');
     document.getElementById('btn-inativar-conta')?.addEventListener('click', () => {
@@ -52,11 +55,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             nome: capitalizarNome(obterValor('nome')),
             sobrenome: capitalizarNome(obterValor('sobrenome')),
             email: obterValor('email').toLowerCase(),
+            telefone: obterValor('telefone').replace(/\D/g, ''),
             senha: obterValor('senha', false)
         };
 
-        if (!dados.nome || !dados.sobrenome || !dados.email) {
+        if (!dados.nome || !dados.sobrenome || !dados.email || !dados.telefone) {
             mostrarMensagem('Preencha todos os campos obrigatórios.', 'erro');
+            return;
+        }
+
+        if (dados.telefone.length < 10 || dados.telefone.length > 11) {
+            mostrarMensagem('Informe um telefone válido com DDD.', 'erro');
             return;
         }
 
@@ -98,6 +107,7 @@ function preencherFormulario(usuario) {
     document.getElementById('nome').value = usuario.nome || '';
     document.getElementById('sobrenome').value = usuario.sobrenome || '';
     document.getElementById('email').value = usuario.email || '';
+    document.getElementById('telefone').value = formatarTelefone(usuario.telefone || '');
 }
 
 function criarSnapshotPerfil(usuario) {
@@ -105,6 +115,7 @@ function criarSnapshotPerfil(usuario) {
         nome: capitalizarNome(usuario.nome),
         sobrenome: capitalizarNome(usuario.sobrenome),
         email: String(usuario.email || '').trim().toLowerCase(),
+        telefone: String(usuario.telefone || '').replace(/\D/g, ''),
         senha: ''
     };
 }
@@ -119,6 +130,13 @@ function obterValor(id, preservarEspacos = false) {
 function capitalizarNome(nome) {
     return nome.toLocaleLowerCase('pt-BR')
         .replace(/(^|[\s'-])\p{L}/gu, letra => letra.toLocaleUpperCase('pt-BR'));
+}
+
+function formatarTelefone(telefone) {
+    const numeros = String(telefone).replace(/\D/g, '').slice(0, 11);
+    return numeros.length > 10
+        ? numeros.replace(/(\d{2})(\d{5})(\d{1,4})/, '($1) $2-$3')
+        : numeros.replace(/(\d{2})(\d{4})(\d{1,4})/, '($1) $2-$3');
 }
 
 function mostrarMensagem(mensagem, tipo) {

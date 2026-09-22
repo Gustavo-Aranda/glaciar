@@ -30,8 +30,10 @@ namespace glaciar.Application.Services.Clientes
 
             var cpf = CpfValidator.Normalizar(dto.Cpf);
             var email = NormalizarEmail(dto.Email);
+            var telefone = NormalizarTelefone(dto.Telefone);
 
             await ValidarDadosCadastraisAsync(cpf, email);
+            ValidarTelefone(telefone);
 
             var usuario = new Usuario
             {
@@ -39,6 +41,7 @@ namespace glaciar.Application.Services.Clientes
                 Sobrenome = CapitalizarNome(dto.Sobrenome),
                 Cpf = cpf,
                 Email = email,
+                Telefone = telefone,
                 SenhaHash = _hasher.Hash(dto.Senha),
                 TipoUsuario = tipoUsuario
             };
@@ -87,9 +90,12 @@ namespace glaciar.Application.Services.Clientes
 
             var cpf = CpfValidator.Normalizar(dto.Cpf);
             var email = NormalizarEmail(dto.Email);
+            var telefone = NormalizarTelefone(dto.Telefone);
 
             await ValidarDadosCadastraisAsync(cpf, email, id);
+            ValidarTelefone(telefone);
             AtualizarDadosUsuario(usuario, dto, cpf, email);
+            usuario.Telefone = telefone;
 
             await _usuarioRepository.UpdateAsync(usuario);
             return _mapper.Map<UsuarioResponseDTO>(usuario);
@@ -99,6 +105,7 @@ namespace glaciar.Application.Services.Clientes
         {
             var usuario = await ObterUsuarioAsync(id);
             var email = NormalizarEmail(dto.Email);
+            var telefone = NormalizarTelefone(dto.Telefone);
 
             ValidarDadosObrigatorios(
                 dto.Nome,
@@ -107,6 +114,7 @@ namespace glaciar.Application.Services.Clientes
                 dto.Senha,
                 usuario.TipoUsuario,
                 senhaObrigatoria: false);
+            ValidarTelefone(telefone);
 
             var usuarioEmail = await _usuarioRepository.GetByEmailAsync(email);
             if (usuarioEmail != null && usuarioEmail.Id != id)
@@ -115,6 +123,7 @@ namespace glaciar.Application.Services.Clientes
             usuario.Nome = CapitalizarNome(dto.Nome);
             usuario.Sobrenome = CapitalizarNome(dto.Sobrenome);
             usuario.Email = email;
+            usuario.Telefone = telefone;
 
             if (!string.IsNullOrWhiteSpace(dto.Senha))
                 usuario.SenhaHash = _hasher.Hash(dto.Senha);
@@ -196,6 +205,7 @@ namespace glaciar.Application.Services.Clientes
             usuario.Sobrenome = CapitalizarNome(dto.Sobrenome);
             usuario.Cpf = cpf;
             usuario.Email = email;
+            usuario.Telefone = NormalizarTelefone(dto.Telefone);
             usuario.TipoUsuario = dto.TipoUsuario;
 
             if (!string.IsNullOrWhiteSpace(dto.Senha))
@@ -205,6 +215,17 @@ namespace glaciar.Application.Services.Clientes
         private static string NormalizarEmail(string email)
         {
             return email.Trim().ToLowerInvariant();
+        }
+
+        private static string NormalizarTelefone(string telefone)
+        {
+            return new string((telefone ?? string.Empty).Where(char.IsDigit).ToArray());
+        }
+
+        private static void ValidarTelefone(string telefone)
+        {
+            if (telefone.Length is < 10 or > 11)
+                throw new DomainValidationException("Telefone inválido. Informe DDD e número.");
         }
 
         private static string CapitalizarNome(string nome)
