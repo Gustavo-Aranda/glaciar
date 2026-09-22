@@ -1,26 +1,24 @@
-version: '3.8'
+version: "3.8"
 
 services:
-  # Configuração do Backend C#
   api:
-    build: 
-      context: ./caminho_para_pasta_do_backend_onde_esta_o_sln
+    build:
+      context: ./src
       dockerfile: Dockerfile
+    container_name: glaciar-api
     ports:
-      # Mapeia a porta 5205 da sua máquina para a 8080 do contêiner .NET
       - "5205:8080"
     environment:
       # O .NET vai ler a string de conexão do Supabase daqui em tempo de execução
       - ConnectionStrings__DefaultConnection=${SUPABASE_CONNECTION}
 
-  # Configuração do Frontend Vanilla JS
   frontend:
     build:
-      context: ./caminho_para_pasta_do_frontend
+      context: ./frontend
       dockerfile: Dockerfile
+    container_name: glaciar-frontend
     ports:
-      # Mapeia a porta 5500 da sua máquina para a porta 80 do Nginx
-      # Isso substitui o "Live Server" perfeitamente
       - "5500:80"
     depends_on:
       - api
+    restart: unless-stopped
