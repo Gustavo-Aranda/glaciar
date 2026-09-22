@@ -12,6 +12,9 @@ node_modules/
 
 cypress/videos/
 cypress/screenshots/
+cypress/downloads/
+
+cypress.env.json
 
 .DS_Store
 Thumbs.db
