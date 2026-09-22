@@ -1,5 +1,21 @@
 let clientesGerais = []; 
 
+function formatarCPF(cpf) {
+    const cpfNumeros = String(cpf || '').replace(/\D/g, '');
+    if (cpfNumeros.length !== 11) return cpf || 'Não informado';
+
+    return cpfNumeros.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+}
+
+function formatarData(data) {
+    if (!data) return 'Não informado';
+
+    const dataFormatada = new Date(data);
+    if (Number.isNaN(dataFormatada.getTime())) return 'Data inválida';
+
+    return dataFormatada.toLocaleDateString('pt-BR');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     carregarClientes();
 
@@ -40,6 +56,11 @@ function renderizarClientes(lista) {
 
     lista.forEach(cliente => {
         const isAtivo = cliente.ativo !== false; 
+        const nome = escapeHtml(capitalizarNome(cliente.nome));
+        const sobrenome = escapeHtml(capitalizarNome(cliente.sobrenome));
+        const email = escapeHtml(cliente.email);
+        const cpf = escapeHtml(formatarCPF(cliente.cpf));
+        const dataCadastro = escapeHtml(formatarData(cliente.createdAt || cliente.created_at));
         const article = document.createElement('article');
         article.className = `admin-card ${!isAtivo ? 'inactive-card' : ''}`;
 
@@ -47,9 +68,15 @@ function renderizarClientes(lista) {
             <div class="card-header">
                 <div class="card-info">
                     <span class="card-title" ${!isAtivo ? 'style="color: var(--cinza-rocha-claro);"' : ''}>
-                        ${cliente.nome} ${cliente.sobrenome}
+                        ${nome} ${sobrenome}
+                        <button class="btn-edit-client" type="button" title="Editar usuário" aria-label="Editar usuário" onclick="abrirEdicaoCliente(${cliente.id})">
+                            <img src="./assets/icons/pencil-solid-full.svg" alt="">
+                        </button>
+                        <button class="btn-delete-client" type="button" title="Excluir usuário" aria-label="Excluir usuário" onclick="excluirCliente(${cliente.id})">
+                            <img src="./assets/icons/trash-solid-full.svg" alt="">
+                        </button>
                     </span>
-                    <span class="card-subtitle">E-mail: ${cliente.email} | CPF: ${formatarCPF(cliente.cpf)}</span>
+                    <span class="card-subtitle">E-mail: ${email} | CPF: ${cpf}</span>
                 </div>
                 <span class="status ${isAtivo ? 'status-neutro' : 'status-atencao'}">
                     ${isAtivo ? 'Conta Ativa' : 'Conta Inativa'}
@@ -57,7 +84,7 @@ function renderizarClientes(lista) {
             </div>
             <div class="card-body">
                 <div class="client-details" ${!isAtivo ? 'style="opacity: 0.6;"' : ''}>
-                    <p><strong>Data de Cadastro:</strong> ${formatarData(cliente.createdAt || cliente.created_at)}</p>
+                    <p><strong>Data de Cadastro:</strong> ${dataCadastro}</p>
                     ${!isAtivo 
                         ? `<p><strong>Motivo Inativação:</strong> Desativado via painel admin.</p>` 
                         : `<p><strong>Tipo de Conta:</strong> ${cliente.tipoUsuario === 1 ? 'Administrador' : 'Cliente'}</p>`
@@ -79,14 +106,79 @@ function renderizarClientes(lista) {
 }
 
 function filtrarClientes() {
-    const termo = document.getElementById('input-busca-cliente').value.toLowerCase();
+    const inputBusca = document.getElementById('input-busca-cliente');
+    const termo = (inputBusca?.value || '').trim().toLowerCase();
+    const termoCpf = termo.replace(/\D/g, '');
     
     const clientesFiltrados = clientesGerais.filter(c => 
         (c.nome && c.nome.toLowerCase().includes(termo)) ||
         (c.sobrenome && c.sobrenome.toLowerCase().includes(termo)) ||
         (c.email && c.email.toLowerCase().includes(termo)) ||
-        (c.cpf && c.cpf.includes(termo))
+        (termoCpf && c.cpf && String(c.cpf).replace(/\D/g, '').includes(termoCpf))
     );
 
     renderizarClientes(clientesFiltrados);
+}
+
+async function inativarCliente(id) {
+    await alterarStatusCliente(id, false);
+}
+
+async function reativarCliente(id) {
+    await alterarStatusCliente(id, true);
+}
+
+async function excluirCliente(id) {
+    if (!confirm('Deseja excluir este usuário permanentemente?')) return;
+
+    try {
+        const response = await fetch(`http://localhost:5205/api/conta/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) throw new Error('Falha ao excluir o usuário.');
+
+        await carregarClientes();
+        mostrarResultado('Usuário excluído', 'O usuário foi removido com sucesso.', 'sucesso');
+    } catch (error) {
+        console.error('Erro ao excluir usuário:', error);
+        mostrarResultado('Não foi possível excluir', 'O usuário não pôde ser removido.', 'erro');
+    }
+}
+
+async function alterarStatusCliente(id, ativo) {
+    const acao = ativo ? 'reativar' : 'inativar';
+    if (!confirm(`Deseja ${acao} esta conta?`)) return;
+
+    try {
+        const response = await fetch(`http://localhost:5205/api/conta/${id}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ativo })
+        });
+
+        if (!response.ok) throw new Error('Falha ao alterar o status da conta.');
+
+        await carregarClientes();
+        mostrarResultado('Status atualizado', `A conta foi ${ativo ? 'reativada' : 'inativada'} com sucesso.`, 'sucesso');
+    } catch (error) {
+        console.error('Erro ao alterar status:', error);
+        mostrarResultado('Não foi possível atualizar', 'O status da conta não pôde ser alterado.', 'erro');
+    }
+}
+
+function capitalizarNome(nome) {
+    return String(nome || '')
+        .toLocaleLowerCase('pt-BR')
+        .replace(/(^|[\s'-])\p{L}/gu, letra => letra.toLocaleUpperCase('pt-BR'));
+}
+
+function escapeHtml(valor) {
+    return String(valor ?? '').replace(/[&<>'"]/g, caractere => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+    }[caractere]));
 }
