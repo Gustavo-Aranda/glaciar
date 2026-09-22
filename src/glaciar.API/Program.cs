@@ -3,8 +3,10 @@ using glaciar.Infrastructure.Data;
 using glaciar.Domain.Interfaces.Repositories;
 using glaciar.Infrastructure.Repositories;
 using glaciar.Application.Services.Clientes;
+using glaciar.Application.Services.Enderecos;
 using glaciar.Infrastructure.Security;
 using glaciar.Application.Interfaces.Services;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +22,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>(); 
 builder.Services.AddScoped<UsuarioService>();
+builder.Services.AddScoped<EnderecoService>();
 builder.Services.AddScoped<IEnderecoRepository, EnderecoRepository>();
 builder.Services.AddScoped<IUsuarioEnderecoRepository, UsuarioEnderecoRepository>();
 builder.Services.AddAutoMapper(config =>
@@ -38,7 +41,9 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddEndpointsApiExplorer();
 //builder.Services.AddSwaggerGen();
 

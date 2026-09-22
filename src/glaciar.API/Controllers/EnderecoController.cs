@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using glaciar.Application.DTOs.Enderecos;
 using glaciar.Application.Services.Enderecos;
 using glaciar.Domain.Exceptions;
+using AutoMapper;
 
 namespace glaciar.API.Controllers
 {
@@ -10,10 +11,12 @@ namespace glaciar.API.Controllers
     public class EnderecosController : ControllerBase
     {
         private readonly EnderecoService _enderecoService;
+        private readonly IMapper _mapper;
 
-        public EnderecosController(EnderecoService enderecoService)
+        public EnderecosController(EnderecoService enderecoService, IMapper mapper)
         {
             _enderecoService = enderecoService;
+            _mapper = mapper;
         }
 
         // ==========================================
@@ -25,7 +28,8 @@ namespace glaciar.API.Controllers
             try
             {
                 var novoEndereco = await _enderecoService.CreateEnderecoAsync(dto);
-                return CreatedAtAction(nameof(BuscarPorId), new { id = novoEndereco.Id }, novoEndereco);
+                var resposta = _mapper.Map<EnderecoResponseDTO>(novoEndereco);
+                return CreatedAtAction(nameof(BuscarPorId), new { id = novoEndereco.Id }, resposta);
             }
             catch (DomainValidationException ex)
             {
@@ -40,7 +44,7 @@ namespace glaciar.API.Controllers
         public async Task<IActionResult> ListarEnderecos(int clienteId)
         {
             var enderecos = await _enderecoService.GetEnderecoClienteAsync(clienteId);
-            return Ok(enderecos);
+            return Ok(_mapper.Map<IEnumerable<UsuarioEnderecoResponseDTO>>(enderecos));
         }
 
         // ==========================================
@@ -52,7 +56,7 @@ namespace glaciar.API.Controllers
             var endereco = await _enderecoService.GetEnderecoAsync(id);
             if (endereco == null) return NotFound(new { erro = "Endereço não encontrado." });
             
-            return Ok(endereco);
+            return Ok(_mapper.Map<EnderecoResponseDTO>(endereco));
         }
 
         // ==========================================
