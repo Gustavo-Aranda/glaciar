@@ -1,5 +1,14 @@
 document.addEventListener("DOMContentLoaded", () => {
     const loginForm = document.getElementById("loginForm");
+    const passwordInput = document.getElementById("password");
+    const togglePassword = document.querySelector(".btn-toggle-pass");
+
+    togglePassword?.addEventListener("click", () => {
+        const mostrandoSenha = passwordInput.type === "text";
+        passwordInput.type = mostrandoSenha ? "password" : "text";
+        togglePassword.setAttribute("aria-label", mostrandoSenha ? "Mostrar senha" : "Ocultar senha");
+        togglePassword.setAttribute("aria-pressed", String(!mostrandoSenha));
+    });
 
     if (!loginForm) return;
 
