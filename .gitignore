@@ -4,6 +4,7 @@
 *.user
 *.suo
 .vs/
+.env
 
 appsettings.Development.json
 appsettings.Local.json
