@@ -1,4 +1,26 @@
 let clientesGerais = []; 
+let clienteParaExcluirId = null;
+let clienteParaAlterarStatus = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    const modalExclusao = document.getElementById('modal-excluir-cliente');
+    const btnCancelar = document.getElementById('btn-cancelar-exclusao');
+    const btnConfirmar = document.getElementById('btn-confirmar-exclusao');
+    const modalStatus = document.getElementById('modal-status-cliente');
+    const btnCancelarStatus = document.getElementById('btn-cancelar-status');
+    const btnConfirmarStatus = document.getElementById('btn-confirmar-status');
+
+    btnCancelar?.addEventListener('click', fecharModalExclusao);
+    btnConfirmar?.addEventListener('click', confirmarExclusaoCliente);
+    btnCancelarStatus?.addEventListener('click', fecharModalStatus);
+    btnConfirmarStatus?.addEventListener('click', confirmarAlteracaoStatus);
+    modalExclusao?.addEventListener('click', event => {
+        if (event.target === modalExclusao) fecharModalExclusao();
+    });
+    modalStatus?.addEventListener('click', event => {
+        if (event.target === modalStatus) fecharModalStatus();
+    });
+});
 
 function formatarCPF(cpf) {
     const cpfNumeros = String(cpf || '').replace(/\D/g, '');
@@ -29,6 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function carregarClientes() {
     const container = document.getElementById('lista-clientes-container');
+    mostrarLoading('Carregando clientes...');
     container.innerHTML = '<p>Carregando clientes do banco de dados...</p>';
 
     try {
@@ -42,6 +65,8 @@ async function carregarClientes() {
     } catch (error) {
         console.error('Erro no Fetch:', error);
         container.innerHTML = `<p style="color: #e74c3c; font-weight: bold;">Erro ao buscar clientes. Verifique se sua API C# está rodando.</p>`;
+    } finally {
+        esconderLoading();
     }
 }
 
@@ -72,7 +97,7 @@ function renderizarClientes(lista) {
                         <button class="btn-edit-client" type="button" title="Editar usuário" aria-label="Editar usuário" onclick="abrirEdicaoCliente(${cliente.id})">
                             <img src="./assets/icons/pencil-solid-full.svg" alt="">
                         </button>
-                        <button class="btn-delete-client" type="button" title="Excluir usuário" aria-label="Excluir usuário" onclick="excluirCliente(${cliente.id})">
+                        <button class="btn-delete-client" type="button" title="Excluir usuário" aria-label="Excluir usuário" onclick="abrirExclusaoCliente(${cliente.id})">
                             <img src="./assets/icons/trash-solid-full.svg" alt="">
                         </button>
                     </span>
@@ -128,9 +153,29 @@ async function reativarCliente(id) {
     await alterarStatusCliente(id, true);
 }
 
-async function excluirCliente(id) {
-    if (!confirm('Deseja excluir este usuário permanentemente?')) return;
+function abrirExclusaoCliente(id) {
+    const cliente = clientesGerais.find(clienteAtual => clienteAtual.id === id);
+    if (!cliente) return;
 
+    clienteParaExcluirId = id;
+    document.getElementById('exclusao-nome').textContent =
+        `${capitalizarNome(cliente.nome)} ${capitalizarNome(cliente.sobrenome)}`;
+    document.getElementById('exclusao-email').textContent = cliente.email || '';
+    document.getElementById('modal-excluir-cliente').classList.remove('hidden');
+}
+
+function fecharModalExclusao() {
+    clienteParaExcluirId = null;
+    document.getElementById('modal-excluir-cliente')?.classList.add('hidden');
+}
+
+async function confirmarExclusaoCliente() {
+    if (!clienteParaExcluirId) return;
+
+    const id = clienteParaExcluirId;
+    fecharModalExclusao();
+
+    mostrarLoading('Excluindo usuário...');
     try {
         const response = await fetch(`http://localhost:5205/api/conta/${id}`, {
             method: 'DELETE'
@@ -143,13 +188,43 @@ async function excluirCliente(id) {
     } catch (error) {
         console.error('Erro ao excluir usuário:', error);
         mostrarResultado('Não foi possível excluir', 'O usuário não pôde ser removido.', 'erro');
+    } finally {
+        esconderLoading();
     }
 }
 
 async function alterarStatusCliente(id, ativo) {
-    const acao = ativo ? 'reativar' : 'inativar';
-    if (!confirm(`Deseja ${acao} esta conta?`)) return;
+    const cliente = clientesGerais.find(clienteAtual => clienteAtual.id === id);
+    if (!cliente) return;
 
+    clienteParaAlterarStatus = { id, ativo };
+    document.getElementById('status-titulo').textContent = ativo
+        ? 'Reativar conta'
+        : 'Inativar conta';
+    document.getElementById('status-mensagem').textContent = ativo
+        ? 'Deseja reativar a conta deste cliente?'
+        : 'Deseja inativar a conta deste cliente?';
+    document.getElementById('status-nome').textContent =
+        `${capitalizarNome(cliente.nome)} ${capitalizarNome(cliente.sobrenome)}`;
+    document.getElementById('status-acao-simbolo').textContent = ativo ? '\u2713' : '!';
+    document.getElementById('btn-confirmar-status').textContent = ativo
+        ? 'Reativar conta'
+        : 'Inativar conta';
+    document.getElementById('modal-status-cliente').classList.remove('hidden');
+}
+
+function fecharModalStatus() {
+    clienteParaAlterarStatus = null;
+    document.getElementById('modal-status-cliente')?.classList.add('hidden');
+}
+
+async function confirmarAlteracaoStatus() {
+    if (!clienteParaAlterarStatus) return;
+
+    const { id, ativo } = clienteParaAlterarStatus;
+    fecharModalStatus();
+
+    mostrarLoading(ativo ? 'Reativando conta...' : 'Inativando conta...');
     try {
         const response = await fetch(`http://localhost:5205/api/conta/${id}/status`, {
             method: 'PATCH',
@@ -164,6 +239,8 @@ async function alterarStatusCliente(id, ativo) {
     } catch (error) {
         console.error('Erro ao alterar status:', error);
         mostrarResultado('Não foi possível atualizar', 'O status da conta não pôde ser alterado.', 'erro');
+    } finally {
+        esconderLoading();
     }
 }
 

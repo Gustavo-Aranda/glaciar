@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        mostrarLoading('Atualizando cliente...');
         try {
             const response = await fetch(`http://localhost:5205/api/conta/${clienteEmEdicaoId}`, {
                 method: 'PUT',
@@ -73,6 +74,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Erro ao atualizar cliente:', error);
             mostrarResultado('Não foi possível concluir', 'Não foi possível conectar à API.', 'erro');
+        } finally {
+            esconderLoading();
         }
     });
 });

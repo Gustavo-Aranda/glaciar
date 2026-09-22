@@ -56,6 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     tipoUsuario
                 };
 
+                mostrarLoading('Criando cliente...');
                 try {
 
                     const resposta = await fetch("http://localhost:5205/api/conta/admin/registrar", {
@@ -80,6 +81,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 } catch (error) {
                     console.error("Erro no fetch:", error);
                     mostrarResultado('Não foi possível concluir', 'Não foi possível conectar à API.', 'erro');
+                } finally {
+                    esconderLoading();
                 }
             });
         }
