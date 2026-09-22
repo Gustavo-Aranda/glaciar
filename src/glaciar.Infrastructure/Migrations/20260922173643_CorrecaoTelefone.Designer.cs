@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using glaciar.Infrastructure.Data;
@@ -11,9 +12,11 @@ using glaciar.Infrastructure.Data;
 namespace glaciar.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260922173643_CorrecaoTelefone")]
+    partial class CorrecaoTelefone
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -37,7 +40,7 @@ namespace glaciar.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categorias", (string)null);
+                    b.ToTable("Categorias");
                 });
 
             modelBuilder.Entity("glaciar.Domain.Entities.Catalogos.CategoriaProduto", b =>
@@ -60,7 +63,7 @@ namespace glaciar.Infrastructure.Migrations
 
                     b.HasIndex("ProdutoId");
 
-                    b.ToTable("CategoriasProdutos", (string)null);
+                    b.ToTable("CategoriasProdutos");
                 });
 
             modelBuilder.Entity("glaciar.Domain.Entities.Catalogos.Estoque", b =>
@@ -102,7 +105,7 @@ namespace glaciar.Infrastructure.Migrations
 
                     b.HasIndex("ProdutoId");
 
-                    b.ToTable("Estoques", (string)null);
+                    b.ToTable("Estoques");
                 });
 
             modelBuilder.Entity("glaciar.Domain.Entities.Catalogos.Produto", b =>
@@ -138,7 +141,7 @@ namespace glaciar.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Produtos", (string)null);
+                    b.ToTable("Produtos");
                 });
 
             modelBuilder.Entity("glaciar.Domain.Entities.Clientes.Cartao", b =>
@@ -160,7 +163,7 @@ namespace glaciar.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Cartoes", (string)null);
+                    b.ToTable("Cartoes");
                 });
 
             modelBuilder.Entity("glaciar.Domain.Entities.Clientes.Endereco", b =>
@@ -206,7 +209,7 @@ namespace glaciar.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Enderecos", (string)null);
+                    b.ToTable("Enderecos");
                 });
 
             modelBuilder.Entity("glaciar.Domain.Entities.Clientes.Usuario", b =>
@@ -259,7 +262,7 @@ namespace glaciar.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Usuarios", (string)null);
+                    b.ToTable("Usuarios");
                 });
 
             modelBuilder.Entity("glaciar.Domain.Entities.Clientes.UsuarioCartao", b =>
@@ -285,7 +288,7 @@ namespace glaciar.Infrastructure.Migrations
 
                     b.HasIndex("UsuarioId");
 
-                    b.ToTable("UsuariosCartoes", (string)null);
+                    b.ToTable("UsuariosCartoes");
                 });
 
             modelBuilder.Entity("glaciar.Domain.Entities.Clientes.UsuarioEndereco", b =>
@@ -319,7 +322,7 @@ namespace glaciar.Infrastructure.Migrations
 
                     b.HasIndex("UsuarioId");
 
-                    b.ToTable("UsuariosEnderecos", (string)null);
+                    b.ToTable("UsuariosEnderecos");
                 });
 
             modelBuilder.Entity("glaciar.Domain.Entities.Logisticas.Devolucao", b =>
@@ -371,7 +374,7 @@ namespace glaciar.Infrastructure.Migrations
 
                     b.HasIndex("PedidoProdutoId");
 
-                    b.ToTable("Devolucoes", (string)null);
+                    b.ToTable("Devolucoes");
                 });
 
             modelBuilder.Entity("glaciar.Domain.Entities.Logisticas.Entrega", b =>
@@ -413,7 +416,7 @@ namespace glaciar.Infrastructure.Migrations
 
                     b.HasIndex("PedidoId");
 
-                    b.ToTable("Entregas", (string)null);
+                    b.ToTable("Entregas");
                 });
 
             modelBuilder.Entity("glaciar.Domain.Entities.Vendas.Cupom", b =>
@@ -447,7 +450,7 @@ namespace glaciar.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Cupons", (string)null);
+                    b.ToTable("Cupons");
                 });
 
             modelBuilder.Entity("glaciar.Domain.Entities.Vendas.Pagamento", b =>
@@ -493,7 +496,7 @@ namespace glaciar.Infrastructure.Migrations
 
                     b.HasIndex("UsuarioCartaoId");
 
-                    b.ToTable("Pagamentos", (string)null);
+                    b.ToTable("Pagamentos");
                 });
 
             modelBuilder.Entity("glaciar.Domain.Entities.Vendas.Pedido", b =>
@@ -541,7 +544,7 @@ namespace glaciar.Infrastructure.Migrations
 
                     b.HasIndex("UsuarioId");
 
-                    b.ToTable("Pedidos", (string)null);
+                    b.ToTable("Pedidos");
                 });
 
             modelBuilder.Entity("glaciar.Domain.Entities.Vendas.PedidoProduto", b =>
@@ -570,7 +573,7 @@ namespace glaciar.Infrastructure.Migrations
 
                     b.HasIndex("PedidoId");
 
-                    b.ToTable("PedidosProdutos", (string)null);
+                    b.ToTable("PedidosProdutos");
                 });
 
             modelBuilder.Entity("glaciar.Domain.Entities.Catalogos.CategoriaProduto", b =>
