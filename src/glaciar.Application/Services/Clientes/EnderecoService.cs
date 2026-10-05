@@ -12,17 +12,20 @@ namespace glaciar.Application.Services.Enderecos
         private readonly IEnderecoRepository _enderecoRepository;
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IUsuarioEnderecoRepository _usuarioEnderecoRepository;
+        private readonly IPedidoRepository _pedidoRepository;
         private readonly IMapper _mapper;
 
         public EnderecoService(
             IEnderecoRepository enderecoRepository, 
             IUsuarioRepository usuarioRepository,
             IUsuarioEnderecoRepository usuarioEnderecoRepository,
+            IPedidoRepository pedidoRepository,
             IMapper mapper)
         {
             _enderecoRepository = enderecoRepository;
             _usuarioRepository = usuarioRepository;
             _usuarioEnderecoRepository = usuarioEnderecoRepository;
+            _pedidoRepository = pedidoRepository;
             _mapper = mapper;
         }
 
@@ -73,10 +76,12 @@ namespace glaciar.Application.Services.Enderecos
             if (vinculo.Endereco != null)
             {
                 var totalVinculos = await _usuarioEnderecoRepository.CountVinculosByEnderecoIdAsync(vinculo.EnderecoId);
+                var usadoEmPedido = await _pedidoRepository.ExisteComEnderecoAsync(vinculo.EnderecoId);
 
                 // Se o Endereço estiver associado a múltiplos vínculos, não alteramos o registro original
                 // para evitar efeito colateral em outros clientes. Instanciamos e persistimos um novo.
-                if (totalVinculos > 1)
+                // O mesmo vale se ele já foi usado como entrega de algum pedido: o histórico é imutável.
+                if (totalVinculos > 1 || usadoEmPedido)
                 {
                     var novoEndereco = new Endereco
                     {
@@ -116,9 +121,42 @@ namespace glaciar.Application.Services.Enderecos
             await _usuarioEnderecoRepository.UpdateAsync(vinculo);
         }
 
+        // ==========================================
+        // CHECKOUT: Endereço de entrega
+        // ==========================================
+        public async Task<EnderecoResponseDTO> ObterEnderecoDoClienteAsync(int usuarioId, int usuarioEnderecoId)
+        {
+            var vinculo = await _usuarioEnderecoRepository.GetByIdAsync(usuarioEnderecoId);
+            if (vinculo == null || vinculo.UsuarioId != usuarioId || !vinculo.Ativo || vinculo.Endereco == null)
+                throw new DomainValidationException("Endereço de entrega não encontrado para este cliente.");
+
+            return _mapper.Map<EnderecoResponseDTO>(vinculo.Endereco);
+        }
+
+        public async Task<EnderecoResponseDTO> RegistrarEnderecoDeEntregaAsync(EnderecoCreateDTO dto, bool salvarNoPerfil)
+        {
+            dto.Cep = new string((dto.Cep ?? string.Empty).Where(char.IsDigit).ToArray());
+
+            // Apelido só é exigido quando o endereço vai para o perfil do cliente.
+            if (!salvarNoPerfil && string.IsNullOrWhiteSpace(dto.Apelido))
+                dto.Apelido = "Entrega";
+
+            ValidarDadosEndereco(dto.Cep, dto.Logradouro, dto.Numero, dto.Bairro, dto.Cidade, dto.Apelido);
+            await ValidarSeClienteExisteAsync(dto.UsuarioId);
+
+            var enderecoFisico = await ObterOuRegistrarEnderecoFisicoAsync(dto);
+
+            if (salvarNoPerfil)
+            {
+                await AjustarEnderecoPadraoAnteriorAsync(dto.UsuarioId, dto.Padrao);
+                await CriarVinculoDeEnderecoAsync(dto, enderecoFisico.Id);
+            }
+
+            return _mapper.Map<EnderecoResponseDTO>(enderecoFisico);
+        }
 
         // ==========================================
-        // 🔒 MÉTODOS PRIVADOS (Os detalhes da operação)
+        // MÉTODOS PRIVADOS 
         // ==========================================
 
         private async Task ValidarSeClienteExisteAsync(int usuarioId)

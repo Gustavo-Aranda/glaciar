@@ -36,10 +36,11 @@ namespace glaciar.Domain.Entities.Vendas
         [ForeignKey("UsuarioId")]
         public Usuario Usuario { get; set; } = null!;
 
-        [Required]
-        public int EnderecoId { get; set; }
+        // Opcional: enquanto o Pedido está "EmAberto" (carrinho) ainda não há endereço de entrega.
+        // O checkout garante o preenchimento antes de mudar o status para "EmProcessamento".
+        public int? EnderecoId { get; set; }
         [ForeignKey("EnderecoId")]
-        public Endereco Endereco { get; set; } = null!;
+        public Endereco? Endereco { get; set; }
         
         public ICollection<PedidoCupom> CuponsAplicados { get; set; } = new List<PedidoCupom>();
 
