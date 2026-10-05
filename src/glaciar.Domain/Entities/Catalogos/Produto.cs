@@ -30,6 +30,9 @@ namespace glaciar.Domain.Entities.Catalogos
         [Required]
         public DateTime UpdatedAt { get; set; }
 
+        [Required]
+        public Boolean Visivel { get; set; } = true;
+
         public ICollection<Estoque> Estoques { get; set; } = new List<Estoque>();
         public ICollection<CategoriaProduto> CategoriasDoProduto { get; set; } = new List<CategoriaProduto>();
     }

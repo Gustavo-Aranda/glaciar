@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using glaciar.Domain.Entities.Clientes;
 
 namespace glaciar.Domain.Entities.Vendas
 {
@@ -27,5 +28,11 @@ namespace glaciar.Domain.Entities.Vendas
 
         [Required]
         public string CategoriaCupom { get; set; } = null!; // Categoria do cupom (Ex: "Desconto", "Frete Grátis", etc.)
+
+        public int? UsuarioId { get; set; }
+        [ForeignKey("UsuarioId")]
+        public Usuario? Usuario { get; set; }
+
+        public ICollection<PedidoCupom> PedidosOndeFoiAplicado { get; set; } = new List<PedidoCupom>();
     }
 }

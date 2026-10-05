@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using glaciar.Domain.Entities.Catalogos;
 using glaciar.Domain.Entities.Clientes;
 using glaciar.Domain.Entities.Logisticas;
@@ -33,6 +33,7 @@ namespace glaciar.Infrastructure.Data
         public DbSet<Pedido> Pedidos { get; set; }
         public DbSet<PedidoProduto> PedidosProdutos { get; set; }
         public DbSet<Cupom> Cupons { get; set; }
+        public DbSet<PedidoCupom> PedidosCupons { get; set; }
         public DbSet<Pagamento> Pagamentos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -98,6 +99,10 @@ namespace glaciar.Infrastructure.Data
 
             modelBuilder.Entity<UsuarioCartao>()
                 .HasIndex(uc => new { uc.UsuarioId, uc.CartaoId })
+                .IsUnique();
+
+            modelBuilder.Entity<PedidoCupom>()
+                .HasIndex(pc => new { pc.PedidoId, pc.CupomId })
                 .IsUnique();
 
         }

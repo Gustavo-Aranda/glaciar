@@ -41,9 +41,7 @@ namespace glaciar.Domain.Entities.Vendas
         [ForeignKey("EnderecoId")]
         public Endereco Endereco { get; set; } = null!;
         
-        public int? CupomId { get; set; }
-        [ForeignKey("CupomId")]
-        public Cupom? Cupom { get; set; }
+        public ICollection<PedidoCupom> CuponsAplicados { get; set; } = new List<PedidoCupom>();
 
         public ICollection<PedidoProduto> ProdutosDoPedido { get; set; } = new List<PedidoProduto>();
         public ICollection<Pagamento> Pagamentos { get; set; } = new List<Pagamento>();
