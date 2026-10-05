@@ -9,5 +9,6 @@ namespace glaciar.Domain.Interfaces.Repositories
         Task AddAsync(UsuarioEndereco usuarioEndereco);
         Task UpdateAsync(UsuarioEndereco usuarioEndereco); 
         Task RemoverPadraoDoUsuarioAsync(int usuarioId);
+        Task<int> CountVinculosByEnderecoIdAsync(int enderecoId);
     }
 }

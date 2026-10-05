@@ -22,7 +22,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>(); 
 builder.Services.AddScoped<UsuarioService>();
-builder.Services.AddScoped<EnderecoService>();
+builder.Services.AddScoped<IEnderecoService, EnderecoService>();
 builder.Services.AddScoped<IEnderecoRepository, EnderecoRepository>();
 builder.Services.AddScoped<IUsuarioEnderecoRepository, UsuarioEnderecoRepository>();
 builder.Services.AddScoped<ICartaoService, CartaoService>();

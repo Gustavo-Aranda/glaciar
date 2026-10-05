@@ -1,31 +1,35 @@
 using glaciar.Application.DTOs.Enderecos;
-using glaciar.Domain.Entities;
+using glaciar.Application.Interfaces.Services;
 using glaciar.Domain.Entities.Clientes;
 using glaciar.Domain.Exceptions;
 using glaciar.Domain.Interfaces.Repositories;
+using AutoMapper;
 
 namespace glaciar.Application.Services.Enderecos
 {
-    public class EnderecoService
+    public class EnderecoService : IEnderecoService
     {
         private readonly IEnderecoRepository _enderecoRepository;
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IUsuarioEnderecoRepository _usuarioEnderecoRepository;
+        private readonly IMapper _mapper;
 
         public EnderecoService(
             IEnderecoRepository enderecoRepository, 
             IUsuarioRepository usuarioRepository,
-            IUsuarioEnderecoRepository usuarioEnderecoRepository)
+            IUsuarioEnderecoRepository usuarioEnderecoRepository,
+            IMapper mapper)
         {
             _enderecoRepository = enderecoRepository;
             _usuarioRepository = usuarioRepository;
             _usuarioEnderecoRepository = usuarioEnderecoRepository;
+            _mapper = mapper;
         }
 
         // ==========================================
         // CREATE: Orquestração Limpa e Semântica
         // ==========================================
-        public async Task<Endereco> CreateEnderecoAsync(EnderecoCreateDTO dto)
+        public async Task<EnderecoResponseDTO> CreateEnderecoAsync(EnderecoCreateDTO dto)
         {
             ValidarDadosEndereco(dto.Cep, dto.Logradouro, dto.Numero, dto.Bairro, dto.Cidade, dto.Apelido);
             await ValidarSeClienteExisteAsync(dto.UsuarioId);
@@ -36,20 +40,22 @@ namespace glaciar.Application.Services.Enderecos
 
             await CriarVinculoDeEnderecoAsync(dto, enderecoFisico.Id);
 
-            return enderecoFisico;
+            return _mapper.Map<EnderecoResponseDTO>(enderecoFisico);
         }
 
         // ==========================================
         // READ: Métodos de Consulta
         // ==========================================
-        public async Task<IEnumerable<UsuarioEndereco>> GetEnderecoClienteAsync(int clienteId)
+        public async Task<IEnumerable<UsuarioEnderecoResponseDTO>> GetEnderecoClienteAsync(int clienteId)
         {
-            return await _usuarioEnderecoRepository.GetAtivosByUsuarioIdAsync(clienteId);
+            var vinculos = await _usuarioEnderecoRepository.GetAtivosByUsuarioIdAsync(clienteId);
+            return _mapper.Map<IEnumerable<UsuarioEnderecoResponseDTO>>(vinculos);
         }
 
-        public async Task<Endereco?> GetEnderecoAsync(int id)
+        public async Task<EnderecoResponseDTO?> GetEnderecoAsync(int id)
         {
-            return await _enderecoRepository.GetByIdAsync(id);
+            var endereco = await _enderecoRepository.GetByIdAsync(id);
+            return endereco == null ? null : _mapper.Map<EnderecoResponseDTO>(endereco);
         }
 
         // ==========================================
@@ -66,8 +72,32 @@ namespace glaciar.Application.Services.Enderecos
 
             if (vinculo.Endereco != null)
             {
-                AtualizarDadosFisicosDaRua(vinculo.Endereco, dto);
-                await _enderecoRepository.UpdateAsync(vinculo.Endereco);
+                var totalVinculos = await _usuarioEnderecoRepository.CountVinculosByEnderecoIdAsync(vinculo.EnderecoId);
+
+                // Se o Endereço estiver associado a múltiplos vínculos, não alteramos o registro original
+                // para evitar efeito colateral em outros clientes. Instanciamos e persistimos um novo.
+                if (totalVinculos > 1)
+                {
+                    var novoEndereco = new Endereco
+                    {
+                        Cep = dto.Cep,
+                        Logradouro = dto.Logradouro,
+                        Numero = dto.Numero,
+                        Complemento = dto.Complemento,
+                        Bairro = dto.Bairro,
+                        Cidade = dto.Cidade,
+                        Estado = dto.Estado
+                    };
+
+                    await _enderecoRepository.AddAsync(novoEndereco);
+                    vinculo.EnderecoId = novoEndereco.Id;
+                    vinculo.Endereco = novoEndereco;
+                }
+                else
+                {
+                    AtualizarDadosFisicosDaRua(vinculo.Endereco, dto);
+                    await _enderecoRepository.UpdateAsync(vinculo.Endereco);
+                }
             }
 
             await _usuarioEnderecoRepository.UpdateAsync(vinculo);

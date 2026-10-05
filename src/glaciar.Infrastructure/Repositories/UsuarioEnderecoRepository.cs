@@ -59,5 +59,11 @@ namespace glaciar.Infrastructure.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<int> CountVinculosByEnderecoIdAsync(int enderecoId)
+        {
+            return await _context.UsuariosEnderecos
+                .CountAsync(ue => ue.EnderecoId == enderecoId);
+        }
     }
 }
