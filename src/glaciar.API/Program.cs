@@ -30,6 +30,15 @@ builder.Services.AddScoped<ICartaoRepository, CartaoRepository>();
 builder.Services.AddAutoMapper(config =>
     config.AddMaps(typeof(glaciar.Application.Mappings.UsuarioProfile).Assembly));
 
+// Módulo de Vendas
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IPedidoRepository, PedidoRepository>();
+builder.Services.AddScoped<ICupomRepository, CupomRepository>();
+builder.Services.AddScoped<IEstoqueRepository, EstoqueRepository>();
+builder.Services.AddScoped<IFreteService, glaciar.Application.Services.Vendas.FreteService>();
+builder.Services.AddScoped<ICarrinhoService, glaciar.Application.Services.Vendas.CarrinhoService>();
+builder.Services.AddScoped<ICheckoutService, glaciar.Application.Services.Vendas.CheckoutService>();
+
 // ==========================================
 // CONFIGURAÇÃO DE CORS (LIBERAR FRONTEND)
 // ==========================================
