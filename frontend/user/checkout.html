@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout | Glaciar</title>
+</head>
+<body>
+    <h1>Checkout de Venda (Simples)</h1>
+    
+    <div id="mensagem" style="margin-bottom: 20px; color: red;"></div>
+
+    <form id="checkout-form">
+        <h3>1. Endereço de Entrega</h3>
+        <label>
+            <input type="radio" name="endereco_tipo" value="existente" checked>
+            Usar endereço cadastrado:
+            <select id="endereco-existente">
+                <option value="1">Endereço Principal (ID: 1)</option>
+                <!-- Será populado pela API na versão final -->
+            </select>
+        </label>
+        <br><br>
+
+        <label>
+            <input type="radio" name="endereco_tipo" value="novo">
+            Novo Endereço:
+        </label>
+        <div id="novo-endereco-form" style="margin-left: 20px; margin-top: 10px;">
+            CEP: <input type="text" id="cep"> <br>
+            Logradouro: <input type="text" id="logradouro"> <br>
+            Número: <input type="text" id="numero"> <br>
+            Bairro: <input type="text" id="bairro"> <br>
+            Cidade: <input type="text" id="cidade"> <br>
+            Estado: <input type="text" id="estado" placeholder="SP"> <br>
+            <label><input type="checkbox" id="salvar-perfil"> Salvar no perfil (Apelido: <input type="text" id="apelido"> )</label>
+        </div>
+
+        <hr>
+
+        <h3>2. Cupons de Desconto / Troca</h3>
+        Códigos (separados por vírgula): <input type="text" id="cupons" placeholder="Ex: PROMO10, TROCA-XYZ">
+
+        <hr>
+
+        <h3>3. Pagamentos (Cartões de Crédito)</h3>
+        <p>Abaixo, insira o ID do seu cartão cadastrado e o valor a ser cobrado.</p>
+        <div id="cartoes-container">
+            <div class="cartao-item" style="margin-bottom: 10px;">
+                Cartão ID (Existente): <input type="number" class="cartao-id" value="1"> 
+                Valor (R$): <input type="number" step="0.01" class="cartao-valor" placeholder="10.00">
+            </div>
+            <!-- Pode adicionar mais campos dinamicamente no JS -->
+        </div>
+        
+        <hr>
+        <button type="submit" style="padding: 10px 20px; font-size: 16px;">Finalizar Compra</button>
+    </form>
+
+    <script src="./js/pages/checkout.js"></script>
+</body>
+</html>
