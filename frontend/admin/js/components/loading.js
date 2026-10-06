@@ -1,19 +1,12 @@
-let carregamentosAtivos = 0;
-
+// Compatibilidade com código legado do Admin
 function mostrarLoading(mensagem = 'Carregando...') {
-    const loading = document.getElementById('loading-overlay');
-    const texto = document.getElementById('loading-mensagem');
-    if (!loading || !texto) return;
-
-    carregamentosAtivos += 1;
-    texto.textContent = mensagem;
-    loading.classList.remove('hidden');
+    if (window.LoadingService) {
+        window.LoadingService.show(mensagem);
+    }
 }
 
 function esconderLoading() {
-    const loading = document.getElementById('loading-overlay');
-    if (!loading) return;
-
-    carregamentosAtivos = Math.max(0, carregamentosAtivos - 1);
-    if (carregamentosAtivos === 0) loading.classList.add('hidden');
+    if (window.LoadingService) {
+        window.LoadingService.hide();
+    }
 }

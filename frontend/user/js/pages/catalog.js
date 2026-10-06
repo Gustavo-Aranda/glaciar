@@ -18,6 +18,7 @@ async function carregarProdutos() {
     const contador = document.getElementById('items-count');
     if (!grid) return;
 
+    if (window.LoadingService) window.LoadingService.show('Carregando produtos...');
     try {
         const response = await fetch(`${API_BASE_URL}/produtos?categoria=${encodeURIComponent(CATEGORIA_PAGINA)}`);
         if (!response.ok) throw new Error(await response.text());
@@ -34,6 +35,8 @@ async function carregarProdutos() {
     } catch (error) {
         console.error('Erro ao carregar produtos:', error);
         grid.innerHTML = '<p>Não foi possível carregar os produtos.</p>';
+    } finally {
+        if (window.LoadingService) window.LoadingService.hide();
     }
 }
 
@@ -103,7 +106,7 @@ function renderizarTamanhos(article, produtoId) {
                 btn.classList.add('disabled');
                 btn.disabled = true;
             } else {
-                btn.addEventListener('click', () => addToBag(produto, e));
+                btn.addEventListener('click', () => addToBag(produto, e, btn));
             }
             overlay.appendChild(btn);
         });
@@ -142,9 +145,15 @@ function toggleSizeSelector(element) {
 }
 
 // Adiciona o item (estoque escolhido) ao carrinho via API e abre o Toast
-async function addToBag(produto, estoque) {
+async function addToBag(produto, estoque, btnElement) {
     const usuarioId = exigirIdUsuario();
     if (!usuarioId) return;
+
+    if (btnElement) {
+        btnElement.disabled = true;
+        btnElement.textContent = 'Adicionando...';
+    }
+
     try {
         const response = await fetch(`${API_BASE_URL}/carrinho/itens`, {
             method: 'POST',
@@ -176,6 +185,11 @@ async function addToBag(produto, estoque) {
         console.error('Erro ao adicionar ao carrinho:', error);
         if (window.Toast) window.Toast.showError('Erro de conexão', 'Não foi possível conectar ao servidor.');
         else alert('Erro de conexão com o servidor.');
+    } finally {
+        if (btnElement) {
+            btnElement.disabled = false;
+            btnElement.textContent = estoque.tamanho;
+        }
     }
 }
 

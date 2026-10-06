@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 /* ---------- 1. Carregamento Unificado (Contexto Agregado) ---------- */
 async function carregarContextoCheckout() {
+    if (window.LoadingService) window.LoadingService.show('Carregando dados do checkout...');
     try {
         const response = await fetch(`${API_BASE_URL}/checkout/contexto`, {
             headers: { 'X-Usuario-Id': USUARIO_ID.toString() }
@@ -48,6 +49,8 @@ async function carregarContextoCheckout() {
     } catch (error) {
         console.error('Erro ao inicializar contexto do checkout:', error);
         exibirMensagem(`Erro ao carregar dados: ${error.message}`, 'erro');
+    } finally {
+        if (window.LoadingService) window.LoadingService.hide();
     }
 }
 
@@ -255,6 +258,7 @@ async function recalcularFretePorOrigem() {
         return;
     }
 
+    if (window.LoadingService) window.LoadingService.show('Calculando frete...');
     $('resumo-frete').textContent = 'Calculando...';
 
     try {
@@ -278,6 +282,8 @@ async function recalcularFretePorOrigem() {
         $('resumo-frete').textContent = 'Erro ao calcular';
         $('resumo-total').textContent = formatarBRL(totalGeral);
         sincronizarValorComCartoes(totalGeral);
+    } finally {
+        if (window.LoadingService) window.LoadingService.hide();
     }
 }
 
@@ -460,11 +466,13 @@ async function finalizarCompra(e) {
 
     const erroValidacao = validar(payload);
     if (erroValidacao) {
-        exibirMensagem(erroValidacao, 'erro');
+        window.Toast.showError('Erro de Validação', erroValidacao);
         return;
     }
 
-    definirCarregando(btn, true);
+    if (window.LoadingService) window.LoadingService.show('Processando seu pedido...');
+    btn.disabled = true;
+    btn.textContent = 'Processando...';
     try {
         const response = await fetch(`${API_BASE_URL}/checkout/finalizar`, {
             method: 'POST',
@@ -485,35 +493,47 @@ async function finalizarCompra(e) {
             throw new Error(msg);
         }
 
-        exibirMensagem(
-            `Compra finalizada com sucesso!<br><strong>Código:</strong> ${data.codigo}<br>` +
-            `<strong>Subtotal:</strong> ${formatarBRL(data.subtotal)}<br>` +
-            `<strong>Frete:</strong> ${formatarBRL(data.valorFrete)}<br>` +
-            `<strong>Total:</strong> ${formatarBRL(data.valorTotal)}`, 'sucesso', true);
-        btn.textContent = 'Compra concluída';
+        // Sucesso: Segue o fluxo sem popup de notificação (apenas exibe a tela de sucesso ou altera a UI nativamente)
+        const mensagemSucesso = `
+            <div style="padding: 2rem; text-align: center; color: #2e8b57;">
+                <h2>Compra finalizada com sucesso! 🎉</h2>
+                <p><strong>Código:</strong> ${data.codigo}</p>
+                <p><strong>Subtotal:</strong> ${formatarBRL(data.subtotal)}</p>
+                <p><strong>Frete:</strong> ${formatarBRL(data.valorFrete)}</p>
+                <p><strong>Total:</strong> ${formatarBRL(data.valorTotal)}</p>
+                <br>
+                <a href="pedidos.html" class="btn-submit" style="display:inline-block; margin-top: 1rem; text-decoration: none;">Ver meus pedidos</a>
+            </div>
+        `;
+        document.querySelector('.checkout-main').innerHTML = mensagemSucesso;
+
     } catch (error) {
         const msg = error instanceof TypeError ? 'Erro de rede. Verifique sua conexão.' : error.message;
-        exibirMensagem(msg, 'erro');
-        definirCarregando(btn, false);
+        window.Toast.showError('Falha no Pagamento', msg);
+        btn.disabled = false;
+        btn.textContent = 'Finalizar Compra';
+    } finally {
+        if (window.LoadingService) window.LoadingService.hide();
     }
 }
 
-/* ---------- Feedback ---------- */
-function definirCarregando(btn, carregando) {
-    btn.disabled = carregando;
-    btn.textContent = carregando ? 'Processando...' : 'Finalizar Compra';
-    if (carregando) exibirMensagem('Processando seu pedido...', 'info');
-}
-
+/* ---------- Feedback Opcional para Mensagens Locais (Não Toast) ---------- */
 function exibirMensagem(texto, tipo, html = false) {
-    const div = $('mensagem');
-    if (div) div.style.display = 'none';
-
     if (tipo === 'erro') {
         window.Toast.showError('Erro', texto);
-    } else if (tipo === 'sucesso') {
-        window.Toast.showSuccess('Sucesso', texto);
-    } else {
-        window.Toast.showSuccess('Informação', texto);
+        return;
     }
+    
+    const div = $('mensagem');
+    if (!div) return;
+    
+    div.style.display = 'block';
+    const cores = { erro: 'red', sucesso: 'green', info: 'blue' };
+    div.style.color = cores[tipo];
+    div.style.padding = '1rem';
+    div.style.marginBottom = '1rem';
+    div.style.border = `1px solid ${cores[tipo]}`;
+    
+    if (html) div.innerHTML = texto; else div.textContent = texto;
+    div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }

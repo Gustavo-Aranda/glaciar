@@ -2,6 +2,7 @@
    VARIÁVEIS GLOBAIS
    ========================================= */
 @import url('./components/notification.css');
+@import url('./components/loading.css');
 :root {
     --branco: #FFFFFF;
     --fundo-app: #F4F6F8;

@@ -34,6 +34,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 async function loadProductData(produtoId) {
+    if (window.LoadingService) window.LoadingService.show('Carregando produto...');
     try {
         const response = await fetch(`${API_BASE_URL}/produtos/${produtoId}`);
         if (!response.ok) throw new Error("Produto não encontrado");
@@ -44,6 +45,8 @@ async function loadProductData(produtoId) {
         console.error(err);
         if (window.Toast) window.Toast.showError('Erro ao carregar produto', err.message);
         else alert(err.message);
+    } finally {
+        if (window.LoadingService) window.LoadingService.hide();
     }
 }
 
@@ -159,6 +162,14 @@ async function addToBag() {
         return;
     }
 
+    const btnElement = document.getElementById('btn-add-to-bag');
+    let originalText = 'Adicionar ao Carrinho';
+    if (btnElement) {
+        originalText = btnElement.textContent;
+        btnElement.disabled = true;
+        btnElement.textContent = 'Adicionando...';
+    }
+
     try {
         const response = await fetch(`${API_BASE_URL}/carrinho/itens`, {
             method: 'POST',
@@ -195,6 +206,11 @@ async function addToBag() {
         console.error('Erro de rede:', error);
         if (window.Toast) window.Toast.showError('Erro de conexão', 'Erro ao se conectar ao servidor.');
         else alert('Erro ao se conectar ao servidor.');
+    } finally {
+        if (btnElement) {
+            btnElement.disabled = false;
+            btnElement.textContent = originalText;
+        }
     }
 }
 

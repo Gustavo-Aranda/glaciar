@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function carregarCarrinho() {
+    if (window.LoadingService) window.LoadingService.show('Carregando carrinho...');
     try {
         const response = await fetch(`${API_BASE_URL}/carrinho`, {
             headers: {
@@ -31,12 +32,16 @@ async function carregarCarrinho() {
         renderizarCarrinho(carrinho);
     } catch (error) {
         console.error('Erro de rede ao carregar carrinho:', error);
+    } finally {
+        if (window.LoadingService) window.LoadingService.hide();
     }
 }
 
 function renderizarCarrinho(carrinho) {
     const container = document.querySelector('.cart-items-section');
     if (!container) return;
+
+    const btnCheckout = document.querySelector('.btn-checkout-black');
 
     // Limpar itens atuais (mantendo o header e footer)
     const items = container.querySelectorAll('.cart-item');
@@ -51,8 +56,20 @@ function renderizarCarrinho(carrinho) {
         emptyMsg.textContent = 'Seu carrinho está vazio.';
         header.after(emptyMsg);
 
+        if (btnCheckout) {
+            btnCheckout.disabled = true;
+            btnCheckout.style.opacity = '0.5';
+            btnCheckout.style.cursor = 'not-allowed';
+        }
+
         atualizarResumo(0);
         return;
+    }
+
+    if (btnCheckout) {
+        btnCheckout.disabled = false;
+        btnCheckout.style.opacity = '1';
+        btnCheckout.style.cursor = 'pointer';
     }
 
     let lastElement = header;
@@ -173,6 +190,7 @@ function alterarQuantidadeInput(itemId, novaQuantidade) {
 }
 
 async function atualizarQuantidadeAPI(itemId, novaQuantidade) {
+    if (window.LoadingService) window.LoadingService.show('Atualizando quantidade...');
     try {
         const response = await fetch(`${API_BASE_URL}/carrinho/itens/${itemId}`, {
             method: 'PUT',
@@ -184,21 +202,23 @@ async function atualizarQuantidadeAPI(itemId, novaQuantidade) {
         });
 
         if (response.ok) {
-            carregarCarrinho();
+            await carregarCarrinho();
         } else {
             const err = await response.json();
             if (window.Toast) window.Toast.showError('Erro ao atualizar quantidade', err.message);
             else alert(`Erro: ${err.message}`);
-            carregarCarrinho(); // Retorna ao estado original do servidor em caso de erro
+            await carregarCarrinho(); // Retorna ao estado original do servidor em caso de erro
         }
     } catch (error) {
         console.error('Erro:', error);
-        carregarCarrinho();
+        await carregarCarrinho();
+    } finally {
+        if (window.LoadingService) window.LoadingService.hide();
     }
 }
 
 async function removerItem(itemId) {
-
+    if (window.LoadingService) window.LoadingService.show('Removendo item...');
     try {
         const response = await fetch(`${API_BASE_URL}/carrinho/itens/${itemId}`, {
             method: 'DELETE',
@@ -208,7 +228,7 @@ async function removerItem(itemId) {
         });
 
         if (response.ok) {
-            carregarCarrinho();
+            await carregarCarrinho();
         } else {
             const err = await response.json();
             if (window.Toast) window.Toast.showError('Erro ao remover item', err.message);
@@ -216,5 +236,7 @@ async function removerItem(itemId) {
         }
     } catch (error) {
         console.error('Erro:', error);
+    } finally {
+        if (window.LoadingService) window.LoadingService.hide();
     }
 }
