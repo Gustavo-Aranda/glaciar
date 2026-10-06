@@ -115,6 +115,8 @@
 
 .status-neutro { background-color: var(--azul-gelo-fundo); color: var(--azul-gelo); }
 .status-atencao { background-color: var(--laranja-alpinista-fundo); color: var(--laranja-alpinista); }
+.status-sucesso { background-color: #E8F8F5; color: #16A085; }
+.status-cancelado { background-color: #FDEDEC; color: #C0392B; }
 
 .btn {
     padding: 0.6rem 1.5rem;
@@ -123,6 +125,10 @@
     cursor: pointer;
     font-size: 0.9rem;
     transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
 }
 
 .btn-primary {
@@ -145,3 +151,122 @@
     border: 1px solid var(--preto);
 }
 .btn-warning:hover { background-color: var(--preto-hover); }
+
+/* =========================================
+   ESTADO VAZIO (EMPTY STATE)
+   ========================================= */
+.empty-orders {
+    background-color: var(--branco);
+    border: 1px dashed var(--borda-cinza);
+    border-radius: 8px;
+    padding: 4rem 2rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.empty-orders-icon {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.7;
+}
+
+.empty-orders h3 {
+    font-size: 1.4rem;
+    color: var(--cinza-rocha);
+}
+
+.empty-orders p {
+    color: var(--cinza-rocha-claro);
+    font-size: 1rem;
+    max-width: 480px;
+}
+
+/* =========================================
+   SUB-ITENS E RODAPÉ DO CARD
+   ========================================= */
+.order-items-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.order-items-group .order-body:not(:last-child) {
+    border-bottom: 1px dashed var(--borda-cinza);
+}
+
+.order-footer-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.2rem 1.5rem;
+    background-color: #FAFAFA;
+    border-top: 1px solid var(--borda-cinza);
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.order-total-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.order-total-value {
+    font-size: 1.05rem;
+    color: var(--cinza-rocha);
+}
+
+.order-total-value strong {
+    font-size: 1.15rem;
+    color: var(--cinza-rocha);
+}
+
+.order-frete-note {
+    font-size: 0.8rem;
+    color: var(--cinza-rocha-claro);
+}
+
+/* =========================================
+   DRAWER DE DETALHES EXPANSÍVEL
+   ========================================= */
+.order-details-drawer {
+    background-color: #F8FAFC;
+    border-top: 1px solid var(--borda-cinza);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    animation: fadeIn 0.25s ease-in-out;
+}
+
+.order-details-drawer.hidden {
+    display: none;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+}
+
+.details-col h4 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--cinza-rocha-claro);
+    margin-bottom: 0.5rem;
+}
+
+.details-col p {
+    font-size: 0.9rem;
+    color: var(--cinza-rocha);
+    line-height: 1.4;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}

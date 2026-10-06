@@ -62,3 +62,4 @@ class NotificationService {
 // Cria a instância global
 const Toast = new NotificationService();
 window.Toast = Toast;
+window.NotificationService = Toast;

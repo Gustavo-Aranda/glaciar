@@ -21,72 +21,8 @@
             <p>Acompanhe a entrega de seus equipamentos e confirme o recebimento.</p>
         </div>
 
-        <section class="orders-list">
-            <!-- Pedido: Em Processamento -->
-            <article class="order-card">
-                <div class="order-header">
-                    <div class="order-info">
-                        <span class="order-number">Pedido #89015</span>
-                        <span class="order-date">Realizado hoje</span>
-                    </div>
-                    <span class="status status-atencao">Em Processamento</span>
-                </div>
-                <div class="order-body">
-                    <div class="product-img" style="background-image: url();"></div>
-                    <div class="product-details">
-                        <p class="product-title">1x Lanterna de Cabeça</p>
-                        <p class="product-price">R$ 300,00</p>
-                    </div>
-                </div>
-                <div class="order-actions">
-                    <button class="btn btn-secondary">Detalhes</button>
-                    <button class="btn btn-warning">Cancelar Pedido</button>
-                </div>
-            </article>
-
-            <!-- Pedido: Em Trânsito -->
-            <article class="order-card">
-                <div class="order-header">
-                    <div class="order-info">
-                        <span class="order-number">Pedido #89012</span>
-                        <span class="order-date">Realizado em: 15/08/2026</span>
-                    </div>
-                    <span class="status status-neutro">Em Trânsito</span>
-                </div>
-                <div class="order-body">
-                    <div class="product-img" style="background-image: url();"></div>
-                    <div class="product-details">
-                        <p class="product-title">1x Jaqueta Alpine Pro - G</p>
-                        <p class="product-price">R$ 850,00</p>
-                    </div>
-                </div>
-                <div class="order-actions">
-                    <button class="btn btn-secondary">Rastrear Entrega</button>
-                    <button class="btn btn-primary">Confirmar Recebimento</button>
-                </div>
-            </article>
-
-            <!-- Pedido: Entregue -->
-            <article class="order-card">
-                <div class="order-header">
-                    <div class="order-info">
-                        <span class="order-number">Pedido #88900</span>
-                        <span class="order-date">Recebido em: 05/08/2026</span>
-                    </div>
-                    <span class="status status-neutro">Entregue</span>
-                </div>
-                <div class="order-body">
-                    <div class="product-img" style="background-image: url();"></div>
-                    <div class="product-details">
-                        <p class="product-title">1x Mochila Covert 30L</p>
-                        <p class="product-price">R$ 600,00</p>
-                    </div>
-                </div>
-                <div class="order-actions">
-                    <button class="btn btn-secondary">Detalhes</button>
-                    <button class="btn btn-warning">Solicitar Troca / Devolução</button>
-                </div>
-            </article>
+        <section class="orders-list" id="orders-container">
+            <!-- Os cards dos pedidos serão injetados dinamicamente via pedidos.js -->
         </section>
     </main>
 
@@ -95,5 +31,6 @@
     <script src="./js/components/loading.js"></script>
     <script src="./js/components/layout.js"></script>
     <script src="./js/components/chatbot.js"></script>
+    <script src="./js/pages/pedidos.js"></script>
 </body>
 </html>

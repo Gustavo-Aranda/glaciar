@@ -4,7 +4,7 @@ namespace glaciar.Application.Interfaces.Services
 {
     public interface IPedidoService
     {
-        Task<IEnumerable<PedidoResponseDTO>> ListarPorUsuarioAsync(int usuarioId);
-        Task<PedidoResponseDTO> ObterAsync(int usuarioId, int pedidoId);
+        Task<IEnumerable<PedidoResponseDTO>> ObterPedidosDoUsuarioAsync(int usuarioId);
+        Task<PedidoResponseDTO?> ObterPedidoPorIdAsync(int usuarioId, int pedidoId);
     }
 }

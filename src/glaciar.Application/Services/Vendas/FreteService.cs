@@ -5,7 +5,6 @@ namespace glaciar.Application.Services.Vendas
 {
     /// <summary>
     /// Regra de frete por região do destino + adicional por unidade.
-    /// por estar isolada atrás de IFreteService, a troca não afeta o checkout.
     /// </summary>
     public class FreteService : IFreteService
     {
