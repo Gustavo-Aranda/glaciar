@@ -71,24 +71,24 @@ namespace glaciar.Application.Services.Vendas
 
                 // 3. Totais e Aplicação de Cupons
                 var subtotalProdutos = pedido.ProdutosDoPedido.Sum(p => p.Preco * p.Quantidade);
-                var totalDescontos = await ProcessarCuponsAsync(pedido, usuarioId, dto.CodigosCupons);
+                var totalCompra = subtotalProdutos + valorFrete;
+                pedido.ValorTotal = totalCompra;
 
-                var totalAposCupons = (subtotalProdutos + valorFrete) - totalDescontos;
-                Cupom? cupomTrocaGerado = null;
+                var resultadoCupons = await ProcessarCuponsAsync(pedido, usuarioId, dto.CodigosCupons, totalCompra);
 
-                if (totalAposCupons < 0)
+                // 4. Processar Pagamento via Cartões
+                if (resultadoCupons.SaldoDevedor > 0)
                 {
-                    var troco = Math.Abs(totalAposCupons);
-                    cupomTrocaGerado = await GerarCupomTrocaAsync(usuarioId, troco);
-                    totalAposCupons = 0;
+                    await ProcessarPagamentosAsync(
+                        pedido,
+                        usuarioId,
+                        dto.Cartoes,
+                        resultadoCupons.SaldoDevedor,
+                        resultadoCupons.HouveCuponsAplicados);
                 }
-
-                pedido.ValorTotal = subtotalProdutos + valorFrete;
-
-                // 4. Processar Pagamento (Cartões de Crédito)
-                if (totalAposCupons > 0)
+                else
                 {
-                    await ProcessarPagamentosAsync(pedido, usuarioId, dto.Cartoes, totalAposCupons);
+                    ValidarSemCobrancaCartao(dto.Cartoes);
                 }
 
                 // 5. Baixa de Estoque
@@ -101,7 +101,7 @@ namespace glaciar.Application.Services.Vendas
                 await _pedidoRepository.UpdateAsync(pedido);
                 await _unitOfWork.CommitAsync();
 
-                return VendasMapper.ParaPedido(pedido, cupomTrocaGerado);
+                return VendasMapper.ParaPedido(pedido, resultadoCupons.CupomTrocaGerado);
             }
             catch
             {
@@ -111,7 +111,7 @@ namespace glaciar.Application.Services.Vendas
         }
 
         // ==========================================
-        // 2. OBTER CONTEXTO (FEAT NOVA)
+        // 2. OBTER CONTEXTO
         // ==========================================
         public async Task<CheckoutContextoDTO> ObterContextoAsync(int usuarioId)
         {
@@ -187,80 +187,121 @@ namespace glaciar.Application.Services.Vendas
             });
         }
 
-        private async Task<decimal> ProcessarCuponsAsync(Pedido pedido, int usuarioId, IEnumerable<string> codigosCupons)
-        {
-            decimal totalDescontos = 0;
-            int countPromocionais = 0;
+        // ==========================================
+        // 🔒 PROCESSAMENTO DE CUPONS
+        // ==========================================
 
+        /// <summary>
+        /// Orquestra a busca, validação e persistência dos cupons, delegando todas as regras
+        /// de negócio para a classe de domínio puro CupomRegras.
+        /// </summary>
+        private async Task<ResultadoProcessamentoCupons> ProcessarCuponsAsync(
+            Pedido pedido,
+            int usuarioId,
+            IEnumerable<string>? codigosCupons,
+            decimal valorTotalCompra)
+        {
             pedido.CuponsAplicados.Clear();
 
-            foreach (var codigo in codigosCupons)
+            // 1. Normalização e validação de duplicidade
+            var codigosLimpos = CupomRegras.NormalizarEValidarCodigos(codigosCupons);
+            if (!codigosLimpos.Any())
+            {
+                return new ResultadoProcessamentoCupons { SaldoDevedor = valorTotalCompra };
+            }
+
+            // 2. Consulta ao banco de dados e validação de elegibilidade
+            var cuponsCarregados = new List<Cupom>();
+            foreach (var codigo in codigosLimpos)
             {
                 var cupom = await _cupomRepository.GetByCodigoAsync(codigo);
                 CupomRegras.ValidarUso(cupom, usuarioId, codigo);
-
-                if (CupomRegras.EhPromocional(cupom!))
-                {
-                    countPromocionais++;
-                    if (countPromocionais > 1)
-                    {
-                        throw new DomainValidationException("Apenas um cupom promocional pode ser usado por pedido.");
-                    }
-                }
-
-                pedido.CuponsAplicados.Add(new PedidoCupom
-                {
-                    CupomId = cupom!.Id,
-                    PedidoId = pedido.Id,
-                    Pedido = pedido
-                });
-
-                cupom.QuantidadeMaximaUso--;
-                totalDescontos += cupom.ValorDesconto;
+                cuponsCarregados.Add(cupom!);
             }
 
-            return totalDescontos;
-        }
+            // 3. Separação de categorias (máximo 1 promocional)
+            var (cupomPromocional, cuponsTroca) = CupomRegras.SepararEValidarCategorias(cuponsCarregados);
 
-        private async Task<Cupom> GerarCupomTrocaAsync(int usuarioId, decimal troco)
-        {
-            var cupomTroca = new Cupom
+            // 4. Cálculo progressivo, proibição de cupons desnecessários e cálculo de troco
+            var plano = CupomRegras.CalcularAbatimento(valorTotalCompra, cupomPromocional, cuponsTroca);
+
+            // 5. Associação dos cupons no pedido e decremento de uso
+            foreach (var cupom in plano.CuponsUtilizados)
             {
-                Codigo = $"TROCA-{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}",
-                ValorDesconto = troco,
-                DataValidade = DateTime.UtcNow.AddYears(1),
-                CategoriaCupom = CategoriasCupom.Troca,
-                Ativo = true,
-                QuantidadeMaximaUso = 1,
-                UsuarioId = usuarioId
-            };
+                pedido.CuponsAplicados.Add(new PedidoCupom
+                {
+                    CupomId = cupom.Id,
+                    PedidoId = pedido.Id,
+                    Pedido = pedido,
+                    Cupom = cupom
+                });
+                cupom.QuantidadeMaximaUso--;
+            }
 
-            await _cupomRepository.AddAsync(cupomTroca);
-            return cupomTroca;
+            // 6. Persistência do novo cupom de troca caso haja troco
+            Cupom? cupomTrocaGerado = null;
+            if (plano.TemTroco)
+            {
+                cupomTrocaGerado = CupomRegras.CriarCupomTroca(usuarioId, plano.ValorTrocoGerado);
+                await _cupomRepository.AddAsync(cupomTrocaGerado);
+            }
+
+            return new ResultadoProcessamentoCupons
+            {
+                SaldoDevedor = plano.SaldoDevedor,
+                TotalDescontosAplicados = plano.TotalDescontosAplicados,
+                CupomTrocaGerado = cupomTrocaGerado,
+                CuponsAplicados = plano.CuponsUtilizados
+            };
         }
 
-        private async Task ProcessarPagamentosAsync(Pedido pedido, int usuarioId, List<CheckoutCartaoDTO> cartoes, decimal saldoDevedor)
+        // ==========================================
+        // 🔒 PROCESSAMENTO DE CARTÕES
+        // ==========================================
+
+        /// <summary>
+        /// Valida múltiplos cartões, exigindo valor mínimo de R$ 10,00 por cartão,
+        /// com exceção permitida apenas quando há cupons aplicados e o saldo restante é inferior a R$ 10,00.
+        /// </summary>
+        private async Task ProcessarPagamentosAsync(
+            Pedido pedido,
+            int usuarioId,
+            List<CheckoutCartaoDTO>? cartoes,
+            decimal saldoDevedor,
+            bool houveCuponsAplicados)
         {
             if (cartoes == null || !cartoes.Any())
             {
-                throw new DomainValidationException("Nenhum cartão informado para o saldo devedor.");
+                throw new DomainValidationException("Nenhum cartão informado para o pagamento do saldo devedor restante.");
             }
 
-            // 1. ETAPA DE VALIDAÇÃO (Fail-Fast)
             var somaValores = cartoes.Sum(c => c.Valor);
-            if (somaValores < saldoDevedor)
+
+            // Valida se o total nos cartões cobre exatamente o saldo devedor
+            if (Math.Round(somaValores, 2) != Math.Round(saldoDevedor, 2))
             {
-                throw new DomainValidationException($"O valor dos cartões (R$ {somaValores:F2}) é inferior ao saldo devedor (R$ {saldoDevedor:F2}).");
+                throw new DomainValidationException(
+                    $"O valor total nos cartões (R$ {somaValores:F2}) não confere com o saldo devedor restante (R$ {saldoDevedor:F2}).");
             }
+
+            // Se combinou cupons e o saldo restante for < R$ 10,00, permite cartão < R$ 10,00
+            bool permiteValorAbaixoDeDez = houveCuponsAplicados && (saldoDevedor < ValorMinimoPorCartao);
 
             foreach (var c in cartoes)
             {
-                if (c.Valor < ValorMinimoPorCartao)
+                if (c.Valor <= 0m)
                 {
-                    throw new DomainValidationException($"O valor mínimo em cada cartão de crédito é R$ {ValorMinimoPorCartao:F2}.");
+                    throw new DomainValidationException("O valor a ser cobrado em cada cartão deve ser maior que zero.");
                 }
 
-                // Validação obrigatória para qualquer novo cartão (independente de salvarNoPerfil)
+                // Validação de valor mínimo de R$ 10,00 por cartão
+                if (!permiteValorAbaixoDeDez && c.Valor < ValorMinimoPorCartao)
+                {
+                    throw new DomainValidationException(
+                        $"O valor mínimo debitado em cada cartão de crédito deve ser de R$ {ValorMinimoPorCartao:F2}. O valor informado de R$ {c.Valor:F2} não é permitido.");
+                }
+
+                // Validação cadastral do cartão
                 if (c.NovoCartao != null)
                 {
                     _cartaoService.ValidarCartao(
@@ -280,12 +321,11 @@ namespace glaciar.Application.Services.Vendas
                 }
             }
 
-            // 2. ETAPA DE PROCESSAMENTO E 3. PERSISTÊNCIA CONDICIONAL
+            // Persistência e associação dos pagamentos
             foreach (var c in cartoes)
             {
                 int? usuarioCartaoId = c.UsuarioCartaoId;
 
-                // Persistência condicional no perfil (última etapa)
                 if (c.NovoCartao != null && c.NovoCartao.SalvarNoPerfil)
                 {
                     var novoUsuarioCartao = await _cartaoService.CreateAsync(new CartaoCreateDTO
@@ -300,7 +340,6 @@ namespace glaciar.Application.Services.Vendas
                     usuarioCartaoId = novoUsuarioCartao.Id;
                 }
 
-                // Registro do pagamento com autorização
                 pedido.Pagamentos.Add(new Pagamento
                 {
                     Valor = c.Valor,
@@ -312,6 +351,15 @@ namespace glaciar.Application.Services.Vendas
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 });
+            }
+        }
+
+        private static void ValidarSemCobrancaCartao(List<CheckoutCartaoDTO>? cartoes)
+        {
+            if (cartoes != null && cartoes.Any(c => c.Valor > 0))
+            {
+                throw new DomainValidationException(
+                    "O valor total da compra foi 100% coberto pelos cupons aplicados. Nenhum valor deve ser cobrado no cartão de crédito.");
             }
         }
 
@@ -328,5 +376,17 @@ namespace glaciar.Application.Services.Vendas
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Encapsula o resultado modular do cálculo progressivo dos cupons no checkout.
+    /// </summary>
+    public class ResultadoProcessamentoCupons
+    {
+        public decimal SaldoDevedor { get; set; }
+        public decimal TotalDescontosAplicados { get; set; }
+        public Cupom? CupomTrocaGerado { get; set; }
+        public List<Cupom> CuponsAplicados { get; set; } = new();
+        public bool HouveCuponsAplicados => CuponsAplicados.Any();
     }
 }
