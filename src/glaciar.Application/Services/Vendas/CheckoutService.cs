@@ -246,7 +246,7 @@ namespace glaciar.Application.Services.Vendas
                 throw new DomainValidationException("Nenhum cartão informado para o saldo devedor.");
             }
 
-            // Validação prévia (Fail-Fast): garante integridade antes de persistir dados
+            // 1. ETAPA DE VALIDAÇÃO (Fail-Fast)
             var somaValores = cartoes.Sum(c => c.Valor);
             if (somaValores < saldoDevedor)
             {
@@ -260,7 +260,32 @@ namespace glaciar.Application.Services.Vendas
                     throw new DomainValidationException($"O valor mínimo em cada cartão de crédito é R$ {ValorMinimoPorCartao:F2}.");
                 }
 
+                // Validação obrigatória para qualquer novo cartão (independente de salvarNoPerfil)
+                if (c.NovoCartao != null)
+                {
+                    _cartaoService.ValidarCartao(
+                        c.NovoCartao.Numero,
+                        c.NovoCartao.Cvv,
+                        c.NovoCartao.Bandeira,
+                        c.NovoCartao.MesValidade,
+                        c.NovoCartao.AnoValidade);
+                }
+                else if (c.UsuarioCartaoId.HasValue)
+                {
+                    await _cartaoService.GetByIdAsync(usuarioId, c.UsuarioCartaoId.Value);
+                }
+                else
+                {
+                    throw new DomainValidationException("Informe um cartão vinculado ou os dados do novo cartão.");
+                }
+            }
+
+            // 2. ETAPA DE PROCESSAMENTO E 3. PERSISTÊNCIA CONDICIONAL
+            foreach (var c in cartoes)
+            {
                 int? usuarioCartaoId = c.UsuarioCartaoId;
+
+                // Persistência condicional no perfil (última etapa)
                 if (c.NovoCartao != null && c.NovoCartao.SalvarNoPerfil)
                 {
                     var novoUsuarioCartao = await _cartaoService.CreateAsync(new CartaoCreateDTO
@@ -275,6 +300,7 @@ namespace glaciar.Application.Services.Vendas
                     usuarioCartaoId = novoUsuarioCartao.Id;
                 }
 
+                // Registro do pagamento com autorização
                 pedido.Pagamentos.Add(new Pagamento
                 {
                     Valor = c.Valor,

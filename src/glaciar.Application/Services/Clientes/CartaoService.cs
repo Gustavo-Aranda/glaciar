@@ -19,14 +19,20 @@ namespace glaciar.Application.Services.Clientes
             _usuarioRepository = usuarioRepository;
         }
 
+        public void ValidarCartao(string numero, string cvv, Domain.Entities.Clientes.Enum.BandeiraCartao bandeira, int mesValidade, int anoValidade)
+        {
+            var numeroNormalizado = NormalizarNumero(numero);
+            ValidarNumero(numeroNormalizado);
+            ValidarCvv(cvv);
+            ValidarBandeira(bandeira);
+            ValidarValidade(mesValidade, anoValidade);
+        }
+
         public async Task<UsuarioCartao> CreateAsync(CartaoCreateDTO dto)
         {
             await ValidarUsuarioAsync(dto.UsuarioId);
+            ValidarCartao(dto.Numero, dto.Cvv, dto.Bandeira, dto.MesValidade, dto.AnoValidade);
             var numero = NormalizarNumero(dto.Numero);
-            ValidarNumero(numero);
-            ValidarCvv(dto.Cvv);
-            ValidarBandeira(dto.Bandeira);
-            ValidarValidade(dto.MesValidade, dto.AnoValidade);
 
             if (dto.Padrao)
             {

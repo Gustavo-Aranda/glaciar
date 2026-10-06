@@ -1,5 +1,6 @@
 using glaciar.Application.DTOs.Clientes;
 using glaciar.Domain.Entities.Clientes;
+using glaciar.Domain.Entities.Clientes.Enum;
 
 namespace glaciar.Application.Interfaces.Services
 {
@@ -10,5 +11,6 @@ namespace glaciar.Application.Interfaces.Services
         Task<UsuarioCartao> GetByIdAsync(int usuarioId, int usuarioCartaoId);
         Task<UsuarioCartao> UpdateAsync(int usuarioId, int usuarioCartaoId, CartaoUpdateDTO dto);
         Task DeleteAsync(int usuarioId, int usuarioCartaoId);
+        void ValidarCartao(string numero, string cvv, BandeiraCartao bandeira, int mesValidade, int anoValidade);
     }
 }
