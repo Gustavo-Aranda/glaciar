@@ -5,6 +5,9 @@ const $ = (id) => document.getElementById(id);
 const formatarBRL = (v) => `R$ ${Number(v).toFixed(2).replace('.', ',')}`;
 
 let subtotalCarrinho = 0;
+let valorFrete = 0;
+let totalGeral = 0;
+let estadoExistente = null;
 let cartoesVinculados = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -22,12 +25,25 @@ function inicializarUI() {
     const btnEndereco = $('btn-toggle-endereco');
     const formNovoEndereco = $('novo-endereco-form');
 
-    btnEndereco.addEventListener('click', () => {
+    btnEndereco.addEventListener('click', async () => {
         const ativo = formNovoEndereco.classList.toggle('active');
         $('usar-novo').checked = ativo;
         $('usar-existente').checked = !ativo;
         btnEndereco.textContent = ativo ? '- Cancelar novo endereço' : '+ Adicionar endereço';
+
+        // Recalcula o frete e total com base na fonte de endereço ativa
+        await atualizarCalculoFreteETotal();
     });
+
+    // Recalcula o frete se o usuário mudar o estado no formulário de novo endereço
+    const selectEstado = $('estado');
+    if (selectEstado) {
+        selectEstado.addEventListener('change', async () => {
+            if ($('usar-novo').checked) {
+                await atualizarCalculoFreteETotal();
+            }
+        });
+    }
 
     // 2. Toggle Novo Cartão (recluso por padrão)
     const btnCartao = $('btn-toggle-cartao');
@@ -41,7 +57,7 @@ function inicializarUI() {
         const inputValorNovo = $('novo-cartao-valor');
         if (ativo && (!inputValorNovo.value || parseFloat(inputValorNovo.value) <= 0)) {
             const cobradoVinculados = somarValoresCartoesVinculados();
-            const restante = Math.max(0, subtotalCarrinho - cobradoVinculados);
+            const restante = Math.max(0, totalGeral - cobradoVinculados);
             if (restante > 0) {
                 inputValorNovo.value = restante.toFixed(2);
             }
@@ -54,7 +70,37 @@ function inicializarUI() {
     });
 }
 
-/* ---------- 1. Carregar Endereço Principal ---------- */
+/* ---------- 1. Carregar Resumo do Pedido (carrinho) ---------- */
+async function carregarResumo() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/carrinho`, {
+            headers: { 'X-Usuario-Id': USUARIO_ID.toString() }
+        });
+        if (!response.ok) throw new Error('Não foi possível carregar o carrinho.');
+
+        const carrinho = await response.json();
+        subtotalCarrinho = carrinho.subtotal || 0;
+        totalGeral = subtotalCarrinho;
+
+        $('resumo-subtotal').textContent = formatarBRL(subtotalCarrinho);
+        $('resumo-total').textContent = formatarBRL(totalGeral);
+
+        $('resumo-itens').innerHTML = (carrinho.itens || []).map(item => `
+            <div class="product-item">
+                <div class="product-img" style="background-color: #eee;"></div>
+                <div class="product-details">
+                    <p class="product-name">${item.nomeProduto}</p>
+                    <p class="product-meta">SKU: ${item.sku} / ${item.cor} / ${item.tamanho}</p>
+                    <p class="product-meta">Qtd: ${item.quantidade}</p>
+                    <p class="product-price">${formatarBRL(item.subtotal)}</p>
+                </div>
+            </div>`).join('');
+    } catch (error) {
+        exibirMensagem(error.message, 'erro');
+    }
+}
+
+/* ---------- 2. Carregar Endereço Principal ---------- */
 async function carregarEnderecoPrincipal() {
     const infoDiv = $('endereco-info');
     const hiddenId = $('endereco-existente');
@@ -71,6 +117,7 @@ async function carregarEnderecoPrincipal() {
                 <p>Cadastre um endereço para entrega no formulário abaixo.</p>
             `;
             hiddenId.value = '';
+            estadoExistente = null;
 
             // Expande o formulário de novo endereço automaticamente
             const formNovo = $('novo-endereco-form');
@@ -78,6 +125,8 @@ async function carregarEnderecoPrincipal() {
             $('usar-novo').checked = true;
             $('usar-existente').checked = false;
             $('btn-toggle-endereco').textContent = '- Cancelar novo endereço';
+
+            await atualizarCalculoFreteETotal();
             return;
         }
 
@@ -86,6 +135,7 @@ async function carregarEnderecoPrincipal() {
         const dadosFisicos = enderecoPrincipal.endereco || enderecoPrincipal;
 
         hiddenId.value = enderecoPrincipal.id;
+        estadoExistente = dadosFisicos.estado;
         const apelidoStr = enderecoPrincipal.apelido ? ` (${enderecoPrincipal.apelido})` : '';
 
         infoDiv.innerHTML = `
@@ -93,6 +143,9 @@ async function carregarEnderecoPrincipal() {
             <p>${dadosFisicos.logradouro}, ${dadosFisicos.numero}${dadosFisicos.complemento ? ' - ' + dadosFisicos.complemento : ''}, ${dadosFisicos.bairro} - ${dadosFisicos.cidade}/${dadosFisicos.estado}, CEP: ${dadosFisicos.cep}</p>
             <input type="hidden" id="endereco-existente" value="${enderecoPrincipal.id}">
         `;
+
+        // Calcula frete imediatamente para o endereço principal
+        await atualizarCalculoFreteETotal();
     } catch (err) {
         console.error('Erro ao buscar endereço principal:', err);
         infoDiv.innerHTML = `
@@ -100,10 +153,90 @@ async function carregarEnderecoPrincipal() {
             <p>Utilize a opção de adicionar novo endereço abaixo.</p>
         `;
         hiddenId.value = '';
+        estadoExistente = null;
+        await atualizarCalculoFreteETotal();
     }
 }
 
-/* ---------- 2. Carregar Cartões Vinculados (empilhados) ---------- */
+/* ---------- 3. Calcular Frete e Atualizar Total ---------- */
+async function atualizarCalculoFreteETotal() {
+    const tipo = document.querySelector('input[name="endereco_tipo"]:checked')?.value || 'existente';
+    let estado = null;
+
+    if (tipo === 'existente') {
+        estado = estadoExistente;
+    } else {
+        estado = $('estado')?.value || null;
+    }
+
+    if (!estado || subtotalCarrinho <= 0) {
+        valorFrete = 0;
+        totalGeral = subtotalCarrinho;
+        $('resumo-frete').textContent = estado ? 'R$ 0,00' : 'Aguardando endereço';
+        $('resumo-total').textContent = formatarBRL(totalGeral);
+        sincronizarValorComCartoes(totalGeral);
+        return;
+    }
+
+    $('resumo-frete').textContent = 'Calculando...';
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/carrinho/frete/${estado}`, {
+            headers: { 'X-Usuario-Id': USUARIO_ID.toString() }
+        });
+
+        if (!response.ok) throw new Error('Não foi possível calcular o frete.');
+
+        const freteData = await response.json();
+        valorFrete = freteData.valor || 0;
+        totalGeral = subtotalCarrinho + valorFrete;
+
+        $('resumo-frete').textContent = formatarBRL(valorFrete);
+        $('resumo-total').textContent = formatarBRL(totalGeral);
+
+        sincronizarValorComCartoes(totalGeral);
+    } catch (err) {
+        console.error('Erro ao calcular frete:', err);
+        valorFrete = 0;
+        totalGeral = subtotalCarrinho;
+        $('resumo-frete').textContent = 'Erro ao calcular';
+        $('resumo-total').textContent = formatarBRL(totalGeral);
+        sincronizarValorComCartoes(totalGeral);
+    }
+}
+
+function sincronizarValorComCartoes(total) {
+    if (total <= 0) return;
+
+    const inputsVinculados = document.querySelectorAll('.input-valor-cartao');
+    if (inputsVinculados.length > 0) {
+        // Se houver apenas 1 cartão vinculado, ele recebe o total
+        if (inputsVinculados.length === 1) {
+            inputsVinculados[0].value = total.toFixed(2);
+        } else {
+            // Se houver mais de um, e os outros estiverem zerados, atualiza o primeiro
+            let outrosComValor = false;
+            for (let i = 1; i < inputsVinculados.length; i++) {
+                const val = parseFloat(inputsVinculados[i].value);
+                if (!isNaN(val) && val > 0) {
+                    outrosComValor = true;
+                    break;
+                }
+            }
+            if (!outrosComValor) {
+                inputsVinculados[0].value = total.toFixed(2);
+            }
+        }
+    } else {
+        // Se não houver cartões vinculados, preenche o novo cartão
+        const inputNovo = $('novo-cartao-valor');
+        if (inputNovo) {
+            inputNovo.value = total.toFixed(2);
+        }
+    }
+}
+
+/* ---------- 4. Carregar Cartões Vinculados (empilhados) ---------- */
 async function carregarCartoesVinculados() {
     const container = $('cartoes-vinculados-container');
     container.innerHTML = '<p style="color: #666; font-size: 14px;">Carregando cartões vinculados...</p>';
@@ -124,8 +257,8 @@ async function carregarCartoesVinculados() {
             // Abre o formulário de novo cartão automaticamente e define valor total
             $('novo-cartao-form').classList.add('active');
             $('btn-toggle-cartao').textContent = '- Cancelar novo cartão';
-            if (subtotalCarrinho > 0) {
-                $('novo-cartao-valor').value = subtotalCarrinho.toFixed(2);
+            if (totalGeral > 0) {
+                $('novo-cartao-valor').value = totalGeral.toFixed(2);
             }
             return;
         }
@@ -137,8 +270,8 @@ async function carregarCartoesVinculados() {
             article.className = 'endereco-resumo-container cartao-item-vinculado';
             article.setAttribute('data-cartao-id', cartao.id);
 
-            // Se for o único ou o primeiro/padrão, recebe o valor total inicial da compra
-            const valorInicial = (index === 0 && subtotalCarrinho > 0) ? subtotalCarrinho.toFixed(2) : '0.00';
+            // Se for o primeiro/padrão, recebe o valor total inicial da compra (incluindo frete)
+            const valorInicial = (index === 0 && totalGeral > 0) ? totalGeral.toFixed(2) : '0.00';
             const badgePadrao = cartao.padrao ? ' (Principal)' : '';
             const mesStr = String(cartao.mesValidade).padStart(2, '0');
 
@@ -181,36 +314,7 @@ function somarValoresCartoesVinculados() {
     return total;
 }
 
-/* ---------- 3. Resumo do Pedido (carrinho) ---------- */
-async function carregarResumo() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/carrinho`, {
-            headers: { 'X-Usuario-Id': USUARIO_ID.toString() }
-        });
-        if (!response.ok) throw new Error('Não foi possível carregar o carrinho.');
-
-        const carrinho = await response.json();
-        subtotalCarrinho = carrinho.subtotal || 0;
-
-        $('resumo-subtotal').textContent = formatarBRL(subtotalCarrinho);
-        $('resumo-total').textContent = formatarBRL(subtotalCarrinho);
-
-        $('resumo-itens').innerHTML = (carrinho.itens || []).map(item => `
-            <div class="product-item">
-                <div class="product-img" style="background-color: #eee;"></div>
-                <div class="product-details">
-                    <p class="product-name">${item.nomeProduto}</p>
-                    <p class="product-meta">SKU: ${item.sku} / ${item.cor} / ${item.tamanho}</p>
-                    <p class="product-meta">Qtd: ${item.quantidade}</p>
-                    <p class="product-price">${formatarBRL(item.subtotal)}</p>
-                </div>
-            </div>`).join('');
-    } catch (error) {
-        exibirMensagem(error.message, 'erro');
-    }
-}
-
-/* ---------- 4. Coleta de Dados ---------- */
+/* ---------- 5. Coleta de Dados ---------- */
 function coletarEndereco() {
     const tipo = document.querySelector('input[name="endereco_tipo"]:checked').value;
 
@@ -313,14 +417,14 @@ function validar(payload) {
     }
 
     const totalCobrado = payload.cartoes.reduce((acc, c) => acc + c.valor, 0);
-    if (totalCobrado < subtotalCarrinho) {
-        return `O total nos cartões (R$ ${totalCobrado.toFixed(2)}) é inferior ao valor do pedido (R$ ${subtotalCarrinho.toFixed(2)}).`;
+    if (totalCobrado < totalGeral) {
+        return `O total nos cartões (${formatarBRL(totalCobrado)}) é inferior ao valor do pedido com frete (${formatarBRL(totalGeral)}).`;
     }
 
     return null;
 }
 
-/* ---------- 5. Submissão do Pedido ---------- */
+/* ---------- 6. Submissão do Pedido ---------- */
 async function finalizarCompra(e) {
     e.preventDefault();
 
@@ -362,6 +466,8 @@ async function finalizarCompra(e) {
 
         exibirMensagem(
             `Compra finalizada com sucesso!<br><strong>Código:</strong> ${data.codigo}<br>` +
+            `<strong>Subtotal:</strong> ${formatarBRL(data.subtotal)}<br>` +
+            `<strong>Frete:</strong> ${formatarBRL(data.valorFrete)}<br>` +
             `<strong>Total:</strong> ${formatarBRL(data.valorTotal)}`, 'sucesso', true);
         btn.textContent = 'Compra concluída';
     } catch (error) {
