@@ -267,7 +267,7 @@ function templateItem(item) {
             <div class="item-qty">
                 <div class="qty-selector">
                     <button type="button" class="btn-minus" id="btn-minus-${id}" data-acao="decrementar" ${quantidade <= 1 ? 'disabled' : ''}>&minus;</button>
-                    <input type="number" id="qty-${id}" value="${quantidade}" min="1" max="${estoqueDisponivel}" readonly>
+                    <input type="number" id="qty-${id}" class="qty-input" value="${quantidade}" min="1" max="${estoqueDisponivel}" readonly>
                     <button type="button" class="btn-plus" id="btn-plus-${id}" data-acao="incrementar" ${quantidade >= estoqueDisponivel ? 'disabled' : ''}>&plus;</button>
                 </div>
             </div>
@@ -307,14 +307,15 @@ function renderizarResumo() {
         dom.frete.className = '';
         dom.frete.textContent =
             subtotal <= 0 ? formatarMoeda(0)
-            : alterado ? 'Recalculado no checkout'          // frete depende da qtd; só o backend calcula
+            : alterado ? (frete > 0 ? formatarMoeda(frete) : 'Recalculado no checkout')
             : frete > 0 ? formatarMoeda(frete)
             : temEndereco ? formatarMoeda(0) : 'Calculado no checkout';
     }
 
     if (dom.total) {
-        // Sem alterações, exibimos o total oficial; com alterações, apenas a estimativa local.
-        dom.total.textContent = formatarMoeda(subtotal <= 0 ? 0 : alterado ? subtotal : total);
+        // Sem alterações, exibimos o total oficial; com alterações, estimativa local com frete conhecido.
+        const freteEstimado = frete > 0 ? frete : 0;
+        dom.total.textContent = formatarMoeda(subtotal <= 0 ? 0 : alterado ? (subtotal + freteEstimado) : total);
     }
 }
 
