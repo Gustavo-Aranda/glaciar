@@ -3,6 +3,9 @@ const { defineConfig } = require("cypress");
 module.exports = defineConfig({
   e2e: {
     baseUrl: "http://127.0.0.1:5500/frontend/user/",
+    expose: {
+      apiUrl: "http://localhost:5205/api"
+    },
     env: {
       apiUrl: "http://localhost:5205/api"
     },
