@@ -187,7 +187,8 @@ async function atualizarQuantidadeAPI(itemId, novaQuantidade) {
             carregarCarrinho();
         } else {
             const err = await response.json();
-            alert(`Erro: ${err.message}`);
+            if (window.Toast) window.Toast.showError('Erro ao atualizar quantidade', err.message);
+            else alert(`Erro: ${err.message}`);
             carregarCarrinho(); // Retorna ao estado original do servidor em caso de erro
         }
     } catch (error) {
@@ -210,7 +211,8 @@ async function removerItem(itemId) {
             carregarCarrinho();
         } else {
             const err = await response.json();
-            alert(`Erro: ${err.message}`);
+            if (window.Toast) window.Toast.showError('Erro ao remover item', err.message);
+            else alert(`Erro: ${err.message}`);
         }
     } catch (error) {
         console.error('Erro:', error);

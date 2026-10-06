@@ -208,6 +208,38 @@ function inicializarEventosUI() {
     $('btn-toggle-cupom').addEventListener('click', () => {
         $('cupom-form').classList.toggle('active');
     });
+
+    // 5. Máscaras e validações em tempo real para o novo cartão
+    const inputNumero = $('cartao-numero');
+    if (inputNumero) {
+        inputNumero.addEventListener('input', (e) => {
+            const digits = e.target.value.replace(/\D/g, '').slice(0, 19);
+            e.target.value = digits.replace(/(.{4})/g, '$1 ').trim();
+        });
+    }
+
+    const inputMes = $('cartao-mes');
+    if (inputMes) {
+        inputMes.addEventListener('input', (e) => {
+            let val = e.target.value.replace(/\D/g, '').slice(0, 2);
+            if (val.length === 2 && parseInt(val, 10) > 12) val = '12';
+            e.target.value = val;
+        });
+    }
+
+    const inputAno = $('cartao-ano');
+    if (inputAno) {
+        inputAno.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
+        });
+    }
+
+    const inputCvv = $('cartao-cvv');
+    if (inputCvv) {
+        inputCvv.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
+        });
+    }
 }
 
 async function recalcularFretePorOrigem() {
@@ -333,22 +365,25 @@ function coletarCartoes() {
     });
 
     // 2. Novo cartão (se preenchido e com valor > 0)
-    const valorNovo = parseFloat($('novo-cartao-valor').value);
-    const numeroNovo = $('cartao-numero').value.replace(/\s+/g, '');
+    const valorNovo = parseFloat($('novo-cartao-valor')?.value);
+    const numeroNovo = ($('cartao-numero')?.value || '').replace(/\s+/g, '');
+    const mesNovo = parseInt($('cartao-mes')?.value?.trim(), 10);
+    const anoRaw = parseInt($('cartao-ano')?.value?.trim(), 10);
+    const anoNovo = !isNaN(anoRaw) ? (anoRaw < 100 ? 2000 + anoRaw : anoRaw) : NaN;
+    const cvvNovo = ($('cartao-cvv')?.value || '').trim();
+    const bandeiraNova = $('cartao-bandeira')?.value || '';
+    const salvarNoPerfil = $('save-card')?.checked || false;
 
-    if (!isNaN(valorNovo) && valorNovo > 0 && numeroNovo) {
-        const [mes, ano] = ($('cartao-validade').value || '').split('/').map(p => parseInt(p.trim(), 10));
-        const anoCompleto = ano < 100 ? 2000 + ano : ano;
-
+    if (!isNaN(valorNovo) && valorNovo > 0 && (numeroNovo || !isNaN(mesNovo) || !isNaN(anoNovo) || cvvNovo)) {
         cartoes.push({
             usuarioCartaoId: null,
             novoCartao: {
                 numero: numeroNovo,
-                cvv: $('cartao-cvv').value.trim(),
-                bandeira: $('cartao-bandeira').value,
-                mesValidade: mes,
-                anoValidade: anoCompleto,
-                salvarNoPerfil: $('save-card').checked
+                cvv: cvvNovo,
+                bandeira: bandeiraNova,
+                mesValidade: mesNovo,
+                anoValidade: anoNovo,
+                salvarNoPerfil: salvarNoPerfil
             },
             valor: valorNovo
         });
@@ -379,8 +414,25 @@ function validar(payload) {
         }
         if (c.novoCartao) {
             const nc = c.novoCartao;
-            if (!nc.numero || !nc.cvv || !Number.isInteger(nc.mesValidade) || !Number.isInteger(nc.anoValidade)) {
-                return 'Preencha todos os dados do novo cartão (validade no formato MM/AA).';
+            if (!nc.numero || nc.numero.length < 13 || nc.numero.length > 19) {
+                return 'Informe um número de cartão de crédito válido (13 a 19 dígitos).';
+            }
+            if (!nc.bandeira) {
+                return 'Selecione a bandeira do cartão.';
+            }
+            if (!Number.isInteger(nc.mesValidade) || nc.mesValidade < 1 || nc.mesValidade > 12) {
+                return 'Informe um mês de validade válido (1 a 12).';
+            }
+            const anoAtual = new Date().getFullYear();
+            if (!Number.isInteger(nc.anoValidade) || nc.anoValidade < anoAtual || nc.anoValidade > 2100) {
+                return `Informe um ano de validade válido (a partir de ${anoAtual}).`;
+            }
+            const mesAtual = new Date().getMonth() + 1;
+            if (nc.anoValidade === anoAtual && nc.mesValidade < mesAtual) {
+                return 'O cartão informado está vencido.';
+            }
+            if (!nc.cvv || nc.cvv.length < 3 || nc.cvv.length > 4) {
+                return 'Informe um código de segurança (CVV) válido (3 ou 4 dígitos).';
             }
         }
     }
@@ -455,8 +507,13 @@ function definirCarregando(btn, carregando) {
 
 function exibirMensagem(texto, tipo, html = false) {
     const div = $('mensagem');
-    const cores = { erro: 'red', sucesso: 'green', info: 'blue' };
-    div.style.color = cores[tipo];
-    if (html) div.innerHTML = texto; else div.textContent = texto;
-    div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    if (div) div.style.display = 'none';
+
+    if (tipo === 'erro') {
+        window.Toast.showError('Erro', texto);
+    } else if (tipo === 'sucesso') {
+        window.Toast.showSuccess('Sucesso', texto);
+    } else {
+        window.Toast.showSuccess('Informação', texto);
+    }
 }

@@ -157,7 +157,9 @@ async function addToBag(produto, estoque) {
 
         if (!response.ok) {
             const err = await response.json().catch(() => null);
-            alert(err?.message || 'Não foi possível adicionar o item ao carrinho.');
+            const msg = err?.message || 'Não foi possível adicionar o item ao carrinho.';
+            if (window.Toast) window.Toast.showError('Erro ao adicionar', msg);
+            else alert(msg);
             return;
         }
 
@@ -172,7 +174,8 @@ async function addToBag(produto, estoque) {
         document.querySelectorAll('.btn-quick-add').forEach(btn => btn.style.display = 'block');
     } catch (error) {
         console.error('Erro ao adicionar ao carrinho:', error);
-        alert('Erro de conexão com o servidor.');
+        if (window.Toast) window.Toast.showError('Erro de conexão', 'Não foi possível conectar ao servidor.');
+        else alert('Erro de conexão com o servidor.');
     }
 }
 
