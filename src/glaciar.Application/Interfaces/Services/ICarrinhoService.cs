@@ -7,8 +7,11 @@ namespace glaciar.Application.Interfaces.Services
     {
         Task<CarrinhoResponseDTO> ObterAsync(int usuarioId);
         Task<CarrinhoResponseDTO> AdicionarItemAsync(int usuarioId, CarrinhoItemAddDTO dto);
-        Task<CarrinhoResponseDTO> AtualizarItemAsync(int usuarioId, int itemId, CarrinhoItemUpdateDTO dto);
-        Task<CarrinhoResponseDTO> RemoverItemAsync(int usuarioId, int itemId);
+        /// <summary>
+        /// Aplica, de forma atômica, as quantidades finais definidas no carrinho (0 = remover)
+        /// e devolve o carrinho com os preços oficiais recalculados no servidor.
+        /// </summary>
+        Task<CarrinhoResponseDTO> SincronizarItensAsync(int usuarioId, CarrinhoSincronizarDTO dto);
         Task<FreteResponseDTO> CalcularFreteAsync(int usuarioId, Estados estado);
     }
 }

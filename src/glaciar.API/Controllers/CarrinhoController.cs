@@ -52,26 +52,17 @@ namespace glaciar.API.Controllers
             catch (Exception) { return StatusCode(500, new { message = "Erro interno no servidor." }); }
         }
 
-        [HttpPut("itens/{itemId}")]
-        public async Task<IActionResult> AtualizarItem(int itemId, [FromBody] CarrinhoItemUpdateDTO dto)
+        /// <summary>
+        /// Recebe o lote de quantidades finais do carrinho (0 = remover) e aplica tudo de forma atômica.
+        /// Body: { "itens": [ { "itemId": 1, "quantidade": 3 }, { "itemId": 2, "quantidade": 0 } ] }
+        /// </summary>
+        [HttpPut("itens")]
+        public async Task<IActionResult> SincronizarItens([FromBody] CarrinhoSincronizarDTO dto)
         {
             try
             {
                 var usuarioId = GetUsuarioId();
-                var result = await _carrinhoService.AtualizarItemAsync(usuarioId, itemId, dto);
-                return Ok(result);
-            }
-            catch (DomainValidationException ex) { return BadRequest(new { message = ex.Message }); }
-            catch (Exception) { return StatusCode(500, new { message = "Erro interno no servidor." }); }
-        }
-
-        [HttpDelete("itens/{itemId}")]
-        public async Task<IActionResult> RemoverItem(int itemId)
-        {
-            try
-            {
-                var usuarioId = GetUsuarioId();
-                var result = await _carrinhoService.RemoverItemAsync(usuarioId, itemId);
+                var result = await _carrinhoService.SincronizarItensAsync(usuarioId, dto);
                 return Ok(result);
             }
             catch (DomainValidationException ex) { return BadRequest(new { message = ex.Message }); }

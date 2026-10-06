@@ -18,7 +18,10 @@ namespace glaciar.Domain.Interfaces.Repositories
         /// <summary>Persiste alterações em um Pedido já rastreado (inclui filhos adicionados às coleções).</summary>
         Task UpdateAsync(Pedido pedido);
 
-        Task RemoverItemAsync(PedidoProduto item);
+        /// <summary>
+        /// Persiste o carrinho e exclui os itens removidos em um único SaveChanges (transação atômica).
+        /// </summary>
+        Task UpdateAsync(Pedido pedido, IEnumerable<PedidoProduto> itensRemovidos);
 
         /// <summary>Indica se algum pedido (não carrinho) aponta para o endereço físico informado.</summary>
         Task<bool> ExisteComEnderecoAsync(int enderecoId);

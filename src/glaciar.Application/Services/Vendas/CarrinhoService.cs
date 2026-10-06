@@ -73,40 +73,42 @@ namespace glaciar.Application.Services.Vendas
         }
 
         // ==========================================
-        // ALTERAR QUANTIDADE
+        // SINCRONIZAR (lote enviado ao seguir para o checkout)
         // ==========================================
-        public async Task<CarrinhoResponseDTO> AtualizarItemAsync(int usuarioId, int itemId, CarrinhoItemUpdateDTO dto)
+        public async Task<CarrinhoResponseDTO> SincronizarItensAsync(int usuarioId, CarrinhoSincronizarDTO dto)
         {
-            ValidarQuantidadeInformada(dto.Quantidade);
+            ValidarLote(dto);
 
+            // 1 único SELECT: o carrinho já vem com Itens -> Estoque -> Produto.
             var carrinho = await ObterCarrinhoExistenteAsync(usuarioId);
-            var item = ObterItemDoCarrinho(carrinho, itemId);
+            var itensRemovidos = new List<PedidoProduto>();
 
-            var estoque = await ObterEstoqueVendavelAsync(item.EstoqueId);
-            ValidarQuantidadeContraEstoque(estoque, dto.Quantidade);
+            foreach (var alteracao in dto.Itens)
+            {
+                var item = ObterItemDoCarrinho(carrinho, alteracao.ItemId);
 
-            item.Quantidade = dto.Quantidade;
-            item.Preco = estoque.Produto.Preco;
+                if (alteracao.Quantidade == 0)
+                    itensRemovidos.Add(item);
+                else
+                    item.Quantidade = alteracao.Quantidade;
+            }
+
+            foreach (var item in itensRemovidos)
+                carrinho.ProdutosDoPedido.Remove(item);
+
+            // O backend é a fonte da verdade: revalida todo o carrinho que vai para o checkout
+            // e congela o preço oficial vigente, ignorando qualquer cálculo feito no front.
+            foreach (var item in carrinho.ProdutosDoPedido)
+            {
+                ValidarEstoqueVendavel(item.Estoque);
+                ValidarQuantidadeContraEstoque(item.Estoque, item.Quantidade);
+                item.Preco = item.Estoque.Produto.Preco;
+            }
 
             RecalcularCarrinho(carrinho);
-            await _pedidoRepository.UpdateAsync(carrinho);
 
-            return VendasMapper.ParaCarrinho(carrinho);
-        }
-
-        // ==========================================
-        // REMOVER
-        // ==========================================
-        public async Task<CarrinhoResponseDTO> RemoverItemAsync(int usuarioId, int itemId)
-        {
-            var carrinho = await ObterCarrinhoExistenteAsync(usuarioId);
-            var item = ObterItemDoCarrinho(carrinho, itemId);
-
-            carrinho.ProdutosDoPedido.Remove(item);
-            await _pedidoRepository.RemoverItemAsync(item);
-
-            RecalcularCarrinho(carrinho);
-            await _pedidoRepository.UpdateAsync(carrinho);
+            // 1 único SaveChanges (transação): atualizações + exclusões, tudo ou nada.
+            await _pedidoRepository.UpdateAsync(carrinho, itensRemovidos);
 
             return VendasMapper.ParaCarrinho(carrinho);
         }
@@ -139,17 +141,32 @@ namespace glaciar.Application.Services.Vendas
                 throw new DomainValidationException("A quantidade deve ser de no mínimo 1 unidade.");
         }
 
+        private static void ValidarLote(CarrinhoSincronizarDTO? dto)
+        {
+            if (dto?.Itens == null || dto.Itens.Count == 0)
+                throw new DomainValidationException("Nenhuma alteração de item foi informada.");
+
+            if (dto.Itens.Any(i => i.Quantidade < 0))
+                throw new DomainValidationException("A quantidade não pode ser negativa.");
+
+            if (dto.Itens.GroupBy(i => i.ItemId).Any(g => g.Count() > 1))
+                throw new DomainValidationException("O mesmo item foi informado mais de uma vez.");
+        }
+
         private async Task<Estoque> ObterEstoqueVendavelAsync(int estoqueId)
         {
             var estoque = await _estoqueRepository.GetByIdComProdutoAsync(estoqueId);
+            ValidarEstoqueVendavel(estoque);
+            return estoque!;
+        }
 
+        private static void ValidarEstoqueVendavel(Estoque? estoque)
+        {
             if (estoque == null || estoque.Produto == null)
                 throw new DomainValidationException("O produto selecionado não existe.");
 
             if (!estoque.Produto.Visivel || estoque.Quantidade <= 0)
                 throw new DomainValidationException($"O produto '{estoque.Produto.Nome}' ({estoque.Cor}, {estoque.Tamanho}) está indisponível.");
-
-            return estoque;
         }
 
         private static void ValidarQuantidadeContraEstoque(Estoque estoque, int quantidadeDesejada)

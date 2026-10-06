@@ -87,10 +87,12 @@ namespace glaciar.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task RemoverItemAsync(PedidoProduto item)
+        public async Task UpdateAsync(Pedido pedido, IEnumerable<PedidoProduto> itensRemovidos)
         {
-            _context.PedidosProdutos.Remove(item);
-            await _context.SaveChangesAsync();
+            // Marca as exclusões e reaproveita o UpdateAsync: tudo vai para o banco em um único
+            // SaveChanges, que o EF Core já envolve em uma transação (tudo ou nada).
+            _context.PedidosProdutos.RemoveRange(itensRemovidos);
+            await UpdateAsync(pedido);
         }
 
         public async Task<bool> ExisteComEnderecoAsync(int enderecoId)
