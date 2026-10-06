@@ -1,8 +1,9 @@
+using AutoMapper;
+using glaciar.Application.DTOs.Clientes;
 using glaciar.Application.DTOs.Enderecos;
 using glaciar.Application.DTOs.Vendas;
 using glaciar.Application.Interfaces.Services;
 using glaciar.Application.Mappings;
-using glaciar.Domain.Entities.Clientes.Enum;
 using glaciar.Domain.Entities.Logisticas;
 using glaciar.Domain.Entities.Logisticas.Enum;
 using glaciar.Domain.Entities.Vendas;
@@ -14,6 +15,8 @@ namespace glaciar.Application.Services.Vendas
 {
     public class CheckoutService : ICheckoutService
     {
+        private const decimal ValorMinimoPorCartao = 10.00m;
+
         private readonly IPedidoRepository _pedidoRepository;
         private readonly ICupomRepository _cupomRepository;
         private readonly IEstoqueRepository _estoqueRepository;
@@ -21,6 +24,7 @@ namespace glaciar.Application.Services.Vendas
         private readonly IEnderecoService _enderecoService;
         private readonly ICartaoService _cartaoService;
         private readonly IFreteService _freteService;
+        private readonly IMapper _mapper;
 
         public CheckoutService(
             IPedidoRepository pedidoRepository,
@@ -29,7 +33,8 @@ namespace glaciar.Application.Services.Vendas
             IUnitOfWork unitOfWork,
             IEnderecoService enderecoService,
             ICartaoService cartaoService,
-            IFreteService freteService)
+            IFreteService freteService,
+            IMapper mapper)
         {
             _pedidoRepository = pedidoRepository;
             _cupomRepository = cupomRepository;
@@ -38,9 +43,13 @@ namespace glaciar.Application.Services.Vendas
             _enderecoService = enderecoService;
             _cartaoService = cartaoService;
             _freteService = freteService;
+            _mapper = mapper;
         }
 
-        public async Task<PedidoResponseDTO> FinalizarCompraAsync(int usuarioId, CheckoutRequestDTO dto) // refatorar com outras funcoes privadas
+        // ==========================================
+        // 1. FINALIZAR COMPRA
+        // ==========================================
+        public async Task<PedidoResponseDTO> FinalizarCompraAsync(int usuarioId, CheckoutRequestDTO dto)
         {
             await _unitOfWork.BeginTransactionAsync();
             try
@@ -51,157 +60,41 @@ namespace glaciar.Application.Services.Vendas
                     throw new DomainValidationException("Carrinho vazio ou não encontrado.");
                 }
 
-                // 1. Processar Endereço
-                EnderecoResponseDTO enderecoFisico = null!;
-                if (dto.UsuarioEnderecoId.HasValue)
-                {
-                    enderecoFisico = await _enderecoService.ObterEnderecoDoClienteAsync(usuarioId, dto.UsuarioEnderecoId.Value);
-                }
-                else if (dto.NovoEndereco != null)
-                {
-                    enderecoFisico = await _enderecoService.RegistrarEnderecoDeEntregaAsync(new EnderecoCreateDTO
-                    {
-                        UsuarioId = usuarioId,
-                        Apelido = dto.NovoEndereco.Apelido,
-                        Cep = dto.NovoEndereco.Cep,
-                        Logradouro = dto.NovoEndereco.Logradouro,
-                        Numero = dto.NovoEndereco.Numero,
-                        Complemento = dto.NovoEndereco.Complemento,
-                        Bairro = dto.NovoEndereco.Bairro,
-                        Cidade = dto.NovoEndereco.Cidade,
-                        Estado = dto.NovoEndereco.Estado
-                    }, dto.NovoEndereco.SalvarNoPerfil);
-                }
-                else
-                {
-                    throw new DomainValidationException("Endereço de entrega não informado.");
-                }
-
+                // 1. Processar Endereço de Entrega
+                var enderecoFisico = await ProcessarEnderecoEntregaAsync(usuarioId, dto);
                 pedido.EnderecoId = enderecoFisico.Id;
-                
-                // 2. Calcular Frete
-                var totalItens = pedido.ProdutosDoPedido.Sum(p => p.Quantidade); //analisar
+
+                // 2. Calcular Frete e Registrar Entrega
+                var totalItens = pedido.ProdutosDoPedido.Sum(p => p.Quantidade);
                 var valorFrete = _freteService.Calcular(enderecoFisico.Estado, totalItens);
-                
-                pedido.Entregas.Add(new Entrega
-                {
-                    ValorFrete = valorFrete,
-                    CodigoRastreamento = "AGUARDANDO", // Mockado temporariamente
-                    Status = StatusEntrega.EmProcessamento,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                });
+                AdicionarEntrega(pedido, valorFrete);
 
+                // 3. Totais e Aplicação de Cupons
                 var subtotalProdutos = pedido.ProdutosDoPedido.Sum(p => p.Preco * p.Quantidade);
+                var totalDescontos = await ProcessarCuponsAsync(pedido, usuarioId, dto.CodigosCupons);
 
-                // 3. Validar e Aplicar Cupons
-                decimal totalDescontos = 0;
-                int countPromocionais = 0;
-
-                // Limpa quaisquer cupons que talvez já estivessem vinculados indevidamente no carrinho aberto
-                pedido.CuponsAplicados.Clear();
-
-                foreach (var codigo in dto.CodigosCupons)
-                {
-                    var cupom = await _cupomRepository.GetByCodigoAsync(codigo);
-                    CupomRegras.ValidarUso(cupom, usuarioId, codigo);
-
-                    if (CupomRegras.EhPromocional(cupom!))
-                    {
-                        countPromocionais++;
-                        if (countPromocionais > 1) throw new DomainValidationException("Apenas um cupom promocional pode ser usado por pedido.");
-                    }
-
-                    pedido.CuponsAplicados.Add(new PedidoCupom
-                    {
-                        CupomId = cupom!.Id,
-                        PedidoId = pedido.Id,
-                        Pedido = pedido
-                    });
-
-                    // Registra que o cupom foi "usado"
-                    cupom.QuantidadeMaximaUso--;
-
-                    totalDescontos += cupom.ValorDesconto;
-                }
-
-                // 4. Calcular Total a Pagar
                 var totalAposCupons = (subtotalProdutos + valorFrete) - totalDescontos;
                 Cupom? cupomTrocaGerado = null;
-                
+
                 if (totalAposCupons < 0)
                 {
-                    // O cliente tem mais saldo de troca do que o valor da compra. Gera novo cupom de troca com o troco.
                     var troco = Math.Abs(totalAposCupons);
-                    cupomTrocaGerado = new Cupom
-                    {
-                        Codigo = $"TROCA-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}",
-                        ValorDesconto = troco,
-                        DataValidade = DateTime.UtcNow.AddYears(1), // Assuming DateTime based on rules
-                        CategoriaCupom = "Troca",
-                        Ativo = true,
-                        QuantidadeMaximaUso = 1,
-                        UsuarioId = usuarioId
-                    };
-                    await _cupomRepository.AddAsync(cupomTrocaGerado);
+                    cupomTrocaGerado = await GerarCupomTrocaAsync(usuarioId, troco);
                     totalAposCupons = 0;
                 }
 
                 pedido.ValorTotal = subtotalProdutos + valorFrete;
 
-                // 5. Processar Pagamentos (Cartão de Crédito)
+                // 4. Processar Pagamento (Cartões de Crédito)
                 if (totalAposCupons > 0)
                 {
-                    decimal totalCartoes = 0;
-                    if (!dto.Cartoes.Any()) throw new DomainValidationException("Nenhum cartão informado para o saldo devedor.");
-                    
-                    foreach (var c in dto.Cartoes)
-                    {
-                        if (c.Valor < 10m) throw new DomainValidationException("O valor mínimo em cada cartão de crédito é R$ 10,00.");
-                        
-                        int? usuarioCartaoId = c.UsuarioCartaoId;
-                        if (c.NovoCartao != null)
-                        {
-                            if (c.NovoCartao.SalvarNoPerfil) //cuidado com a segurança, por causa do dto (revisar)
-                            {
-                                var novoUsuarioCartao = await _cartaoService.CreateAsync(new Application.DTOs.Clientes.CartaoCreateDTO
-                                {
-                                    UsuarioId = usuarioId,
-                                    Numero = c.NovoCartao.Numero,
-                                    Cvv = c.NovoCartao.Cvv,
-                                    Bandeira = c.NovoCartao.Bandeira,
-                                    MesValidade = c.NovoCartao.MesValidade,
-                                    AnoValidade = c.NovoCartao.AnoValidade
-                                });
-                                usuarioCartaoId = novoUsuarioCartao.Id;
-                            }
-                        }
-
-                        pedido.Pagamentos.Add(new Pagamento
-                        {
-                            Valor = c.Valor,
-                            Status = StatusPagamento.PagamentoRealizado, // Simulando aprovação síncrona
-                            Metodo = MetodoPagamento.Credito,
-                            Data = DateOnly.FromDateTime(DateTime.UtcNow),
-                            QuantidadeParcelas = 1, // Poderia vir do DTO
-                            UsuarioCartaoId = usuarioCartaoId,
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow
-                        });
-                        totalCartoes += c.Valor;
-                    }
-
-                    if (totalCartoes < totalAposCupons)
-                        throw new DomainValidationException($"O valor dos cartões (R$ {totalCartoes}) é inferior ao saldo devedor (R$ {totalAposCupons}).");
+                    await ProcessarPagamentosAsync(pedido, usuarioId, dto.Cartoes, totalAposCupons);
                 }
 
-                // 6. Baixa de Estoque e Fechamento do Pedido
-                foreach (var item in pedido.ProdutosDoPedido)
-                {
-                    var baixou = await _estoqueRepository.BaixarEstoqueAsync(item.EstoqueId, item.Quantidade);
-                    if (!baixou) throw new DomainValidationException($"Estoque insuficiente para o item {item.Estoque?.Produto?.Nome} (Tamanho: {item.Estoque?.Tamanho}, Cor: {item.Estoque?.Cor}).");
-                }
+                // 5. Baixa de Estoque
+                await ProcessarBaixaEstoqueAsync(pedido);
 
+                // 6. Transição de Status e Persistência
                 pedido.Status = StatusPedido.EmProcessamento;
                 pedido.UpdatedAt = DateTime.UtcNow;
 
@@ -214,6 +107,199 @@ namespace glaciar.Application.Services.Vendas
             {
                 await _unitOfWork.RollbackAsync();
                 throw;
+            }
+        }
+
+        // ==========================================
+        // 2. OBTER CONTEXTO (FEAT NOVA)
+        // ==========================================
+        public async Task<CheckoutContextoDTO> ObterContextoAsync(int usuarioId)
+        {
+            // 1. Carrinho e itens
+            var carrinho = await _pedidoRepository.GetCarrinhoAsync(usuarioId);
+            var carrinhoDto = VendasMapper.ParaCarrinho(carrinho);
+
+            // 2. Endereço principal do cliente
+            var enderecos = await _enderecoService.GetEnderecoClienteAsync(usuarioId);
+            var enderecoPrincipal = enderecos.FirstOrDefault(e => e.Padrao) ?? enderecos.FirstOrDefault();
+
+            // 3. Frete e total inicial
+            decimal valorFrete = 0m;
+            if (enderecoPrincipal?.Endereco != null && carrinhoDto.QuantidadeItens > 0)
+            {
+                valorFrete = _freteService.Calcular(enderecoPrincipal.Endereco.Estado, carrinhoDto.QuantidadeItens);
+            }
+
+            var valorTotal = carrinhoDto.Subtotal + valorFrete;
+
+            // 4. Cartões cadastrados do cliente
+            var cartoes = await _cartaoService.GetByUsuarioAsync(usuarioId);
+            var cartoesDto = _mapper.Map<IEnumerable<CartaoResponseDTO>>(cartoes);
+
+            return new CheckoutContextoDTO
+            {
+                Carrinho = carrinhoDto,
+                EnderecoPrincipal = enderecoPrincipal,
+                ValorFrete = valorFrete,
+                ValorTotal = valorTotal,
+                Cartoes = cartoesDto
+            };
+        }
+
+        // ==========================================
+        // 🔒 MÉTODOS PRIVADOS AUXILIARES
+        // ==========================================
+        private async Task<EnderecoResponseDTO> ProcessarEnderecoEntregaAsync(int usuarioId, CheckoutRequestDTO dto)
+        {
+            if (dto.UsuarioEnderecoId.HasValue)
+            {
+                return await _enderecoService.ObterEnderecoDoClienteAsync(usuarioId, dto.UsuarioEnderecoId.Value);
+            }
+
+            if (dto.NovoEndereco != null)
+            {
+                return await _enderecoService.RegistrarEnderecoDeEntregaAsync(new EnderecoCreateDTO
+                {
+                    UsuarioId = usuarioId,
+                    Apelido = dto.NovoEndereco.Apelido,
+                    Cep = dto.NovoEndereco.Cep,
+                    Logradouro = dto.NovoEndereco.Logradouro,
+                    Numero = dto.NovoEndereco.Numero,
+                    Complemento = dto.NovoEndereco.Complemento,
+                    Bairro = dto.NovoEndereco.Bairro,
+                    Cidade = dto.NovoEndereco.Cidade,
+                    Estado = dto.NovoEndereco.Estado
+                }, dto.NovoEndereco.SalvarNoPerfil);
+            }
+
+            throw new DomainValidationException("Endereço de entrega não informado.");
+        }
+
+        private static void AdicionarEntrega(Pedido pedido, decimal valorFrete)
+        {
+            pedido.Entregas.Add(new Entrega
+            {
+                ValorFrete = valorFrete,
+                CodigoRastreamento = "AGUARDANDO",
+                Status = StatusEntrega.EmProcessamento,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            });
+        }
+
+        private async Task<decimal> ProcessarCuponsAsync(Pedido pedido, int usuarioId, IEnumerable<string> codigosCupons)
+        {
+            decimal totalDescontos = 0;
+            int countPromocionais = 0;
+
+            pedido.CuponsAplicados.Clear();
+
+            foreach (var codigo in codigosCupons)
+            {
+                var cupom = await _cupomRepository.GetByCodigoAsync(codigo);
+                CupomRegras.ValidarUso(cupom, usuarioId, codigo);
+
+                if (CupomRegras.EhPromocional(cupom!))
+                {
+                    countPromocionais++;
+                    if (countPromocionais > 1)
+                    {
+                        throw new DomainValidationException("Apenas um cupom promocional pode ser usado por pedido.");
+                    }
+                }
+
+                pedido.CuponsAplicados.Add(new PedidoCupom
+                {
+                    CupomId = cupom!.Id,
+                    PedidoId = pedido.Id,
+                    Pedido = pedido
+                });
+
+                cupom.QuantidadeMaximaUso--;
+                totalDescontos += cupom.ValorDesconto;
+            }
+
+            return totalDescontos;
+        }
+
+        private async Task<Cupom> GerarCupomTrocaAsync(int usuarioId, decimal troco)
+        {
+            var cupomTroca = new Cupom
+            {
+                Codigo = $"TROCA-{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}",
+                ValorDesconto = troco,
+                DataValidade = DateTime.UtcNow.AddYears(1),
+                CategoriaCupom = CategoriasCupom.Troca,
+                Ativo = true,
+                QuantidadeMaximaUso = 1,
+                UsuarioId = usuarioId
+            };
+
+            await _cupomRepository.AddAsync(cupomTroca);
+            return cupomTroca;
+        }
+
+        private async Task ProcessarPagamentosAsync(Pedido pedido, int usuarioId, List<CheckoutCartaoDTO> cartoes, decimal saldoDevedor)
+        {
+            if (cartoes == null || !cartoes.Any())
+            {
+                throw new DomainValidationException("Nenhum cartão informado para o saldo devedor.");
+            }
+
+            // Validação prévia (Fail-Fast): garante integridade antes de persistir dados
+            var somaValores = cartoes.Sum(c => c.Valor);
+            if (somaValores < saldoDevedor)
+            {
+                throw new DomainValidationException($"O valor dos cartões (R$ {somaValores:F2}) é inferior ao saldo devedor (R$ {saldoDevedor:F2}).");
+            }
+
+            foreach (var c in cartoes)
+            {
+                if (c.Valor < ValorMinimoPorCartao)
+                {
+                    throw new DomainValidationException($"O valor mínimo em cada cartão de crédito é R$ {ValorMinimoPorCartao:F2}.");
+                }
+
+                int? usuarioCartaoId = c.UsuarioCartaoId;
+                if (c.NovoCartao != null && c.NovoCartao.SalvarNoPerfil)
+                {
+                    var novoUsuarioCartao = await _cartaoService.CreateAsync(new CartaoCreateDTO
+                    {
+                        UsuarioId = usuarioId,
+                        Numero = c.NovoCartao.Numero,
+                        Cvv = c.NovoCartao.Cvv,
+                        Bandeira = c.NovoCartao.Bandeira,
+                        MesValidade = c.NovoCartao.MesValidade,
+                        AnoValidade = c.NovoCartao.AnoValidade
+                    });
+                    usuarioCartaoId = novoUsuarioCartao.Id;
+                }
+
+                pedido.Pagamentos.Add(new Pagamento
+                {
+                    Valor = c.Valor,
+                    Status = StatusPagamento.PagamentoRealizado,
+                    Metodo = MetodoPagamento.Credito,
+                    Data = DateOnly.FromDateTime(DateTime.UtcNow),
+                    QuantidadeParcelas = 1,
+                    UsuarioCartaoId = usuarioCartaoId,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                });
+            }
+        }
+
+        private async Task ProcessarBaixaEstoqueAsync(Pedido pedido)
+        {
+            foreach (var item in pedido.ProdutosDoPedido)
+            {
+                var baixou = await _estoqueRepository.BaixarEstoqueAsync(item.EstoqueId, item.Quantidade);
+                if (!baixou)
+                {
+                    throw new DomainValidationException(
+                        $"Estoque insuficiente para o item {item.Estoque?.Produto?.Nome} " +
+                        $"(Tamanho: {item.Estoque?.Tamanho}, Cor: {item.Estoque?.Cor}).");
+                }
             }
         }
     }

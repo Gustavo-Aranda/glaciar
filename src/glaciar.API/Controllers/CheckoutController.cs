@@ -23,6 +23,19 @@ namespace glaciar.API.Controllers
             throw new DomainValidationException("Usuário não autenticado. Informe X-Usuario-Id no header.");
         }
 
+        [HttpGet("contexto")]
+        public async Task<IActionResult> ObterContexto()
+        {
+            try
+            {
+                var usuarioId = GetUsuarioId();
+                var result = await _checkoutService.ObterContextoAsync(usuarioId);
+                return Ok(result);
+            }
+            catch (DomainValidationException ex) { return BadRequest(new { message = ex.Message }); }
+            catch (Exception ex) { return StatusCode(500, new { message = "Erro interno no servidor.", details = ex.Message }); }
+        }
+
         [HttpPost("finalizar")]
         public async Task<IActionResult> FinalizarCompra([FromBody] CheckoutRequestDTO dto)
         {
