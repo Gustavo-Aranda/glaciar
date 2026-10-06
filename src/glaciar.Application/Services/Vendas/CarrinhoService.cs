@@ -14,18 +14,15 @@ namespace glaciar.Application.Services.Vendas
     {
         private readonly IPedidoRepository _pedidoRepository;
         private readonly IEstoqueRepository _estoqueRepository;
-        private readonly IUsuarioRepository _usuarioRepository;
         private readonly IFreteService _freteService;
 
         public CarrinhoService(
             IPedidoRepository pedidoRepository,
             IEstoqueRepository estoqueRepository,
-            IUsuarioRepository usuarioRepository,
             IFreteService freteService)
         {
             _pedidoRepository = pedidoRepository;
             _estoqueRepository = estoqueRepository;
-            _usuarioRepository = usuarioRepository;
             _freteService = freteService;
         }
 
@@ -34,7 +31,6 @@ namespace glaciar.Application.Services.Vendas
         // ==========================================
         public async Task<CarrinhoResponseDTO> ObterAsync(int usuarioId)
         {
-            await ValidarUsuarioAsync(usuarioId);
             var carrinho = await _pedidoRepository.GetCarrinhoAsync(usuarioId);
             return VendasMapper.ParaCarrinho(carrinho);
         }
@@ -44,7 +40,6 @@ namespace glaciar.Application.Services.Vendas
         // ==========================================
         public async Task<CarrinhoResponseDTO> AdicionarItemAsync(int usuarioId, CarrinhoItemAddDTO dto)
         {
-            await ValidarUsuarioAsync(usuarioId);
             ValidarQuantidadeInformada(dto.Quantidade);
 
             var estoque = await ObterEstoqueVendavelAsync(dto.EstoqueId);
@@ -82,7 +77,6 @@ namespace glaciar.Application.Services.Vendas
         // ==========================================
         public async Task<CarrinhoResponseDTO> AtualizarItemAsync(int usuarioId, int itemId, CarrinhoItemUpdateDTO dto)
         {
-            await ValidarUsuarioAsync(usuarioId);
             ValidarQuantidadeInformada(dto.Quantidade);
 
             var carrinho = await ObterCarrinhoExistenteAsync(usuarioId);
@@ -105,8 +99,6 @@ namespace glaciar.Application.Services.Vendas
         // ==========================================
         public async Task<CarrinhoResponseDTO> RemoverItemAsync(int usuarioId, int itemId)
         {
-            await ValidarUsuarioAsync(usuarioId);
-
             var carrinho = await ObterCarrinhoExistenteAsync(usuarioId);
             var item = ObterItemDoCarrinho(carrinho, itemId);
 
@@ -124,8 +116,6 @@ namespace glaciar.Application.Services.Vendas
         // ==========================================
         public async Task<FreteResponseDTO> CalcularFreteAsync(int usuarioId, Estados estado)
         {
-            await ValidarUsuarioAsync(usuarioId);
-
             if (!Enum.IsDefined(estado))
                 throw new DomainValidationException("O estado de destino é inválido.");
 
@@ -143,13 +133,6 @@ namespace glaciar.Application.Services.Vendas
         // ==========================================
         // 🔒 MÉTODOS PRIVADOS
         // ==========================================
-        private async Task ValidarUsuarioAsync(int usuarioId)
-        {
-            var usuario = await _usuarioRepository.GetByIdAsync(usuarioId);
-            if (usuario == null || !usuario.Ativo)
-                throw new DomainValidationException("O cliente informado não existe ou está inativo.");
-        }
-
         private static void ValidarQuantidadeInformada(int quantidade)
         {
             if (quantidade < 1)
