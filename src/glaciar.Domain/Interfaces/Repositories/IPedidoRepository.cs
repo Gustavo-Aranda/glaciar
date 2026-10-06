@@ -22,5 +22,9 @@ namespace glaciar.Domain.Interfaces.Repositories
 
         /// <summary>Indica se algum pedido (não carrinho) aponta para o endereço físico informado.</summary>
         Task<bool> ExisteComEnderecoAsync(int enderecoId);
+
+        // --- MÉTODOS DE ADMINISTRAÇÃO ---
+        Task<IEnumerable<Pedido>> GetAllParaAdminAsync();
+        Task<Pedido?> GetParaAdminByIdAsync(int id);
     }
 }

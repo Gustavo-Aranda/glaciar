@@ -30,6 +30,13 @@ function obterIdUsuarioAtual() {
     }
 }
 
+// Retorna o id do usuário logado (URL ?id= ou sessão). Sem login, redireciona para a tela de login.
+function exigirIdUsuario() {
+    const id = obterIdUsuarioAtual();
+    if (!id) window.location.href = 'login.html';
+    return id;
+}
+
 function atualizarLinksConta() {
     const id = obterIdUsuarioAtual();
     if (!id) return;
