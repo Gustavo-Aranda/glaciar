@@ -44,6 +44,34 @@
     flex-shrink: 0;
 }
 
+.toast-icon-success {
+    background-color: #2e7d32;
+    color: #fff;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.toast-icon-info {
+    background-color: #1976d2;
+    color: #fff;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
 
 .toast-content {
     flex-grow: 1;

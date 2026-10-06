@@ -9,5 +9,8 @@ namespace glaciar.Application.Interfaces.Services
 
         /// <summary>Cupons de troca disponíveis do cliente.</summary>
         Task<IEnumerable<CupomResponseDTO>> ListarCuponsDeTrocaAsync(int usuarioId);
+
+        /// <summary>Todos os cupons disponíveis para o cliente (troca e promocionais).</summary>
+        Task<IEnumerable<CupomResponseDTO>> ListarPorClienteAsync(int usuarioId);
     }
 }

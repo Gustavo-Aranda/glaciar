@@ -14,14 +14,28 @@ class NotificationService {
     }
 
     showError(title, message, duration = 5000) {
+        this._showToast(title, message, 'error', duration);
+    }
+
+    showSuccess(title, message, duration = 4000) {
+        this._showToast(title, message, 'success', duration);
+    }
+
+    showInfo(title, message, duration = 4000) {
+        this._showToast(title, message, 'info', duration);
+    }
+
+    _showToast(title, message, type = 'info', duration = 5000) {
+        this._initContainer();
         const container = document.getElementById(this.containerId);
         if (!container) return;
-        
+
+        const iconSymbol = type === 'success' ? '✓' : (type === 'error' ? '!' : 'ℹ');
         const toast = document.createElement('div');
-        toast.className = 'toast toast-error';
-        
+        toast.className = `toast toast-${type}`;
+
         toast.innerHTML = `
-            <div class="toast-icon-error">!</div>
+            <div class="toast-icon-${type}">${iconSymbol}</div>
             <div class="toast-content">
                 <div class="toast-title">${title}</div>
                 <div class="toast-message">${message}</div>

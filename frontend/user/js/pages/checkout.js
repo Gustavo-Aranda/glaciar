@@ -6,9 +6,12 @@ const formatarBRL = (v) => `R$ ${Number(v).toFixed(2).replace('.', ',')}`;
 
 let subtotalCarrinho = 0;
 let valorFrete = 0;
+let valorDescontoTotal = 0;
 let totalGeral = 0;
 let estadoExistente = null;
 let cartoesVinculados = [];
+let cuponsAplicados = []; // Array de { id, codigo, valorDesconto, categoria }
+let cupomFeedbackTimeout = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     inicializarEventosUI();
@@ -32,17 +35,18 @@ async function carregarContextoCheckout() {
 
         const contexto = await response.json();
 
-        // 1. Dados do Carrinho e Totais
+        // 1. Dados do Carrinho e Frete inicial
         subtotalCarrinho = contexto.carrinho?.subtotal || 0;
         valorFrete = contexto.valorFrete || 0;
-        totalGeral = contexto.valorTotal || subtotalCarrinho;
 
-        renderizarResumo(contexto.carrinho, valorFrete, totalGeral);
-
-        // 2. Endereço Principal
+        // 2. Endereço Principal (define estadoExistente)
         renderizarEnderecoPrincipal(contexto.enderecoPrincipal);
 
-        // 3. Cartões Vinculados
+        // 3. Renderiza itens e calcula totais reativos
+        renderizarItensResumo(contexto.carrinho);
+        atualizarTotaisCheckout();
+
+        // 4. Cartões Vinculados
         cartoesVinculados = contexto.cartoes || [];
         renderizarCartoesVinculados(cartoesVinculados, totalGeral);
 
@@ -55,12 +59,10 @@ async function carregarContextoCheckout() {
 }
 
 /* ---------- 2. Renderização dos Blocos da Tela ---------- */
-function renderizarResumo(carrinho, frete, total) {
-    $('resumo-subtotal').textContent = formatarBRL(carrinho?.subtotal || 0);
-    $('resumo-frete').textContent = frete > 0 ? formatarBRL(frete) : (estadoExistente ? 'R$ 0,00' : 'Aguardando endereço');
-    $('resumo-total').textContent = formatarBRL(total);
-
+function renderizarItensResumo(carrinho) {
     const itensContainer = $('resumo-itens');
+    if (!itensContainer) return;
+
     const itens = carrinho?.itens || [];
 
     if (itens.length === 0) {
@@ -81,6 +83,72 @@ function renderizarResumo(carrinho, frete, total) {
     `).join('');
 }
 
+function renderizarResumo(carrinho, frete, total) {
+    renderizarItensResumo(carrinho);
+    atualizarTotaisCheckout();
+}
+
+/**
+ * Recálculo reativo centralizado do checkout.
+ * Respeita as regras de negócio de cupons (RN0033, RN0035, RN0036):
+ * - Aplica 1º o promocional e depois cupons de troca
+ * - Atualiza o campo 'Desconto' no resumo
+ * - Sincroniza o saldo devedor restante com os inputs de pagamento
+ */
+function atualizarTotaisCheckout() {
+    const baseTotal = subtotalCarrinho + valorFrete;
+
+    const promo = cuponsAplicados.find(c => (c.categoria || '').toUpperCase() !== 'TROCA');
+    const trocas = cuponsAplicados.filter(c => (c.categoria || '').toUpperCase() === 'TROCA');
+
+    let saldo = baseTotal;
+    let descontoCalculado = 0;
+
+    if (promo) {
+        const descPromo = Math.min(promo.valorDesconto, saldo);
+        saldo -= descPromo;
+        descontoCalculado += descPromo;
+    }
+
+    for (const t of trocas) {
+        if (saldo > 0) {
+            const descTroca = Math.min(t.valorDesconto, saldo);
+            saldo -= descTroca;
+            descontoCalculado += descTroca;
+        }
+    }
+
+    valorDescontoTotal = descontoCalculado;
+    totalGeral = Math.max(0, saldo);
+
+    if ($('resumo-subtotal')) $('resumo-subtotal').textContent = formatarBRL(subtotalCarrinho);
+    if ($('resumo-frete')) {
+        $('resumo-frete').textContent = valorFrete > 0 ? formatarBRL(valorFrete) : (estadoExistente ? 'R$ 0,00' : 'Aguardando endereço');
+    }
+
+    const elDesconto = $('resumo-desconto');
+    if (elDesconto) {
+        if (valorDescontoTotal > 0) {
+            elDesconto.textContent = `- ${formatarBRL(valorDescontoTotal)}`;
+            elDesconto.classList.add('desconto-ativo');
+        } else {
+            elDesconto.textContent = 'R$ 0,00';
+            elDesconto.classList.remove('desconto-ativo');
+        }
+    }
+
+    if ($('resumo-total')) $('resumo-total').textContent = formatarBRL(totalGeral);
+
+    // Mantém campo hidden de cupons sincronizado
+    const hiddenCupons = $('cupons');
+    if (hiddenCupons) {
+        hiddenCupons.value = cuponsAplicados.map(c => c.codigo).join(',');
+    }
+
+    // Reajusta os cartões com o saldo restante
+    sincronizarValorComCartoes(totalGeral);
+}
+
 function renderizarEnderecoPrincipal(enderecoPrincipal) {
     const infoDiv = $('endereco-info');
     const hiddenId = $('endereco-existente');
@@ -93,7 +161,6 @@ function renderizarEnderecoPrincipal(enderecoPrincipal) {
         hiddenId.value = '';
         estadoExistente = null;
 
-        // Abre automaticamente o formulário de novo endereço
         $('novo-endereco-form').classList.add('active');
         $('usar-novo').checked = true;
         $('usar-existente').checked = false;
@@ -123,11 +190,12 @@ function renderizarCartoesVinculados(cartoes, total) {
             </div>
         `;
 
-        // Abre automaticamente o formulário de novo cartão com o total preenchido
         $('novo-cartao-form').classList.add('active');
         $('btn-toggle-cartao').textContent = '- Cancelar novo cartão';
         if (total > 0) {
             $('novo-cartao-valor').value = total.toFixed(2);
+        } else {
+            $('novo-cartao-valor').value = '0.00';
         }
         return;
     }
@@ -138,7 +206,6 @@ function renderizarCartoesVinculados(cartoes, total) {
         article.className = 'endereco-resumo-container cartao-item-vinculado';
         article.setAttribute('data-cartao-id', cartao.id);
 
-        // O primeiro cartão (ou padrão) assume o total inicial
         const valorInicial = (index === 0 && total > 0) ? total.toFixed(2) : '0.00';
         const badgePadrao = cartao.padrao ? ' (Principal)' : '';
         const mesStr = String(cartao.mesValidade).padStart(2, '0');
@@ -164,20 +231,22 @@ function renderizarCartoesVinculados(cartoes, total) {
     });
 }
 
-/* ---------- 3. UI e Recálculo Reativo de Frete ---------- */
+/* ---------- 3. UI, Validação de Cupons e Recálculo Reativo ---------- */
 function inicializarEventosUI() {
     // 1. Toggle Novo Endereço
     const btnEndereco = $('btn-toggle-endereco');
     const formNovoEndereco = $('novo-endereco-form');
 
-    btnEndereco.addEventListener('click', async () => {
-        const ativo = formNovoEndereco.classList.toggle('active');
-        $('usar-novo').checked = ativo;
-        $('usar-existente').checked = !ativo;
-        btnEndereco.textContent = ativo ? '- Cancelar novo endereço' : '+ Adicionar endereço';
+    if (btnEndereco && formNovoEndereco) {
+        btnEndereco.addEventListener('click', async () => {
+            const ativo = formNovoEndereco.classList.toggle('active');
+            $('usar-novo').checked = ativo;
+            $('usar-existente').checked = !ativo;
+            btnEndereco.textContent = ativo ? '- Cancelar novo endereço' : '+ Adicionar endereço';
 
-        await recalcularFretePorOrigem();
-    });
+            await recalcularFretePorOrigem();
+        });
+    }
 
     // 2. Mudança de Estado no formulário de novo endereço
     const selectEstado = $('estado');
@@ -193,26 +262,51 @@ function inicializarEventosUI() {
     const btnCartao = $('btn-toggle-cartao');
     const formNovoCartao = $('novo-cartao-form');
 
-    btnCartao.addEventListener('click', () => {
-        const ativo = formNovoCartao.classList.toggle('active');
-        btnCartao.textContent = ativo ? '- Cancelar novo cartão' : '+ Adicionar um cartão';
+    if (btnCartao && formNovoCartao) {
+        btnCartao.addEventListener('click', () => {
+            const ativo = formNovoCartao.classList.toggle('active');
+            btnCartao.textContent = ativo ? '- Cancelar novo cartão' : '+ Adicionar um cartão';
 
-        const inputValorNovo = $('novo-cartao-valor');
-        if (ativo && (!inputValorNovo.value || parseFloat(inputValorNovo.value) <= 0)) {
-            const cobradoVinculados = somarValoresCartoesVinculados();
-            const restante = Math.max(0, totalGeral - cobradoVinculados);
-            if (restante > 0) {
-                inputValorNovo.value = restante.toFixed(2);
+            const inputValorNovo = $('novo-cartao-valor');
+            if (ativo && (!inputValorNovo.value || parseFloat(inputValorNovo.value) <= 0)) {
+                const cobradoVinculados = somarValoresCartoesVinculados();
+                const restante = Math.max(0, totalGeral - cobradoVinculados);
+                if (restante > 0) {
+                    inputValorNovo.value = restante.toFixed(2);
+                }
             }
-        }
-    });
+        });
+    }
 
-    // 4. Toggle Cupons
-    $('btn-toggle-cupom').addEventListener('click', () => {
-        $('cupom-form').classList.toggle('active');
-    });
+    // 4. Toggle e Ações de Cupom
+    const btnToggleCupom = $('btn-toggle-cupom');
+    const formCupom = $('cupom-form');
+    if (btnToggleCupom && formCupom) {
+        btnToggleCupom.addEventListener('click', () => {
+            const ativo = formCupom.classList.toggle('active');
+            const icon = btnToggleCupom.querySelector('.icon');
+            if (icon) icon.textContent = ativo ? '-' : '+';
+        });
+    }
 
-    // 5. Máscaras e validações em tempo real para o novo cartão
+    // Botão da setinha para validar e aplicar o cupom
+    const btnAplicarCupom = $('btn-aplicar-cupom');
+    if (btnAplicarCupom) {
+        btnAplicarCupom.addEventListener('click', aplicarCupom);
+    }
+
+    // Tecla Enter no input de cupom
+    const inputCupom = $('cupom-codigo');
+    if (inputCupom) {
+        inputCupom.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                aplicarCupom();
+            }
+        });
+    }
+
+    // 5. Máscaras e validações para o novo cartão
     const inputNumero = $('cartao-numero');
     if (inputNumero) {
         inputNumero.addEventListener('input', (e) => {
@@ -245,21 +339,160 @@ function inicializarEventosUI() {
     }
 }
 
+/* ---------- 4. Lógica de Cupons (Validação Reativa) ---------- */
+async function aplicarCupom() {
+    const input = $('cupom-codigo');
+    if (!input) return;
+
+    const codigo = input.value.trim().toUpperCase();
+    if (!codigo) {
+        mostrarFeedbackCupom('Por favor, informe o código do cupom.', 'erro');
+        input.focus();
+        return;
+    }
+
+    // Evita duplicidade do mesmo cupom
+    if (cuponsAplicados.some(c => c.codigo.toUpperCase() === codigo)) {
+        mostrarFeedbackCupom(`O cupom '${codigo}' já está adicionado ao pedido.`, 'alerta');
+        return;
+    }
+
+    const btn = $('btn-aplicar-cupom');
+    if (btn) btn.disabled = true;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/cupons/validar/${encodeURIComponent(codigo)}`, {
+            headers: { 'X-Usuario-Id': USUARIO_ID.toString() }
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            const msg = data.message || data.title || 'Cupom inválido ou não disponível.';
+            mostrarFeedbackCupom(msg, 'erro');
+            return;
+        }
+
+        const categoria = (data.categoria || '').toUpperCase();
+        const ehTroca = categoria === 'TROCA';
+
+        // RN0033: Apenas 1 cupom promocional por compra. Cupons de troca podem ser múltiplos.
+        if (!ehTroca) {
+            const promoExistente = cuponsAplicados.find(c => (c.categoria || '').toUpperCase() !== 'TROCA');
+            if (promoExistente) {
+                mostrarFeedbackCupom(
+                    `Apenas 1 cupom promocional é permitido por compra. Remova '${promoExistente.codigo}' se desejar substituí-lo.`,
+                    'alerta'
+                );
+                return;
+            }
+        }
+
+        // Adiciona à lista de cupons aplicados no checkout
+        cuponsAplicados.push({
+            id: data.id,
+            codigo: data.codigo,
+            valorDesconto: Number(data.valorDesconto),
+            categoria: data.categoria
+        });
+
+        input.value = '';
+        mostrarFeedbackCupom(`Cupom '${data.codigo}' aplicado com sucesso!`, 'sucesso');
+        renderizarCuponsAplicados();
+        atualizarTotaisCheckout();
+
+        if (window.Toast && typeof window.Toast.showSuccess === 'function') {
+            window.Toast.showSuccess('Cupom Aplicado', `Desconto de ${formatarBRL(data.valorDesconto)} adicionado.`);
+        }
+    } catch (error) {
+        console.error('Erro ao validar cupom:', error);
+        mostrarFeedbackCupom('Erro ao validar o cupom. Verifique sua conexão.', 'erro');
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
+function removerCupom(codigo) {
+    const idx = cuponsAplicados.findIndex(c => c.codigo.toUpperCase() === codigo.toUpperCase());
+    if (idx !== -1) {
+        const removido = cuponsAplicados.splice(idx, 1)[0];
+        renderizarCuponsAplicados();
+        atualizarTotaisCheckout();
+        mostrarFeedbackCupom(`Cupom '${removido.codigo}' removido.`, 'info');
+        if (window.Toast && typeof window.Toast.showInfo === 'function') {
+            window.Toast.showInfo('Cupom Removido', `O cupom '${removido.codigo}' foi removido do pedido.`);
+        }
+    }
+}
+
+function renderizarCuponsAplicados() {
+    const container = $('cupons-aplicados-container');
+    if (!container) return;
+
+    if (cuponsAplicados.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+
+    container.innerHTML = cuponsAplicados.map(c => {
+        const ehTroca = (c.categoria || '').toUpperCase() === 'TROCA';
+        const badgeLabel = ehTroca ? 'Troca' : 'Promocional';
+        const badgeClass = ehTroca ? 'badge-troca' : 'badge-promo';
+
+        return `
+            <div class="cupom-tag-card" data-codigo="${c.codigo}">
+                <div class="cupom-tag-info">
+                    <span class="cupom-tag-codigo">${c.codigo}</span>
+                    <span class="cupom-tag-badge ${badgeClass}">${badgeLabel}</span>
+                    <span class="cupom-tag-valor">-${formatarBRL(c.valorDesconto)}</span>
+                </div>
+                <button type="button" class="btn-remover-cupom" data-codigo="${c.codigo}" title="Remover cupom ${c.codigo}" aria-label="Remover cupom">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+        `;
+    }).join('');
+
+    container.querySelectorAll('.btn-remover-cupom').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const cod = btn.getAttribute('data-codigo');
+            if (cod) removerCupom(cod);
+        });
+    });
+}
+
+function mostrarFeedbackCupom(msg, tipo) {
+    const el = $('cupom-mensagem-feedback');
+    if (!el) return;
+
+    el.textContent = msg;
+    el.className = `cupom-feedback-msg cupom-feedback-${tipo}`;
+    el.style.display = 'block';
+
+    if (cupomFeedbackTimeout) {
+        clearTimeout(cupomFeedbackTimeout);
+    }
+    cupomFeedbackTimeout = setTimeout(() => {
+        el.style.display = 'none';
+    }, 4000);
+}
+
+/* ---------- 5. Recálculo Reativo de Frete ---------- */
 async function recalcularFretePorOrigem() {
     const tipo = document.querySelector('input[name="endereco_tipo"]:checked')?.value || 'existente';
     const estado = (tipo === 'existente') ? estadoExistente : ($('estado')?.value || null);
 
     if (!estado || subtotalCarrinho <= 0) {
         valorFrete = 0;
-        totalGeral = subtotalCarrinho;
-        $('resumo-frete').textContent = estado ? 'R$ 0,00' : 'Aguardando endereço';
-        $('resumo-total').textContent = formatarBRL(totalGeral);
-        sincronizarValorComCartoes(totalGeral);
+        atualizarTotaisCheckout();
         return;
     }
 
     if (window.LoadingService) window.LoadingService.show('Calculando frete...');
-    $('resumo-frete').textContent = 'Calculando...';
+    if ($('resumo-frete')) $('resumo-frete').textContent = 'Calculando...';
 
     try {
         const response = await fetch(`${API_BASE_URL}/carrinho/frete/${estado}`, {
@@ -270,27 +503,28 @@ async function recalcularFretePorOrigem() {
 
         const freteData = await response.json();
         valorFrete = freteData.valor || 0;
-        totalGeral = subtotalCarrinho + valorFrete;
-
-        $('resumo-frete').textContent = formatarBRL(valorFrete);
-        $('resumo-total').textContent = formatarBRL(totalGeral);
-        sincronizarValorComCartoes(totalGeral);
+        atualizarTotaisCheckout();
     } catch (err) {
         console.error('Erro ao recalcular frete:', err);
         valorFrete = 0;
-        totalGeral = subtotalCarrinho;
-        $('resumo-frete').textContent = 'Erro ao calcular';
-        $('resumo-total').textContent = formatarBRL(totalGeral);
-        sincronizarValorComCartoes(totalGeral);
+        atualizarTotaisCheckout();
+        if ($('resumo-frete')) $('resumo-frete').textContent = 'Erro ao calcular';
     } finally {
         if (window.LoadingService) window.LoadingService.hide();
     }
 }
 
 function sincronizarValorComCartoes(total) {
-    if (total <= 0) return;
-
     const inputsVinculados = document.querySelectorAll('.input-valor-cartao');
+    const inputNovo = $('novo-cartao-valor');
+
+    // Se o valor restante for R$ 0,00 (100% coberto por cupons)
+    if (total <= 0) {
+        inputsVinculados.forEach(inp => inp.value = '0.00');
+        if (inputNovo) inputNovo.value = '0.00';
+        return;
+    }
+
     if (inputsVinculados.length > 0) {
         if (inputsVinculados.length === 1) {
             inputsVinculados[0].value = total.toFixed(2);
@@ -308,7 +542,6 @@ function sincronizarValorComCartoes(total) {
             }
         }
     } else {
-        const inputNovo = $('novo-cartao-valor');
         if (inputNovo) {
             inputNovo.value = total.toFixed(2);
         }
@@ -324,9 +557,9 @@ function somarValoresCartoesVinculados() {
     return total;
 }
 
-/* ---------- 4. Coleta de Dados ---------- */
+/* ---------- 6. Coleta de Dados ---------- */
 function coletarEndereco() {
-    const tipo = document.querySelector('input[name="endereco_tipo"]:checked').value;
+    const tipo = document.querySelector('input[name="endereco_tipo"]:checked')?.value || 'existente';
 
     if (tipo === 'existente') {
         const idExistente = $('endereco-existente') ? parseInt($('endereco-existente').value, 10) : null;
@@ -352,10 +585,15 @@ function coletarEndereco() {
 }
 
 function coletarCupons() {
-    return $('cupons').value.split(',').map(c => c.trim()).filter(Boolean);
+    return cuponsAplicados.map(c => c.codigo);
 }
 
 function coletarCartoes() {
+    // Se o pedido foi 100% quitado por cupons, não há cobrança em cartões
+    if (totalGeral <= 0) {
+        return [];
+    }
+
     const cartoes = [];
 
     // 1. Cartões vinculados com valor > 0
@@ -410,12 +648,34 @@ function validar(payload) {
         }
     }
 
+    // Validação quando o valor restante é nulo ou R$ 0,00 (100% coberto por cupons)
+    if (totalGeral <= 0) {
+        // Valida se há pelo menos um cupom aplicado no pedido
+        if (!payload.codigosCupons || payload.codigosCupons.length === 0 || cuponsAplicados.length === 0) {
+            return 'Para compras com valor zerado (R$ 0,00), é necessário que um cupom válido esteja aplicado ao pedido.';
+        }
+
+        // Valida se o cupom está realmente vinculado aos cupons validados
+        const cupomNoPedido = cuponsAplicados.some(c => payload.codigosCupons.includes(c.codigo));
+        if (!cupomNoPedido) {
+            return 'O cupom informado não foi validado no pedido. Aplique o cupom novamente.';
+        }
+
+        // Cupom validado no pedido: não cobra nada no cartão e deixa passar a compra normalmente
+        payload.cartoes = [];
+        return null;
+    }
+
+    // Se o pedido tiver saldo a ser pago por cartões (> 0)
     if (!payload.cartoes || payload.cartoes.length === 0) {
         return 'Informe o valor a ser cobrado em pelo menos um cartão.';
     }
 
+    const houveCupom = cuponsAplicados.length > 0;
     for (const c of payload.cartoes) {
-        if (c.valor < 10) {
+        // RN0034 / RN0035: Se combinou cupons e o saldo restante for inferior a R$ 10,00, é permitido valor menor que R$ 10,00
+        const permiteMenorQue10 = houveCupom && totalGeral < 10;
+        if (!permiteMenorQue10 && c.valor < 10) {
             return 'O valor mínimo por cartão de crédito é R$ 10,00.';
         }
         if (c.novoCartao) {
@@ -445,18 +705,31 @@ function validar(payload) {
 
     const totalCobrado = payload.cartoes.reduce((acc, c) => acc + c.valor, 0);
     if (totalCobrado < totalGeral) {
-        return `O total nos cartões (${formatarBRL(totalCobrado)}) é inferior ao valor do pedido com frete (${formatarBRL(totalGeral)}).`;
+        return `O total nos cartões (${formatarBRL(totalCobrado)}) é inferior ao valor restante do pedido (${formatarBRL(totalGeral)}).`;
     }
 
     return null;
 }
 
-/* ---------- 5. Submissão do Pedido ---------- */
+/* ---------- 7. Submissão do Pedido ---------- */
 async function finalizarCompra(e) {
     e.preventDefault();
 
     const btn = document.querySelector('.btn-submit');
     if (btn.disabled) return;
+
+    // Aviso se digitou um cupom no campo mas não clicou na setinha para validar
+    const cupomNaoAplicado = $('cupom-codigo')?.value.trim();
+    if (cupomNaoAplicado) {
+        const jaFoi = cuponsAplicados.some(c => c.codigo.toUpperCase() === cupomNaoAplicado.toUpperCase());
+        if (!jaFoi) {
+            window.Toast?.showError(
+                'Cupom não aplicado',
+                `Você digitou '${cupomNaoAplicado}' mas não clicou na setinha para validá-lo. Clique na seta ao lado do campo para aplicar o cupom antes de finalizar.`
+            );
+            return;
+        }
+    }
 
     const payload = {
         ...coletarEndereco(),
@@ -493,14 +766,21 @@ async function finalizarCompra(e) {
             throw new Error(msg);
         }
 
-        // Sucesso: Segue o fluxo sem popup de notificação (apenas exibe a tela de sucesso ou altera a UI nativamente)
+        // Sucesso
         const mensagemSucesso = `
             <div style="padding: 2rem; text-align: center; color: #2e8b57;">
                 <h2>Compra finalizada com sucesso! 🎉</h2>
                 <p><strong>Código:</strong> ${data.codigo}</p>
                 <p><strong>Subtotal:</strong> ${formatarBRL(data.subtotal)}</p>
                 <p><strong>Frete:</strong> ${formatarBRL(data.valorFrete)}</p>
-                <p><strong>Total:</strong> ${formatarBRL(data.valorTotal)}</p>
+                ${data.valorAbatidoCupons > 0 ? `<p><strong>Desconto Aplicado:</strong> -${formatarBRL(data.valorAbatidoCupons)}</p>` : ''}
+                <p><strong>Valor Final:</strong> ${formatarBRL(data.valorTotal)}</p>
+                ${data.cupomTrocaGerado ? `
+                    <div style="margin-top: 15px; padding: 12px; background: #e8f5e9; border: 1px dashed #2e7d32; border-radius: 6px; color: #1b5e20;">
+                        <strong>Novo Cupom de Troca Gerado!</strong>
+                        <p>Código: <b>${data.cupomTrocaGerado.codigo}</b> | Saldo: <b>${formatarBRL(data.cupomTrocaGerado.valorDesconto)}</b></p>
+                    </div>
+                ` : ''}
                 <br>
                 <a href="pedidos.html" class="btn-submit" style="display:inline-block; margin-top: 1rem; text-decoration: none;">Ver meus pedidos</a>
             </div>

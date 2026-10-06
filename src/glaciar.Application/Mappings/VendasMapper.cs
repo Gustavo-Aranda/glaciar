@@ -56,6 +56,12 @@ namespace glaciar.Application.Mappings
             var frete = pedido.Entregas.OrderBy(e => e.Id).FirstOrDefault()?.ValorFrete ?? 0m;
             var somaCupons = pedido.CuponsAplicados.Sum(pc => pc.Cupom?.ValorDesconto ?? 0m);
 
+            var totalBruto = subtotal + frete;
+            var valorAbatido = Math.Min(somaCupons, totalBruto);
+            var valorFinal = (valorAbatido > 0 && Math.Abs(pedido.ValorTotal - totalBruto) < 0.001m)
+                ? Math.Max(0m, totalBruto - valorAbatido)
+                : pedido.ValorTotal;
+
             return new PedidoResponseDTO
             {
                 Id = pedido.Id,
@@ -64,8 +70,8 @@ namespace glaciar.Application.Mappings
                 Status = pedido.Status,
                 Subtotal = subtotal,
                 ValorFrete = frete,
-                ValorTotal = pedido.ValorTotal,
-                ValorAbatidoCupons = Math.Min(somaCupons, pedido.ValorTotal),
+                ValorTotal = valorFinal,
+                ValorAbatidoCupons = valorAbatido,
                 ValorPagoCartoes = pedido.Pagamentos.Sum(p => p.Valor),
                 EnderecoEntrega = pedido.Endereco == null ? null : new EnderecoResponseDTO
                 {

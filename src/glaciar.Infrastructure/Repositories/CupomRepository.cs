@@ -37,6 +37,21 @@ namespace glaciar.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Cupom>> GetDisponiveisByUsuarioAsync(int usuarioId)
+        {
+            var agora = DateTime.UtcNow;
+            return await _context.Cupons
+                .AsNoTracking()
+                .Where(c =>
+                    (c.UsuarioId == usuarioId || (c.UsuarioId == null && c.CategoriaCupom != CategoriasCupom.Troca)) &&
+                    c.Ativo &&
+                    c.QuantidadeMaximaUso > 0 &&
+                    c.DataValidade >= agora)
+                .OrderByDescending(c => c.CategoriaCupom == CategoriasCupom.Troca)
+                .ThenBy(c => c.DataValidade)
+                .ToListAsync();
+        }
+
         public async Task<bool> ExisteCodigoAsync(string codigo)
         {
             var codigoNormalizado = codigo.Trim().ToUpper();

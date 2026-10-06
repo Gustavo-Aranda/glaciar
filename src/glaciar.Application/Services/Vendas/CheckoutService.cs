@@ -72,9 +72,11 @@ namespace glaciar.Application.Services.Vendas
                 // 3. Totais e Aplicação de Cupons
                 var subtotalProdutos = pedido.ProdutosDoPedido.Sum(p => p.Preco * p.Quantidade);
                 var totalCompra = subtotalProdutos + valorFrete;
-                pedido.ValorTotal = totalCompra;
 
                 var resultadoCupons = await ProcessarCuponsAsync(pedido, usuarioId, dto.CodigosCupons, totalCompra);
+
+                // Deduz o valor dos cupons aplicados no valor total do pedido (saldo final a pagar)
+                pedido.ValorTotal = resultadoCupons.SaldoDevedor;
 
                 // 4. Processar Pagamento via Cartões
                 if (resultadoCupons.SaldoDevedor > 0)
@@ -88,7 +90,7 @@ namespace glaciar.Application.Services.Vendas
                 }
                 else
                 {
-                    ValidarSemCobrancaCartao(dto.Cartoes);
+                    ValidarPagamentoZeradoComCupom(pedido, resultadoCupons, dto.Cartoes);
                 }
 
                 // 5. Baixa de Estoque
@@ -354,8 +356,26 @@ namespace glaciar.Application.Services.Vendas
             }
         }
 
-        private static void ValidarSemCobrancaCartao(List<CheckoutCartaoDTO>? cartoes)
+        private static void ValidarPagamentoZeradoComCupom(
+            Pedido pedido,
+            ResultadoProcessamentoCupons resultadoCupons,
+            List<CheckoutCartaoDTO>? cartoes)
         {
+            // 1. Se o valor a pagar é R$ 0,00, valida se há de fato cupons aplicados no pedido
+            if (!resultadoCupons.HouveCuponsAplicados || !pedido.CuponsAplicados.Any())
+            {
+                throw new DomainValidationException(
+                    "O valor a pagar da compra é R$ 0,00, mas nenhum cupom válido foi aplicado para cobrir o total do pedido.");
+            }
+
+            // 2. Valida se os cupons aplicados cobriram de fato o valor total da compra
+            if (resultadoCupons.SaldoDevedor > 0)
+            {
+                throw new DomainValidationException(
+                    $"Os cupons aplicados abateram R$ {resultadoCupons.TotalDescontosAplicados:F2}, restando R$ {resultadoCupons.SaldoDevedor:F2} a ser pago por cartão de crédito.");
+            }
+
+            // 3. Valida que nenhum cartão está sendo cobrado
             if (cartoes != null && cartoes.Any(c => c.Valor > 0))
             {
                 throw new DomainValidationException(

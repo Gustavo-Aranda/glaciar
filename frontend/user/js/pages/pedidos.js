@@ -252,6 +252,7 @@ function gerarHtmlCardPedido(pedido) {
             <div class="order-footer-bar">
                 <div class="order-total-summary">
                     <span class="order-total-value">Total do Pedido: <strong>${formatarMoeda(pedido.valorTotal)}</strong></span>
+                    ${pedido.valorAbatidoCupons > 0 ? `<span class="order-frete-note" style="color: #2e7d32; font-weight: 500;">Desconto cupom: -${formatarMoeda(pedido.valorAbatidoCupons)}</span>` : ''}
                     ${pedido.valorFrete > 0 ? `<span class="order-frete-note">Inclui frete de ${formatarMoeda(pedido.valorFrete)}</span>` : '<span class="order-frete-note">Frete grátis</span>'}
                 </div>
                 <div class="order-actions" style="padding: 0;">
@@ -297,11 +298,13 @@ function gerarHtmlDetalhesPedido(pedido) {
            CEP: ${escaparHtml(end.cep)}`
         : 'Endereço não informado';
 
-    const pagamentos = (pedido.pagamentos || []).map((p) => {
+    const pagamentosLinhas = (pedido.pagamentos || []).map((p) => {
         const metodo = p.metodo === 1 ? 'Cartão de Crédito' : 'Outro';
         const infoCartao = p.cartaoUltimosDigitos ? `(${p.cartaoBandeira || 'Cartão'} final ${p.cartaoUltimosDigitos})` : '';
         return `${metodo} ${infoCartao}: ${formatarMoeda(p.valor)}`;
-    }).join('<br>') || 'Informação de pagamento indisponível';
+    }).join('<br>');
+
+    const pagamentos = pagamentosLinhas || (pedido.valorAbatidoCupons > 0 ? 'Pago integralmente com Cupom' : 'Informação de pagamento indisponível');
 
     const descontoCupom = pedido.valorAbatidoCupons > 0
         ? `<p>Desconto Cupons: -${formatarMoeda(pedido.valorAbatidoCupons)}</p>`
