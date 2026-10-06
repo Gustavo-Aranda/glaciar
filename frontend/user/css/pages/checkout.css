@@ -1,0 +1,92 @@
+:root {
+    --bg-color: #f3f3f3;
+    --text-color: #000;
+    --border-color: #e0e0e0;
+    --input-border: #000;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+
+body { background-color: var(--bg-color); color: var(--text-color); padding-bottom: 50px;}
+
+/* Header */
+.checkout-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; background: var(--bg-color); }
+.back-link { text-decoration: none; color: var(--text-color); font-size: 14px; }
+.logo { font-size: 24px; letter-spacing: -1px; }
+.user-action { font-size: 14px; background: #000; color: #fff; padding: 5px 15px; border-radius: 20px;}
+
+/* Layout Principal */
+.checkout-container { display: grid; grid-template-columns: 1fr 400px; gap: 30px; max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+/* Seções (Cards) */
+.checkout-section { background: #fff; padding: 30px; border-radius: 8px; margin-bottom: 20px; }
+.checkout-section h2 { font-size: 20px; margin-bottom: 25px; }
+
+/* Endereço Resumo */
+.endereco-resumo-container { border: 2px solid #000; padding: 15px; border-radius: 4px; margin-bottom: 15px; background: #fafafa;}
+.endereco-info p { margin-top: 5px; color: #555; font-size: 14px; }
+.hidden-radio { display: none; }
+
+.add-address-trigger { font-weight: bold; cursor: pointer; padding: 10px 0; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
+
+/* Inputs "Linha" (estilo da imagem 2 e 3) */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.input-group { margin-bottom: 25px; }
+.input-group label { display: block; font-size: 12px; color: #555; margin-bottom: 5px; }
+.input-group input[type="text"], .input-group input[type="number"], .input-group select { 
+    width: 100%; border: none; border-bottom: 1px solid var(--input-border); padding: 5px 0; font-size: 16px; background: transparent; outline: none; 
+}
+.input-group input:focus { border-bottom: 2px solid #000; }
+.inline-input { border: none; border-bottom: 1px solid #ccc; outline: none; width: 100px; padding: 2px; }
+
+/* Checkboxes */
+.checkbox-group { display: flex; align-items: center; gap: 10px; margin-top: 15px; }
+.checkbox-group label { font-size: 14px; cursor: pointer; }
+.mt-4 { margin-top: 20px; }
+
+/* Utilitários Visuais */
+.hidden-form { display: none; padding-top: 15px; }
+.hidden-form.active { display: block; animation: fadeIn 0.3s; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Acordeão de Cupom */
+.accordion { display: flex; justify-content: space-between; cursor: pointer; font-weight: bold; padding: 15px 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); margin-bottom: 20px;}
+
+/* Estilo Pagamento Selecionado */
+.payment-method { margin-bottom: 20px; }
+.payment-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.radio-label { font-weight: bold; font-size: 16px; display: flex; align-items: center; gap: 10px; cursor: pointer;}
+.badge { background: #004592; color: white; padding: 2px 5px; border-radius: 3px; font-size: 10px; font-weight: bold;}
+
+/* Cartões Vinculados */
+.cartao-resumo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.cartao-cobranca-box { margin-top: 12px; display: flex; align-items: center; gap: 10px; background: #fff; padding: 10px 12px; border-radius: 4px; border: 1px solid var(--border-color); }
+.cartao-cobranca-box label { font-size: 13px; font-weight: bold; color: #333; }
+.cartao-cobranca-box input { flex: 1; border: none; border-bottom: 1px solid var(--input-border); padding: 4px 0; font-size: 15px; font-weight: bold; background: transparent; outline: none; }
+.cartao-cobranca-box input:focus { border-bottom: 2px solid #000; }
+
+/* Botão Submit (Preto, arredondado) */
+.btn-submit { background: #000; color: #fff; width: 100%; border: none; padding: 18px; font-size: 16px; font-weight: bold; border-radius: 30px; cursor: pointer; margin-top: 20px; transition: background 0.2s;}
+.btn-submit:hover { background: #333; }
+
+/* Sidebar - Resumo do Pedido */
+.summary-card { background: #fff; padding: 25px; border-radius: 8px; }
+.summary-header { display: flex; justify-content: space-between; margin-bottom: 15px; align-items: baseline; }
+.summary-header h3 { font-size: 18px; }
+.edit-link { color: var(--text-color); font-size: 12px; font-weight: bold; text-decoration: none; }
+.alert-box { border: 1px solid #ccc; padding: 15px; border-radius: 4px; display: flex; gap: 10px; font-size: 13px; color: #555; margin-bottom: 20px; }
+.product-item { display: flex; gap: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); margin-bottom: 15px; }
+.product-img { width: 60px; height: 80px; background: #82475A; border-radius: 4px; } /* Cor simulando o short */
+.product-name { font-weight: bold; font-size: 14px; margin-bottom: 5px; }
+.product-meta { font-size: 12px; color: #666; margin-bottom: 3px; }
+.product-price { font-weight: bold; margin-top: 5px; font-size: 14px;}
+.total-line { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
+.grand-total { font-size: 18px; font-weight: bold; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color); }
+
+.mensagem-alerta { text-align: center; font-weight: bold; padding: 10px; margin-bottom: 10px; }
+
+/* Responsividade */
+@media (max-width: 900px) {
+    .checkout-container { grid-template-columns: 1fr; }
+    .checkout-header { padding: 15px 20px; }
+}

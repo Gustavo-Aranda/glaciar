@@ -1,62 +1,245 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout | Glaciar</title>
+    <link rel="stylesheet" href="./css/global.css">
+    <link rel="stylesheet" href="./css/pages/checkout.css">
+    <link rel="stylesheet" href="./css/components/chatbot.css">
 </head>
+
 <body>
-    <h1>Checkout de Venda (Simples)</h1>
-    
-    <div id="mensagem" style="margin-bottom: 20px; color: red;"></div>
 
-    <form id="checkout-form">
-        <h3>1. Endereço de Entrega</h3>
-        <label>
-            <input type="radio" name="endereco_tipo" value="existente" checked>
-            Usar endereço cadastrado:
-            <select id="endereco-existente">
-                <option value="1">Endereço Principal (ID: 1)</option>
-                <!-- Será populado pela API na versão final -->
-            </select>
-        </label>
-        <br><br>
+    <div id="navbar-placeholder"></div>
 
-        <label>
-            <input type="radio" name="endereco_tipo" value="novo">
-            Novo Endereço:
-        </label>
-        <div id="novo-endereco-form" style="margin-left: 20px; margin-top: 10px;">
-            CEP: <input type="text" id="cep"> <br>
-            Logradouro: <input type="text" id="logradouro"> <br>
-            Número: <input type="text" id="numero"> <br>
-            Bairro: <input type="text" id="bairro"> <br>
-            Cidade: <input type="text" id="cidade"> <br>
-            Estado: <input type="text" id="estado" placeholder="SP"> <br>
-            <label><input type="checkbox" id="salvar-perfil"> Salvar no perfil (Apelido: <input type="text" id="apelido"> )</label>
+    <div id="mensagem" class="mensagem-alerta"></div>
+
+    <form id="checkout-form" class="checkout-container">
+
+        <!-- Coluna Esquerda: Formulários -->
+        <div class="checkout-main">
+
+            <!-- Seção 1: Entrega -->
+            <section class="checkout-section">
+                <h2>Onde você gostaria de receber seu pedido?</h2>
+
+                <!-- Resumo do Endereço Existente -->
+                <div class="endereco-resumo-container" id="container-endereco-existente">
+                    <input type="radio" name="endereco_tipo" value="existente" id="usar-existente" checked
+                        class="hidden-radio">
+                    <div class="endereco-resumo">
+                        <div class="endereco-info" id="endereco-info">
+                            <strong>Carregando endereço principal...</strong>
+                            <p>Buscando endereço cadastrado...</p>
+                            <!-- Input hidden preenchido pelo JS -->
+                            <input type="hidden" id="endereco-existente" value="">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botão para abrir Novo Endereço -->
+                <div class="add-address-trigger" id="btn-toggle-endereco">
+                    + Adicionar endereço
+                </div>
+
+                <!-- Formulário de Novo Endereço (Escondido por padrão) -->
+                <div id="novo-endereco-form" class="hidden-form">
+                    <input type="radio" name="endereco_tipo" value="novo" id="usar-novo" class="hidden-radio">
+
+                    <div class="input-group">
+                        <label>Endereço (Logradouro) *</label>
+                        <input type="text" id="logradouro">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>Número *</label>
+                            <input type="text" id="numero">
+                        </div>
+                        <div class="input-group">
+                            <label>Bairro *</label>
+                            <input type="text" id="bairro">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Cidade *</label>
+                        <input type="text" id="cidade">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>Estado *</label>
+                            <select id="estado">
+                                <option value="">Selecione...</option>
+                                <option value="AC">Acre</option>
+                                <option value="AL">Alagoas</option>
+                                <option value="AP">Amapá</option>
+                                <option value="AM">Amazonas</option>
+                                <option value="BA">Bahia</option>
+                                <option value="CE">Ceará</option>
+                                <option value="DF">Distrito Federal</option>
+                                <option value="ES">Espírito Santo</option>
+                                <option value="GO">Goiás</option>
+                                <option value="MA">Maranhão</option>
+                                <option value="MT">Mato Grosso</option>
+                                <option value="MS">Mato Grosso do Sul</option>
+                                <option value="MG">Minas Gerais</option>
+                                <option value="PA">Pará</option>
+                                <option value="PB">Paraíba</option>
+                                <option value="PR">Paraná</option>
+                                <option value="PE">Pernambuco</option>
+                                <option value="PI">Piauí</option>
+                                <option value="RJ">Rio de Janeiro</option>
+                                <option value="RN">Rio Grande do Norte</option>
+                                <option value="RS">Rio Grande do Sul</option>
+                                <option value="RO">Rondônia</option>
+                                <option value="RR">Roraima</option>
+                                <option value="SC">Santa Catarina</option>
+                                <option value="SP">São Paulo</option>
+                                <option value="SE">Sergipe</option>
+                                <option value="TO">Tocantins</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>CEP *</label>
+                            <input type="text" id="cep">
+                        </div>
+                    </div>
+
+                    <div class="checkbox-group mt-4">
+                        <input type="checkbox" id="salvar-perfil">
+                        <label for="salvar-perfil">Salvar endereço para uso futuro (Apelido: <input type="text"
+                                id="apelido" class="inline-input" placeholder="Ex: Casa">)</label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Seção 2: Pagamento -->
+            <section class="checkout-section">
+                <h2>Como você gostaria de pagar?</h2>
+
+                <!-- Cupons -->
+                <div class="accordion" id="btn-toggle-cupom">
+                    <span>Cartão Presente ou Código Promocional</span>
+                    <span class="icon">+</span>
+                </div>
+                <div id="cupom-form" class="hidden-form">
+                    <div class="input-group">
+                        <label>Códigos (separados por vírgula)</label>
+                        <input type="text" id="cupons" placeholder="Ex: PROMO10">
+                    </div>
+                </div>
+
+                <!-- Lista de Cartões Vinculados (empilhados no estilo do Endereço Principal) -->
+                <div id="cartoes-vinculados-container">
+                    <!-- Preenchido dinamicamente via JS com os cartões vinculados da conta -->
+                </div>
+
+                <!-- Botão para abrir Novo Cartão (recluso por padrão) -->
+                <div class="add-address-trigger" id="btn-toggle-cartao">
+                    + Adicionar um cartão
+                </div>
+
+                <!-- Formulário de Novo Cartão (Escondido por padrão) -->
+                <div id="novo-cartao-form" class="hidden-form">
+                    <div class="card-form">
+                        <div class="cartao-item">
+                            <div class="input-group">
+                                <label>Nome no Cartão</label>
+                                <input type="text" id="cartao-nome">
+                            </div>
+
+                            <div class="input-group">
+                                <label>Bandeira *</label>
+                                <select id="cartao-bandeira">
+                                    <option value="Visa">Visa</option>
+                                    <option value="Mastercard">Mastercard</option>
+                                    <option value="AmericanExpress">American Express</option>
+                                    <option value="Elo">Elo</option>
+                                    <option value="Hipercard">Hipercard</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label>Número do Cartão *</label>
+                                <input type="text" id="cartao-numero" placeholder="0000 0000 0000 0000">
+                            </div>
+
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label>Data de Expiração *</label>
+                                    <input type="text" id="cartao-validade" placeholder="MM/AA">
+                                </div>
+                                <div class="input-group">
+                                    <label>Código de Segurança *</label>
+                                    <input type="text" id="cartao-cvv" placeholder="123">
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <label>Quanto cobrar deste novo cartão (R$) *</label>
+                                <input type="number" step="0.01" min="10" id="novo-cartao-valor" placeholder="0.00">
+                            </div>
+
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="save-card">
+                                <label for="save-card">Salvar Cartão para uso futuro</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">Finalizar Compra</button>
+            </section>
         </div>
 
-        <hr>
+        <!-- Coluna Direita: Resumo do Pedido -->
+        <div class="checkout-sidebar">
+            <div class="summary-card">
+                <div class="summary-header">
+                    <h3>Resumo do Pedido</h3>
+                    <a href="#" class="edit-link">Editar</a>
+                </div>
 
-        <h3>2. Cupons de Desconto / Troca</h3>
-        Códigos (separados por vírgula): <input type="text" id="cupons" placeholder="Ex: PROMO10, TROCA-XYZ">
+                <div class="alert-box">
+                    <span class="icon">🕒</span>
+                    <p>Alguns itens na sua sacola têm pouco estoque e estão reservados para você.</p>
+                </div>
 
-        <hr>
+                <div class="product-list" id="resumo-itens">
+                    <!-- Itens renderizados pelo JS a partir do carrinho -->
+                </div>
 
-        <h3>3. Pagamentos (Cartões de Crédito)</h3>
-        <p>Abaixo, insira o ID do seu cartão cadastrado e o valor a ser cobrado.</p>
-        <div id="cartoes-container">
-            <div class="cartao-item" style="margin-bottom: 10px;">
-                Cartão ID (Existente): <input type="number" class="cartao-id" value="1"> 
-                Valor (R$): <input type="number" step="0.01" class="cartao-valor" placeholder="10.00">
+                <div class="summary-totals">
+                    <div class="total-line">
+                        <span>Subtotal</span>
+                        <span id="resumo-subtotal">-</span>
+                    </div>
+                    <div class="total-line">
+                        <span>Frete Estimado</span>
+                        <span>GRÁTIS</span>
+                    </div>
+                    <div class="total-line">
+                        <span>Imposto Estimado</span>
+                        <span>-</span>
+                    </div>
+                    <div class="total-line grand-total">
+                        <span>Total</span>
+                        <span id="resumo-total">-</span>
+                    </div>
+                </div>
             </div>
-            <!-- Pode adicionar mais campos dinamicamente no JS -->
         </div>
-        
-        <hr>
-        <button type="submit" style="padding: 10px 20px; font-size: 16px;">Finalizar Compra</button>
     </form>
 
+    <!-- Seus scripts -->
+    <script src="./js/components/usuario-session.js"></script>
     <script src="./js/pages/checkout.js"></script>
+    <script src="./js/components/layout.js"></script>
+    <script src="./js/components/chatbot.js"></script>
 </body>
+
 </html>

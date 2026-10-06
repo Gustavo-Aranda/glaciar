@@ -1,6 +1,6 @@
 const API_BASE_URL = 'http://localhost:5205/api';
-// Usaremos um usuário fixo 1 para fins de demonstração (o header que o backend espera)
-const USUARIO_ID = 1;
+// Usuário vindo da sessão/URL (usuario-session.js); sem login, redireciona para o login
+const USUARIO_ID = exigirIdUsuario();
 
 document.addEventListener('DOMContentLoaded', async () => {
     await carregarCarrinho();
@@ -74,9 +74,9 @@ function renderizarCarrinho(carrinho) {
             
             <div class="item-qty">
                 <div class="qty-selector">
-                    <button class="btn-minus" onclick="atualizarQuantidade(${item.id}, ${item.quantidade - 1})">&minus;</button>
-                    <input type="number" value="${item.quantidade}" min="1" readonly>
-                    <button class="btn-plus" onclick="atualizarQuantidade(${item.id}, ${item.quantidade + 1})">&plus;</button>
+                    <button class="btn-minus" id="btn-minus-${item.id}" onclick="alterarQuantidadeInput(${item.id}, ${item.quantidade - 1})">&minus;</button>
+                    <input type="number" id="qty-${item.id}" value="${item.quantidade}" min="1" readonly>
+                    <button class="btn-plus" id="btn-plus-${item.id}" onclick="alterarQuantidadeInput(${item.id}, ${item.quantidade + 1})">&plus;</button>
                 </div>
             </div>
 
@@ -101,9 +101,30 @@ function atualizarResumo(subtotal) {
     if (totalEl) totalEl.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
 }
 
-async function atualizarQuantidade(itemId, novaQuantidade) {
+const qtyTimers = {};
+
+function alterarQuantidadeInput(itemId, novaQuantidade) {
     if (novaQuantidade < 1) return;
 
+    // Atualiza otimisticamente a UI
+    const input = document.getElementById(`qty-${itemId}`);
+    if (input) input.value = novaQuantidade;
+
+    // Ajusta o onclick dos botões
+    const btnMinus = document.getElementById(`btn-minus-${itemId}`);
+    const btnPlus = document.getElementById(`btn-plus-${itemId}`);
+    if (btnMinus) btnMinus.setAttribute('onclick', `alterarQuantidadeInput(${itemId}, ${novaQuantidade - 1})`);
+    if (btnPlus) btnPlus.setAttribute('onclick', `alterarQuantidadeInput(${itemId}, ${novaQuantidade + 1})`);
+
+    // Debounce
+    if (qtyTimers[itemId]) clearTimeout(qtyTimers[itemId]);
+
+    qtyTimers[itemId] = setTimeout(() => {
+        atualizarQuantidadeAPI(itemId, novaQuantidade);
+    }, 500);
+}
+
+async function atualizarQuantidadeAPI(itemId, novaQuantidade) {
     try {
         const response = await fetch(`${API_BASE_URL}/carrinho/itens/${itemId}`, {
             method: 'PUT',
@@ -119,14 +140,15 @@ async function atualizarQuantidade(itemId, novaQuantidade) {
         } else {
             const err = await response.json();
             alert(`Erro: ${err.message}`);
+            carregarCarrinho(); // Retorna ao estado original do servidor em caso de erro
         }
     } catch (error) {
         console.error('Erro:', error);
+        carregarCarrinho();
     }
 }
 
 async function removerItem(itemId) {
-    if (!confirm('Deseja realmente remover este item do carrinho?')) return;
 
     try {
         const response = await fetch(`${API_BASE_URL}/carrinho/itens/${itemId}`, {

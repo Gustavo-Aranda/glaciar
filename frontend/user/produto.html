@@ -16,9 +16,9 @@
         <nav class="breadcrumb" aria-label="Breadcrumb">
             <a href="index.html">Home</a>
             <span class="separator">&gt;</span>
-            <a href="masculino.html">Masculino</a>
+            <a href="masculino.html" id="breadcrumb-category">Masculino</a>
             <span class="separator">&gt;</span>
-            <span class="current">Alpine Pro SV</span>
+            <span class="current" id="breadcrumb-current">Carregando...</span>
         </nav>
 
         <div class="product-layout">
@@ -26,11 +26,9 @@
             <!-- COLUNA ESQUERDA: GALERIA DE IMAGENS -->
             <section class="product-gallery">
                 <!-- Imagem Principal -->
-                <div class="gallery-item large" style="background-image: url('./assets/img/destaque-1.jpg');">
-                </div>
+                <div class="gallery-item large" id="main-gallery-img" style="background-image: url('./assets/img/destaque-1.jpg');"></div>
                 <!-- Imagens Secundárias -->
-                <div class="gallery-item" style="background-image: url('./assets/img/destaque-1.jpg');">
-                </div>
+                <div class="gallery-item" style="background-image: url('./assets/img/destaque-1.jpg');"></div>
                 <div class="gallery-item" style="background-image: url('./assets/img/destaque-1.jpg');"></div>
             </section>
 
@@ -38,21 +36,14 @@
             <aside class="product-sidebar">
                 <div class="sidebar-sticky">
                     
-                    <h1 class="product-title">Alpine Pro SV</h1>
-                    <!-- <div class="product-rating">
-                        ★★★★☆ <span class="review-count">70 Avaliações</span>
-                    </div>
-                    -->
-                    <p class="product-price">R$ 490,00</p>
+                    <h1 class="product-title" id="product-title">Carregando...</h1>
+                    <p class="product-price" id="product-price">R$ 0,00</p>
 
                     <!-- Seletor de Cor -->
                     <div class="selector-group">
-                        <span class="selector-label">Cor: <strong>Berry Fig</strong></span>
-                        <div class="color-swatches">
-                            <span class="swatch checked" style="background: #6a2e41;"></span>
-                            <span class="swatch" style="background: #111;"></span>
-                            <span class="swatch" style="background: #2c3e50;"></span>
-                            <span class="swatch" style="background: #405d45;"></span>
+                        <span class="selector-label" id="color-label">Cor: <strong>Carregando...</strong></span>
+                        <div class="color-swatches" id="color-swatches">
+                            <!-- Injetado via JS -->
                         </div>
                     </div>
 
@@ -62,21 +53,17 @@
                             <span class="selector-label">Tamanho</span>
                             <a href="#" class="size-guide-link">Guia de Tamanhos</a>
                         </div>
-                        <div class="size-grid">
-                            <button class="btn-size">P</button>
-                            <button class="btn-size selected">M</button>
-                            <button class="btn-size">G</button>
-                            <button class="btn-size">GG</button>
-                            <button class="btn-size disabled" disabled>2GG</button>
+                        <div class="size-grid" id="size-grid">
+                            <!-- Injetado via JS -->
                         </div>
                     </div>
 
                     <!-- Botão Adicionar ao Carrinho -->
-                    <button class="btn-add-to-bag" onclick="mockAddToBag()">Adicionar ao Carrinho</button>
+                    <button class="btn-add-to-bag" id="btn-add-to-bag">Adicionar ao Carrinho</button>
 
                     <!-- Descrição Curta -->
-                    <p class="product-description">
-                        Nossa blusa fleece versátil e confortável. Quente, leve e respirável, ideal para trilhas, viagens e os dias mais frios.
+                    <p class="product-description" id="product-description">
+                        Carregando detalhes do produto...
                     </p>
 
                     <!-- Sanfonas (Accordions) de Detalhes -->
@@ -115,9 +102,9 @@
             <div class="toast-body">
                 <div class="toast-img" style="background-image: url('./assets/img/destaque-1.jpg');"></div>
                 <div class="toast-details">
-                    <p class="toast-title">1x Jaqueta Alpine Pro SV</p>
-                    <p class="toast-price">R$ 490,00</p>
-                    <p class="toast-attr">Cor: Berry Fig</p>
+                    <p class="toast-title" id="toast-title">1x Jaqueta Alpine Pro SV</p>
+                    <p class="toast-price" id="toast-price">R$ 490,00</p>
+                    <p class="toast-attr" id="toast-color">Cor: Berry Fig</p>
                     <p class="toast-attr">Tamanho: <span id="toast-size">M</span></p>
                 </div>
             </div>
@@ -129,8 +116,8 @@
     </main>
 
     <script src="./js/components/layout.js"></script>
+    <script src="./js/components/usuario-session.js"></script>
     <script src="./js/pages/produto.js"></script>
-    <script src="./js/pages/catalog.js"></script>
     <script src="./js/components/chatbot.js"></script>
 </body>
 </html>

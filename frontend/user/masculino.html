@@ -32,49 +32,12 @@
 
             <section class="products-grid-container">
                 <div class="grid-controls">
-                    <span class="items-count">636 Itens</span>
+                    <span class="items-count" id="items-count">0 Itens</span>
                     <div class="sort-by">Ordenar Por <strong>Mais Relevantes</strong> <span class="arrow">v</span></div>
                 </div>
 
-                <div class="products-grid">
-                    
-                    <!-- Produto Exemplo: Short com Adição Rápida Funcional -->
-                    <article class="product-card">
-                        <div class="product-img-wrapper">
-                            <span class="badge badge-white">Novo</span>
-                            <a href="produto.html" class="img-link">
-                                <div class="img-placeholder" style="background-image: url(./assets/img/destaque-1.jpg)"></div>
-                            </a>
-                            
-                            <!-- Botão Inicial -->
-                            <button class="btn-quick-add" onclick="toggleSizeSelector(this)">Adição Rápida</button>
-                            
-                            <!-- Grade de Tamanhos (Inspirado na Imagem 1) -->
-                            <div class="size-selector-overlay hidden">
-                                <button class="btn-size" onclick="addToBag('P')">P</button>
-                                <button class="btn-size" onclick="addToBag('M')">M</button>
-                                <button class="btn-size" onclick="addToBag('G')">G</button>
-                                <button class="btn-size" onclick="addToBag('GG')">GG</button>
-                                <button class="btn-size disabled" disabled>2GG</button>
-                                <button class="btn-close-sizes" onclick="toggleSizeSelector(this.parentElement)">&times;</button>
-                            </div>
-                        </div>
-                        
-                        <div class="product-info">
-                            <div class="color-swatches">
-                                <span class="swatch checked" style="background: #6a2e41;"></span>
-                                <span class="swatch" style="background: #111;"></span>
-                                <span class="swatch" style="background: #2c3e50;"></span>
-                                <span class="swatch-more">+1</span>
-                            </div>
-                            <h3 class="product-title"><a href="produto.html">Alpine Pro SV</a></h3>
-                            <p class="product-price">R$ 490,00</p>
-                            <div class="product-tags">
-                                <span class="tag">secagem rápida</span>
-                                <span class="tag">stretch</span>
-                            </div>
-                        </div>
-                    </article>
+                <div class="products-grid" id="products-grid">
+                    <!-- Cards renderizados dinamicamente por js/pages/catalog.js (GET /api/produtos?categoria=Masculino) -->
 
                 </div>
             </section>
@@ -87,11 +50,11 @@
                 <button class="btn-close-toast" onclick="closeToast()">&times;</button>
             </div>
             <div class="toast-body">
-                <div class="toast-img" style="background-image: url('./assets/img/destaque-1.jpg');"></div>
+                <div class="toast-img" id="toast-img" style="background-image: url('./assets/img/destaque-1.jpg');"></div>
                 <div class="toast-details">
-                    <p class="toast-title">1x Jaqueta Alpine Pro SV</p>
-                    <p class="toast-price">R$ 490,00</p>
-                    <p class="toast-attr">Cor: Berry Fig</p>
+                    <p class="toast-title" id="toast-title">1x Produto</p>
+                    <p class="toast-price" id="toast-price">R$ 0,00</p>
+                    <p class="toast-attr">Cor: <span id="toast-color"></span></p>
                     <p class="toast-attr">Tamanho: <span id="toast-size">M</span></p>
                 </div>
             </div>
@@ -104,6 +67,7 @@
     </main>
 
     <script src="./js/components/layout.js"></script>
+    <script src="./js/components/usuario-session.js"></script>
     <script src="./js/pages/catalog.js"></script>
     <script src="./js/components/chatbot.js"></script>
 </body>
