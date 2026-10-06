@@ -17,19 +17,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function carregarCarrinho() {
     if (window.LoadingService) window.LoadingService.show('Carregando carrinho...');
     try {
-        const response = await fetch(`${API_BASE_URL}/carrinho`, {
+        const response = await fetch(`${API_BASE_URL}/checkout/contexto`, {
             headers: {
                 'X-Usuario-Id': USUARIO_ID.toString()
             }
         });
 
         if (!response.ok) {
-            console.error('Erro ao carregar o carrinho', await response.text());
+            console.error('Erro ao carregar o contexto do carrinho', await response.text());
             return;
         }
 
-        const carrinho = await response.json();
-        renderizarCarrinho(carrinho);
+        const contexto = await response.json();
+        renderizarCarrinho(contexto);
     } catch (error) {
         console.error('Erro de rede ao carregar carrinho:', error);
     } finally {
@@ -37,7 +37,12 @@ async function carregarCarrinho() {
     }
 }
 
-function renderizarCarrinho(carrinho) {
+function renderizarCarrinho(contexto) {
+    const carrinho = contexto.carrinho || { itens: [], quantidadeItens: 0, subtotal: 0 };
+    const valorFrete = contexto.valorFrete || 0;
+    const valorTotal = contexto.valorTotal || carrinho.subtotal;
+    const temEndereco = !!contexto.enderecoPrincipal;
+
     const container = document.querySelector('.cart-items-section');
     if (!container) return;
 
@@ -62,7 +67,7 @@ function renderizarCarrinho(carrinho) {
             btnCheckout.style.cursor = 'not-allowed';
         }
 
-        atualizarResumo(0);
+        renderizarResumoEstatico(0, 0, 0, false);
         return;
     }
 
@@ -107,17 +112,17 @@ function renderizarCarrinho(carrinho) {
         lastElement = article;
     });
 
-    atualizarResumo(carrinho.subtotal, carrinho.quantidadeItens);
+    renderizarResumoEstatico(carrinho.subtotal, valorFrete, valorTotal, temEndereco);
 }
 
-async function atualizarResumo(subtotal, quantidadeItens = 0) {
+function renderizarResumoEstatico(subtotal, frete, total, temEndereco) {
     const subtotalEl = document.querySelector('.summary-details .summary-line:nth-child(1) span:nth-child(2)');
     const freteEl = document.querySelector('.summary-details .summary-line:nth-child(2) span:nth-child(2)');
     const totalEl = document.querySelector('.summary-total span:nth-child(2)');
 
     if (subtotalEl) subtotalEl.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
 
-    if (subtotal <= 0 || quantidadeItens <= 0) {
+    if (subtotal <= 0) {
         if (freteEl) {
             freteEl.className = '';
             freteEl.textContent = 'R$ 0,00';
@@ -126,44 +131,19 @@ async function atualizarResumo(subtotal, quantidadeItens = 0) {
         return;
     }
 
-    // Tenta obter o frete estimado para o endereço principal cadastrado
-    let valorFrete = null;
-    try {
-        const resEnd = await fetch(`${API_BASE_URL}/enderecos/cliente/${USUARIO_ID}`);
-        if (resEnd.ok) {
-            const enderecos = await resEnd.json();
-            const principal = enderecos.find(e => e.padrao) || enderecos[0];
-            const dadosFisicos = principal?.endereco || principal;
-            const estado = dadosFisicos?.estado;
-
-            if (estado) {
-                const resFrete = await fetch(`${API_BASE_URL}/carrinho/frete/${estado}`, {
-                    headers: { 'X-Usuario-Id': USUARIO_ID.toString() }
-                });
-                if (resFrete.ok) {
-                    const freteData = await resFrete.json();
-                    valorFrete = freteData.valor;
-                }
-            }
-        }
-    } catch (e) {
-        console.warn('Não foi possível estimar o frete no carrinho:', e);
-    }
-
-    if (valorFrete !== null) {
+    if (frete > 0) {
         if (freteEl) {
             freteEl.className = '';
-            freteEl.textContent = `R$ ${valorFrete.toFixed(2).replace('.', ',')}`;
+            freteEl.textContent = `R$ ${frete.toFixed(2).replace('.', ',')}`;
         }
-        const total = subtotal + valorFrete;
-        if (totalEl) totalEl.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
     } else {
         if (freteEl) {
             freteEl.className = '';
-            freteEl.textContent = 'Calculado no checkout';
+            freteEl.textContent = temEndereco ? 'R$ 0,00' : 'Calculado no checkout';
         }
-        if (totalEl) totalEl.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
     }
+    
+    if (totalEl) totalEl.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
 }
 
 const qtyTimers = {};
