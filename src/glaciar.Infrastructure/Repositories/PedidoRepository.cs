@@ -98,5 +98,21 @@ namespace glaciar.Infrastructure.Repositories
             return await _context.Pedidos
                 .AnyAsync(p => p.EnderecoId == enderecoId && p.Status != StatusPedido.EmAberto);
         }
+
+        public async Task<IEnumerable<Pedido>> GetAllParaAdminAsync()
+        {
+            return await _context.Pedidos
+                .AsNoTracking()
+                .Include(p => p.Usuario)
+                .Where(p => p.Status != StatusPedido.EmAberto)
+                .OrderByDescending(p => p.Data)
+                .ToListAsync();
+        }
+
+        public async Task<Pedido?> GetParaAdminByIdAsync(int id)
+        {
+            return await _context.Pedidos
+                .FirstOrDefaultAsync(p => p.Id == id && p.Status != StatusPedido.EmAberto);
+        }
     }
 }
