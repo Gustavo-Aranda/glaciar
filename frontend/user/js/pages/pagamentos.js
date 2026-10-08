@@ -1,5 +1,5 @@
+const PAGAMENTOS_API = 'http://localhost:5205/api/pagamentos';
 const CARTOES_API = 'http://localhost:5205/api/cartoes';
-const CUPONS_API = 'http://localhost:5205/api/cupons';
 
 let cartaoEmEdicao = null;
 let cartaoParaRemover = null;
@@ -26,12 +26,37 @@ window.addEventListener('DOMContentLoaded', () => {
         if (event.target.id === 'modal-remover-cartao') fecharModalRemocao();
     });
 
-    carregarCartoes(usuarioId);
-    carregarCupons(usuarioId);
+    carregarContextoPagamentos(usuarioId);
 });
 
 /* =========================================
-   1. GESTÃO DE CARTÕES
+   1. CARREGAMENTO UNIFICADO (CONTEXTO AGREGADO)
+   ========================================= */
+async function carregarContextoPagamentos(usuarioId) {
+    const listaCartoes = document.getElementById('lista-cartoes');
+    const listaCupons = document.getElementById('lista-cupons');
+
+    if (listaCartoes) listaCartoes.innerHTML = '<p class="addresses-feedback">Carregando cartões...</p>';
+    if (listaCupons) listaCupons.innerHTML = '<p class="addresses-feedback">Carregando cupons...</p>';
+
+    try {
+        const resposta = await fetch(`${PAGAMENTOS_API}/contexto`, {
+            headers: { 'X-Usuario-Id': usuarioId.toString() }
+        });
+        if (!resposta.ok) throw new Error(await obterErro(resposta));
+
+        const contexto = await resposta.json();
+        if (listaCartoes) renderizarCartoes(listaCartoes, contexto.cartoes || [], usuarioId);
+        if (listaCupons) renderizarCupons(listaCupons, contexto.cupons || []);
+    } catch (error) {
+        console.error('Erro ao carregar contexto de pagamentos:', error);
+        if (listaCartoes) listaCartoes.innerHTML = '<p class="addresses-feedback">Não foi possível carregar seus cartões.</p>';
+        if (listaCupons) listaCupons.innerHTML = '<p class="addresses-feedback">Não foi possível carregar seus cupons.</p>';
+    }
+}
+
+/* =========================================
+   2. GESTÃO DE CARTÕES
    ========================================= */
 async function carregarCartoes(usuarioId) {
     const lista = document.getElementById('lista-cartoes');
@@ -170,27 +195,8 @@ async function confirmarRemocao(usuarioId) {
 }
 
 /* =========================================
-   2. GESTÃO DE CUPONS DO CLIENTE
+   3. RENDERIZAÇÃO DE CUPONS
    ========================================= */
-async function carregarCupons(usuarioId) {
-    const lista = document.getElementById('lista-cupons');
-    if (!lista) return;
-
-    lista.innerHTML = '<p class="addresses-feedback">Carregando cupons...</p>';
-
-    try {
-        const resposta = await fetch(`${CUPONS_API}/cliente/${usuarioId}`, {
-            headers: { 'X-Usuario-Id': usuarioId.toString() }
-        });
-        if (!resposta.ok) throw new Error(await obterErro(resposta));
-
-        const cupons = await resposta.json();
-        renderizarCupons(lista, cupons);
-    } catch (error) {
-        console.error('Erro ao carregar cupons:', error);
-        lista.innerHTML = '<p class="addresses-feedback">Não foi possível carregar seus cupons.</p>';
-    }
-}
 
 function renderizarCupons(lista, cupons) {
     lista.innerHTML = '';
@@ -275,7 +281,7 @@ function copiarFallback(texto, botao) {
 }
 
 /* =========================================
-   3. HELPERS E FORMATAÇÃO
+   4. HELPERS E FORMATAÇÃO
    ========================================= */
 function obterDadosFormulario() {
     const dados = {

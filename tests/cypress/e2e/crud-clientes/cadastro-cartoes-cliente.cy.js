@@ -12,6 +12,16 @@ describe('Cadastro de cartões de crédito (C)', () => {
   beforeEach(() => {
     cartoesCadastrados = []
 
+    cy.intercept('GET', 'http://localhost:5205/api/pagamentos/contexto*', request => {
+      request.reply({
+        statusCode: 200,
+        body: {
+          cartoes: cartoesCadastrados,
+          cupons: []
+        }
+      })
+    }).as('obterContextoPagamentos')
+
     cy.intercept('GET', 'http://localhost:5205/api/cartoes/cliente/42', request => {
       request.reply({ statusCode: 200, body: cartoesCadastrados })
     }).as('listarCartoes')
@@ -35,7 +45,7 @@ describe('Cadastro de cartões de crédito (C)', () => {
         window.sessionStorage.setItem('usuarioLogado', JSON.stringify(cliente))
       }
     })
-    cy.wait('@listarCartoes')
+    cy.wait('@obterContextoPagamentos')
   })
 
   it('associa diversos cartões ao cliente e mantém um cartão preferencial', () => {
