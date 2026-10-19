@@ -35,5 +35,17 @@ namespace glaciar.Infrastructure.Repositories
 
             return linhasAfetadas == 1;
         }
+
+        public async Task ReporEstoqueAsync(int estoqueId, int quantidade)
+        {
+            if (quantidade <= 0) return;
+
+            var agora = DateTime.UtcNow;
+            await _context.Estoques
+                .Where(e => e.Id == estoqueId)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(e => e.Quantidade, e => e.Quantidade + quantidade)
+                    .SetProperty(e => e.UpdatedAt, agora));
+        }
     }
 }

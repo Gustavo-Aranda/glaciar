@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using glaciar.Domain.Entities.Vendas;
 using glaciar.Domain.Entities.Vendas.Enum;
+using glaciar.Domain.Exceptions;
 using glaciar.Domain.Interfaces.Repositories;
 using glaciar.Infrastructure.Data;
 
@@ -84,7 +85,18 @@ namespace glaciar.Infrastructure.Repositories
                 _context.Entry(pedido).State = EntityState.Modified;
             }
 
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Status é token de concorrência: o UPDATE sai com "WHERE Status = <status lido>".
+                // 0 linhas afetadas = outra requisição já moveu o pedido (ex.: dois admins ao mesmo tempo,
+                // ou duplo clique em "Trocado" tentando gerar dois cupons).
+                throw new ConflitoDeConcorrenciaException(
+                    "O pedido foi alterado por outra operação. Recarregue a página e tente novamente.");
+            }
         }
 
         public async Task UpdateAsync(Pedido pedido, IEnumerable<PedidoProduto> itensRemovidos)
@@ -111,10 +123,22 @@ namespace glaciar.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        public async Task<Pedido?> GetParaAdminByIdAsync(int id)
+        public async Task<Pedido?> GetParaAlteracaoStatusAsync(int pedidoId, int? usuarioId = null)
         {
-            return await _context.Pedidos
-                .FirstOrDefaultAsync(p => p.Id == id && p.Status != StatusPedido.EmAberto);
+            // Rastreado (sem AsNoTracking): a entidade será modificada por Pedido.AlterarStatus e salva em UpdateAsync.
+            var query = _context.Pedidos
+                .AsSplitQuery()
+                .Include(p => p.ProdutosDoPedido)
+                .Include(p => p.Pagamentos)
+                .Include(p => p.Entregas)
+                .Include(p => p.CuponsAplicados)
+                    .ThenInclude(pc => pc.Cupom)
+                .Where(p => p.Id == pedidoId && p.Status != StatusPedido.EmAberto);
+
+            if (usuarioId.HasValue)
+                query = query.Where(p => p.UsuarioId == usuarioId.Value);
+
+            return await query.FirstOrDefaultAsync();
         }
     }
 }

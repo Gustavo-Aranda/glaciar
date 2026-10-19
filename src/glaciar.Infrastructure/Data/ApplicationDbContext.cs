@@ -56,9 +56,13 @@ namespace glaciar.Infrastructure.Data
                 .HasConversion<string>();
             
             // Enum de Vendas - Status
+            // IsConcurrencyToken: todo UPDATE de Pedido inclui "AND Status = <valor lido>".
+            // Funciona como compare-and-set da máquina de estados: duas transições concorrentes
+            // a partir do mesmo status nunca são aplicadas ambas (não altera o schema do banco).
             modelBuilder.Entity<Pedido>()
                 .Property(p => p.Status)
-                .HasConversion<string>();
+                .HasConversion<string>()
+                .IsConcurrencyToken();
 
             // Enum de Pagamento - Status
             modelBuilder.Entity<Pagamento>()

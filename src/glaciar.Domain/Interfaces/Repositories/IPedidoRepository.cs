@@ -28,6 +28,13 @@ namespace glaciar.Domain.Interfaces.Repositories
 
         // --- MÉTODOS DE ADMINISTRAÇÃO ---
         Task<IEnumerable<Pedido>> GetAllParaAdminAsync();
-        Task<Pedido?> GetParaAdminByIdAsync(int id);
+
+        // --- MÁQUINA DE ESTADOS ---
+        /// <summary>
+        /// Retorna o pedido (não carrinho) RASTREADO, com o agregado necessário para uma transição de status:
+        /// itens, pagamentos, entregas e cupons aplicados. Se <paramref name="usuarioId"/> for informado,
+        /// só retorna o pedido se pertencer a esse usuário (proteção contra IDOR).
+        /// </summary>
+        Task<Pedido?> GetParaAlteracaoStatusAsync(int pedidoId, int? usuarioId = null);
     }
 }
