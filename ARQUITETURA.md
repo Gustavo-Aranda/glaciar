@@ -97,3 +97,52 @@ public class ProductRepository : IProductRepository
         await _context.SaveChangesAsync();
     }
 }
+```
+
+---
+
+## 🏛️ Caso de Estudo Real do Projeto Glaciar: Máquina de Estados Operacionais
+
+Para o módulo de gestão pós-checkout e devoluções do **Glaciar**, foi adotado um padrão de **Máquina de Estados Finita e Declarativa (State Machine)** associado ao conceito de **Agregados Ricos** do DDD.
+
+### 1. Separação de Responsabilidades (SOLID / Clean Architecture)
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ [ Presentation / API ]                                                                 │
+│  - Recebe PATCH /api/admin/pedidos/{id}/status ou PATCH /api/pedidos/{id}/status       │
+│  - Extrai identidade e ator (Admin ou Cliente)                                         │
+│  - Mapeia exceções: 400 (DomainValidation), 404 (NotFound), 409 (Concurrency)          │
+└────────────────────────────────────────┬───────────────────────────────────────────────┘
+                                         │ chama
+┌────────────────────────────────────────▼───────────────────────────────────────────────┐
+│ [ Application Layer: PedidoStatusService ]                                            │
+│  - Inicia transação com UnitOfWork                                                     │
+│  - Carrega o agregado Pedido rastreado via IPedidoRepository                          │
+│  - Invoca pedido.AlterarStatus(novoStatus, ator)                                       │
+│  - Persiste via pedidoRepository.UpdateAsync(pedido)                                   │
+│  - Executa efeitos colaterais de I/O decididos pelo domínio (estoque / novo cupom)     │
+│  - Comita a transação e mapeia o DTO de retorno                                        │
+└────────────────────────────────────────┬───────────────────────────────────────────────┘
+                                         │ orquestra
+┌────────────────────────────────────────▼───────────────────────────────────────────────┐
+│ [ Domain Layer: Pedido (Aggregate Root) + PedidoMaquinaEstados ]                       │
+│  - Pedido.Status possui 'private set' (proibindo mutação indevida)                     │
+│  - Valida transição estrita na matriz (StatusAtual, ProximoStatus, Ator)               │
+│  - Atualiza coleções filhas do agregado (Pagamentos, Entregas)                         │
+│  - Retorna ResultadoTransicaoPedido com instruções de I/O para a Application           │
+└────────────────────────────────────────┬───────────────────────────────────────────────┘
+                                         │ persiste
+┌────────────────────────────────────────▼───────────────────────────────────────────────┐
+│ [ Infrastructure Layer: PedidoRepository + EF Core ]                                  │
+│  - Mapeamento com HasConversion<string>() e IsConcurrencyToken()                       │
+│  - Executa UPDATE ... WHERE Id = @id AND Status = @statusLido (Compare-And-Set)        │
+│  - Captura DbUpdateConcurrencyException e traduz para ConflitoDeConcorrenciaException  │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 2. Por que esse padrão é superior?
+1. **Regra de Negócio 100% no Domínio (DDD Puro):** Nenhum Controller ou Service possui `if (status == ...)` espalhado. A matriz declarativa de transições é a **única fonte da verdade** para o backend e alimenta dinamicamente o frontend.
+2. **Impossível Burlar Etapas:** Um pedido em `EmProcessamento` nunca pode ir para `EmTransporte` sem antes ter passado por `PagamentoRealizado`.
+3. **Imune a Race Conditions:** O status é um **Concurrency Token**, transformando a atualização em um *Compare-And-Set* atômico no banco de dados.
+4. **Isolamento de I/O:** O domínio não depende de repositórios nem de banco; ele apenas decide *quais* efeitos devem ocorrer (`ResultadoTransicaoPedido`) e a Application executa o I/O de forma segura e transacional.
