@@ -38,6 +38,10 @@ function escaparHtml(texto = '') {
 
 // Configuração e mapeamento de status
 const STATUS_CONFIG = {
+    'EmAberto': {
+        label: 'Em Aberto',
+        classeCss: 'status-neutro'
+    },
     'EmProcessamento': {
         label: 'Em Processamento',
         classeCss: 'status-atencao'
@@ -45,6 +49,10 @@ const STATUS_CONFIG = {
     'PagamentoRealizado': {
         label: 'Pagamento Aprovado',
         classeCss: 'status-neutro'
+    },
+    'PagamentoReprovado': {
+        label: 'Pagamento Recusado',
+        classeCss: 'status-cancelado'
     },
     'EmTransporte': {
         label: 'Em Transporte',
@@ -57,6 +65,30 @@ const STATUS_CONFIG = {
     'Cancelado': {
         label: 'Cancelado',
         classeCss: 'status-cancelado'
+    },
+    'TrocaSolicitada': {
+        label: 'Troca Solicitada',
+        classeCss: 'status-atencao'
+    },
+    'TrocaAceita': {
+        label: 'Troca Autorizada',
+        classeCss: 'status-sucesso'
+    },
+    'TrocaNegada': {
+        label: 'Troca Recusada',
+        classeCss: 'status-cancelado'
+    },
+    'ItemEnviado': {
+        label: 'Item Enviado (Devolução)',
+        classeCss: 'status-neutro'
+    },
+    'ItemRecebido': {
+        label: 'Item Recebido na Glaciar',
+        classeCss: 'status-atencao'
+    },
+    'Trocado': {
+        label: 'Troca Concluída (Cupom Gerado)',
+        classeCss: 'status-sucesso'
     }
 };
 
@@ -94,8 +126,9 @@ function configurarEventosGlobais() {
 
         const btnConfirmar = event.target.closest('[data-acao="confirmar-recebimento"]');
         if (btnConfirmar) {
+            const pedidoId = btnConfirmar.dataset.pedidoId;
             const codigo = btnConfirmar.dataset.codigo;
-            alert(`Recebimento do pedido #${codigo} confirmado com sucesso!`);
+            confirmarRecebimento(pedidoId, codigo);
             return;
         }
     });
@@ -276,7 +309,7 @@ function gerarBotoesAcao(pedido) {
 
     if (status === 'EmTransporte') {
         html += `
-            <button type="button" class="btn btn-primary" data-acao="confirmar-recebimento" data-codigo="${escaparHtml(pedido.codigo || pedido.id)}">Confirmar Recebimento</button>
+            <button type="button" class="btn btn-primary" data-acao="confirmar-recebimento" data-pedido-id="${pedido.id}" data-codigo="${escaparHtml(pedido.codigo || pedido.id)}">Confirmar Recebimento</button>
         `;
     } else if (status === 'Entregue') {
         html += `
@@ -285,6 +318,44 @@ function gerarBotoesAcao(pedido) {
     }
 
     return html;
+}
+
+/**
+ * Envia PATCH à API para transicionar o pedido de EmTransporte para Entregue
+ */
+async function confirmarRecebimento(pedidoId, codigo) {
+    if (!confirm(`Deseja confirmar o recebimento do pedido #${codigo}?`)) return;
+
+    if (window.LoadingService) window.LoadingService.show('Confirmando recebimento...');
+    try {
+        const response = await fetch(`${API_BASE_URL}/pedidos/${pedidoId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Usuario-Id': USUARIO_ID.toString()
+            },
+            body: JSON.stringify({ status: 'Entregue' })
+        });
+
+        if (response.ok) {
+            if (window.NotificationService && typeof window.NotificationService.showSuccess === 'function') {
+                window.NotificationService.showSuccess('Recebimento Confirmado', `Pedido #${codigo} marcado como Entregue!`);
+            } else if (window.Toast && typeof window.Toast.showSuccess === 'function') {
+                window.Toast.showSuccess('Recebimento Confirmado', `Pedido #${codigo} marcado como Entregue!`);
+            } else {
+                alert(`Recebimento do pedido #${codigo} confirmado com sucesso!`);
+            }
+            await carregarHistoricoPedidos();
+        } else {
+            const err = await response.json().catch(() => ({ message: 'Erro ao confirmar recebimento.' }));
+            exibirErro('Atenção', err.message);
+        }
+    } catch (e) {
+        console.error(e);
+        exibirErro('Erro de Conexão', 'Não foi possível se comunicar com o servidor.');
+    } finally {
+        if (window.LoadingService) window.LoadingService.hide();
+    }
 }
 
 /**

@@ -1,16 +1,19 @@
 const API_BASE_URL = 'http://localhost:5205/api';
 
 const statusDisplayMap = {
+    'EmAberto': 'Em Aberto',
     'EmProcessamento': 'Em Processamento',
     'PagamentoRealizado': 'Pagamento Realizado',
-    'EmTransporte': 'Em Transporte',
+    'PagamentoReprovado': 'Pagamento Reprovado',
+    'EmTransporte': 'Em Trânsito',
     'Entregue': 'Entregue',
-    'Cancelado': 'Cancelado'
-};
-
-const proximosStatus = {
-    'EmProcessamento': ['EmTransporte', 'Cancelado'],
-    'EmTransporte': ['Entregue', 'Cancelado']
+    'Cancelado': 'Cancelado',
+    'TrocaSolicitada': 'Troca Solicitada',
+    'TrocaAceita': 'Troca Aceita',
+    'TrocaNegada': 'Troca Negada',
+    'ItemEnviado': 'Item Enviado',
+    'ItemRecebido': 'Item Recebido',
+    'Trocado': 'Trocado'
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -19,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function carregarPedidos() {
     const container = document.getElementById('pedidos-container');
+    if (!container) return;
     container.innerHTML = '<p>Carregando...</p>';
 
     try {
@@ -36,7 +40,7 @@ async function carregarPedidos() {
 function renderizarPedidos(pedidos, container) {
     container.innerHTML = '';
 
-    if (pedidos.length === 0) {
+    if (!Array.isArray(pedidos) || pedidos.length === 0) {
         container.innerHTML = '<p>Não há pedidos para exibir.</p>';
         return;
     }
@@ -51,22 +55,24 @@ function renderizarPedidos(pedidos, container) {
         // Formata a data (ex: 15/10/2026)
         const dateStr = new Date(pedido.data).toLocaleDateString('pt-BR');
 
-        // Apenas os próximos passos válidos do fluxo
-        const permitidos = proximosStatus[pedido.status] || [];
+        // Dupla Blindagem: o backend calcula e envia a lista exata de próximos status permitidos
+        const permitidos = Array.isArray(pedido.proximosStatus) ? pedido.proximosStatus : [];
         const optionsHtml = permitidos
-            .map(s => `<option value="${s}">${statusDisplayMap[s]}</option>`)
+            .map(s => `<option value="${s}">${statusDisplayMap[s] || s}</option>`)
             .join('');
         const updaterHtml = permitidos.length
             ? `<label>Atualizar Status:</label>
                <select class="status-select" id="status-select-${pedido.id}">${optionsHtml}</select>
                <button class="btn btn-primary" onclick="atualizarStatus(${pedido.id})">Aplicar</button>`
-            : `<small>Nenhuma ação disponível para este status.</small>`;
+            : `<small>Nenhuma ação operacional disponível para este status.</small>`;
 
         // Cor do badge de status
-        let statusClass = '';
-        if (pedido.status === 'Cancelado') statusClass = 'status-inativo';
-        else if (pedido.status === 'Entregue') statusClass = 'status-ativo';
-        else statusClass = 'status-atencao';
+        let statusClass = 'status-atencao';
+        if (['Cancelado', 'PagamentoReprovado', 'TrocaNegada'].includes(pedido.status)) {
+            statusClass = 'status-inativo';
+        } else if (['Entregue', 'Trocado'].includes(pedido.status)) {
+            statusClass = 'status-ativo';
+        }
 
         const displayName = statusDisplayMap[pedido.status] || pedido.status;
 
@@ -91,6 +97,7 @@ function renderizarPedidos(pedidos, container) {
 
 async function atualizarStatus(pedidoId) {
     const select = document.getElementById(`status-select-${pedidoId}`);
+    if (!select) return;
     const novoStatus = select.value;
 
     try {
@@ -103,13 +110,25 @@ async function atualizarStatus(pedidoId) {
         });
 
         if (response.ok) {
+            const data = await response.json();
+            if (typeof mostrarNotificacao === 'function') {
+                mostrarNotificacao(data.message || 'Status atualizado com sucesso!', 'sucesso');
+            }
             carregarPedidos();
         } else {
-            const err = await response.json();
-            alert(`Erro: ${err.message}`);
+            const err = await response.json().catch(() => ({ message: 'Falha ao atualizar status.' }));
+            if (typeof mostrarNotificacao === 'function') {
+                mostrarNotificacao(err.message, 'erro');
+            } else {
+                alert(`Erro: ${err.message}`);
+            }
         }
     } catch (err) {
         console.error(err);
-        alert('Erro ao se comunicar com a API.');
+        if (typeof mostrarNotificacao === 'function') {
+            mostrarNotificacao('Erro de conexão ao se comunicar com a API.', 'erro');
+        } else {
+            alert('Erro ao se comunicar com a API.');
+        }
     }
 }
