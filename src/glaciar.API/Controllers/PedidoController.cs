@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using glaciar.Application.DTOs.Vendas;
 using glaciar.Application.Interfaces.Services;
+using glaciar.Domain.Entities.Vendas.Enum;
 using glaciar.Domain.Exceptions;
 
 namespace glaciar.API.Controllers
@@ -9,10 +11,14 @@ namespace glaciar.API.Controllers
     public class PedidoController : ControllerBase
     {
         private readonly IPedidoService _pedidoService;
+        private readonly IPedidoStatusService _pedidoStatusService;
 
-        public PedidoController(IPedidoService pedidoService)
+        public PedidoController(
+            IPedidoService pedidoService,
+            IPedidoStatusService pedidoStatusService)
         {
             _pedidoService = pedidoService;
+            _pedidoStatusService = pedidoStatusService;
         }
 
         private int GetUsuarioId()
@@ -66,6 +72,50 @@ namespace glaciar.API.Controllers
             catch (Exception)
             {
                 return StatusCode(500, new { message = "Erro interno no servidor ao buscar o pedido." });
+            }
+        }
+
+        /// <summary>
+        /// Permite ao cliente avançar status permitidos a ele (ex: EmTransporte -> Entregue, Entregue -> TrocaSolicitada, TrocaAceita -> ItemEnviado).
+        /// </summary>
+        [HttpPatch("{id}/status")]
+        public async Task<IActionResult> AtualizarStatus(int id, [FromBody] AlterarStatusPedidoDTO dto)
+        {
+            if (!ModelState.IsValid || !dto.Status.HasValue)
+            {
+                return BadRequest(new { message = "Informe um status válido para o pedido." });
+            }
+
+            try
+            {
+                var usuarioId = GetUsuarioId();
+                var resultado = await _pedidoStatusService.AlterarStatusAsync(
+                    id,
+                    dto.Status.Value,
+                    AtorTransicao.Cliente,
+                    usuarioId);
+
+                return Ok(new
+                {
+                    message = "Status atualizado com sucesso.",
+                    dados = resultado
+                });
+            }
+            catch (EntidadeNaoEncontradaException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ConflitoDeConcorrenciaException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+            catch (DomainValidationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Erro interno no servidor ao atualizar o status." });
             }
         }
     }

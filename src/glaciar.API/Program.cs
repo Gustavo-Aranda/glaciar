@@ -42,6 +42,7 @@ builder.Services.AddScoped<ICarrinhoService, glaciar.Application.Services.Vendas
 builder.Services.AddScoped<ICheckoutService, glaciar.Application.Services.Vendas.CheckoutService>();
 builder.Services.AddScoped<ICupomService, glaciar.Application.Services.Vendas.CupomService>();
 builder.Services.AddScoped<IPedidoService, glaciar.Application.Services.Vendas.PedidoService>();
+builder.Services.AddScoped<IPedidoStatusService, glaciar.Application.Services.Vendas.PedidoStatusService>();
 
 // ==========================================
 // CONFIGURAÇÃO DE CORS (LIBERAR FRONTEND)

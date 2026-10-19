@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using glaciar.Application.DTOs.Vendas;
+using glaciar.Application.Interfaces.Services;
 using glaciar.Domain.Entities.Vendas.Enum;
-using glaciar.Domain.Interfaces.Repositories;
+using glaciar.Domain.Exceptions;
 
 namespace glaciar.API.Controllers
 {
@@ -8,19 +10,15 @@ namespace glaciar.API.Controllers
     [Route("api/admin/pedidos")]
     public class AdminPedidoController : ControllerBase
     {
-        private readonly IPedidoRepository _pedidoRepository;
+        private readonly IPedidoService _pedidoService;
+        private readonly IPedidoStatusService _pedidoStatusService;
 
-        // Fluxo natural: EmAberto/EmProcessamento são definidos pelo sistema (carrinho/pagamento).
-        // O admin só avança a partir de EmProcessamento (pedido já pago).
-        private static readonly Dictionary<StatusPedido, StatusPedido[]> TransicoesPermitidas = new()
+        public AdminPedidoController(
+            IPedidoService pedidoService,
+            IPedidoStatusService pedidoStatusService)
         {
-            [StatusPedido.EmProcessamento] = new[] { StatusPedido.EmTransporte, StatusPedido.Cancelado },
-            [StatusPedido.EmTransporte] = new[] { StatusPedido.Entregue, StatusPedido.Cancelado }
-        };
-
-        public AdminPedidoController(IPedidoRepository pedidoRepository)
-        {
-            _pedidoRepository = pedidoRepository;
+            _pedidoService = pedidoService;
+            _pedidoStatusService = pedidoStatusService;
         }
 
         [HttpGet]
@@ -28,63 +26,52 @@ namespace glaciar.API.Controllers
         {
             try
             {
-                var pedidos = await _pedidoRepository.GetAllParaAdminAsync();
-                
-                var result = pedidos.Select(p => new
-                {
-                    Id = p.Id,
-                    Codigo = p.Codigo,
-                    Cliente = p.Usuario.Nome,
-                    ValorTotal = p.ValorTotal,
-                    Status = p.Status.ToString(),
-                    Data = p.Data
-                });
-
-                return Ok(result);
+                var pedidos = await _pedidoService.ListarParaAdminAsync();
+                return Ok(pedidos);
             }
             catch (Exception)
             {
-                return StatusCode(500, new { message = "Erro interno no servidor." });
+                return StatusCode(500, new { message = "Erro interno no servidor ao listar pedidos." });
             }
         }
 
         [HttpPatch("{id}/status")]
-        public async Task<IActionResult> AtualizarStatus(int id, [FromBody] StatusUpdateModel model)
+        public async Task<IActionResult> AtualizarStatus(int id, [FromBody] AlterarStatusPedidoDTO dto)
         {
+            if (!ModelState.IsValid || !dto.Status.HasValue)
+            {
+                return BadRequest(new { message = "Informe um status válido para o pedido." });
+            }
+
             try
             {
-                var pedido = await _pedidoRepository.GetParaAdminByIdAsync(id);
-                if (pedido == null)
+                var resultado = await _pedidoStatusService.AlterarStatusAsync(
+                    id,
+                    dto.Status.Value,
+                    AtorTransicao.Administrador);
+
+                return Ok(new
                 {
-                    return NotFound(new { message = "Pedido não encontrado." });
-                }
-
-                if (!Enum.TryParse<StatusPedido>(model.Status, true, out var novoStatus))
-                {
-                    return BadRequest(new { message = "Status inválido." });
-                }
-
-                if (!TransicoesPermitidas.TryGetValue(pedido.Status, out var permitidos) || !permitidos.Contains(novoStatus))
-                {
-                    return BadRequest(new { message = $"Transição de '{pedido.Status}' para '{novoStatus}' não é permitida." });
-                }
-
-                pedido.Status = novoStatus;
-                pedido.UpdatedAt = DateTime.UtcNow;
-
-                await _pedidoRepository.UpdateAsync(pedido);
-
-                return Ok(new { message = "Status atualizado com sucesso." });
+                    message = "Status atualizado com sucesso.",
+                    dados = resultado
+                });
+            }
+            catch (EntidadeNaoEncontradaException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ConflitoDeConcorrenciaException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+            catch (DomainValidationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
             catch (Exception)
             {
-                return StatusCode(500, new { message = "Erro interno no servidor." });
+                return StatusCode(500, new { message = "Erro interno no servidor ao atualizar o status." });
             }
         }
-    }
-
-    public class StatusUpdateModel
-    {
-        public string Status { get; set; } = string.Empty;
     }
 }
