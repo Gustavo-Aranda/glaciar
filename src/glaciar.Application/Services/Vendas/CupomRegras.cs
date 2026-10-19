@@ -10,8 +10,7 @@ namespace glaciar.Application.Services.Vendas
     /// </summary>
     internal static class CupomRegras
     {
-        public static bool EhTroca(Cupom cupom) =>
-            string.Equals(cupom.CategoriaCupom, CategoriasCupom.Troca, StringComparison.OrdinalIgnoreCase);
+        public static bool EhTroca(Cupom cupom) => cupom.EhTroca;
 
         /// <summary>Tudo que não é cupom de troca é tratado como promocional.</summary>
         public static bool EhPromocional(Cupom cupom) => !EhTroca(cupom);
@@ -140,20 +139,10 @@ namespace glaciar.Application.Services.Vendas
 
         /// <summary>
         /// Cria a entidade de um novo Cupom de Troca correspondente ao troco da compra.
+        /// Delegado à fábrica do Domain (mesma usada ao concluir uma troca).
         /// </summary>
-        public static Cupom CriarCupomTroca(int usuarioId, decimal valorTroco)
-        {
-            return new Cupom
-            {
-                Codigo = $"TROCA-{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}",
-                ValorDesconto = Math.Round(valorTroco, 2, MidpointRounding.AwayFromZero),
-                DataValidade = DateTime.UtcNow.AddYears(1),
-                CategoriaCupom = CategoriasCupom.Troca,
-                Ativo = true,
-                QuantidadeMaximaUso = 1,
-                UsuarioId = usuarioId
-            };
-        }
+        public static Cupom CriarCupomTroca(int usuarioId, decimal valorTroco) =>
+            Cupom.CriarCupomTroca(usuarioId, valorTroco);
     }
 
     /// <summary>

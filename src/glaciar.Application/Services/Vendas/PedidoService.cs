@@ -25,5 +25,11 @@ namespace glaciar.Application.Services.Vendas
             var pedido = await _pedidoRepository.GetByIdAsync(usuarioId, pedidoId);
             return pedido == null ? null : VendasMapper.ParaPedido(pedido);
         }
+
+        public async Task<IEnumerable<PedidoAdminResumoDTO>> ListarParaAdminAsync()
+        {
+            var pedidos = await _pedidoRepository.GetAllParaAdminAsync();
+            return pedidos.Select(VendasMapper.ParaPedidoAdminResumo).ToList();
+        }
     }
 }

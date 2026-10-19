@@ -97,8 +97,7 @@ namespace glaciar.Application.Services.Vendas
                 await ProcessarBaixaEstoqueAsync(pedido);
 
                 // 6. Transição de Status e Persistência
-                pedido.Status = StatusPedido.EmProcessamento;
-                pedido.UpdatedAt = DateTime.UtcNow;
+                pedido.AlterarStatus(StatusPedido.EmProcessamento, AtorTransicao.Sistema);
 
                 await _pedidoRepository.UpdateAsync(pedido);
                 await _unitOfWork.CommitAsync();

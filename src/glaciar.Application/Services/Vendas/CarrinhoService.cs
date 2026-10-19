@@ -188,7 +188,6 @@ namespace glaciar.Application.Services.Vendas
                 UsuarioId = usuarioId,
                 Codigo = GerarCodigoPedido(agora),
                 Data = agora,
-                Status = StatusPedido.EmAberto,
                 ValorTotal = 0m,
                 CreatedAt = agora,
                 UpdatedAt = agora

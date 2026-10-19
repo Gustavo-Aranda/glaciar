@@ -1,6 +1,7 @@
 using glaciar.Application.DTOs.Enderecos;
 using glaciar.Application.DTOs.Vendas;
 using glaciar.Domain.Entities.Vendas;
+using glaciar.Domain.Entities.Vendas.Enum;
 
 namespace glaciar.Application.Mappings
 {
@@ -117,7 +118,22 @@ namespace glaciar.Application.Mappings
                     .Where(pc => pc.Cupom != null)
                     .Select(pc => ParaCupom(pc.Cupom))
                     .ToList(),
-                CupomTrocaGerado = cupomTrocaGerado == null ? null : ParaCupom(cupomTrocaGerado)
+                CupomTrocaGerado = cupomTrocaGerado == null ? null : ParaCupom(cupomTrocaGerado),
+                ProximosStatus = PedidoMaquinaEstados.ProximosStatus(pedido.Status, AtorTransicao.Cliente).ToList()
+            };
+        }
+
+        public static PedidoAdminResumoDTO ParaPedidoAdminResumo(Pedido pedido)
+        {
+            return new PedidoAdminResumoDTO
+            {
+                Id = pedido.Id,
+                Codigo = pedido.Codigo,
+                Cliente = pedido.Usuario?.Nome ?? string.Empty,
+                ValorTotal = pedido.ValorTotal,
+                Status = pedido.Status,
+                Data = pedido.Data,
+                ProximosStatus = PedidoMaquinaEstados.ProximosStatus(pedido.Status, AtorTransicao.Administrador).ToList()
             };
         }
 
