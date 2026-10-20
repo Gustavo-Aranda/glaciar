@@ -19,7 +19,6 @@ namespace glaciar.Application.Services.Vendas
 
         private readonly IPedidoRepository _pedidoRepository;
         private readonly ICupomRepository _cupomRepository;
-        private readonly IEstoqueRepository _estoqueRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IEnderecoService _enderecoService;
         private readonly ICartaoService _cartaoService;
@@ -29,7 +28,6 @@ namespace glaciar.Application.Services.Vendas
         public CheckoutService(
             IPedidoRepository pedidoRepository,
             ICupomRepository cupomRepository,
-            IEstoqueRepository estoqueRepository,
             IUnitOfWork unitOfWork,
             IEnderecoService enderecoService,
             ICartaoService cartaoService,
@@ -38,7 +36,6 @@ namespace glaciar.Application.Services.Vendas
         {
             _pedidoRepository = pedidoRepository;
             _cupomRepository = cupomRepository;
-            _estoqueRepository = estoqueRepository;
             _unitOfWork = unitOfWork;
             _enderecoService = enderecoService;
             _cartaoService = cartaoService;
@@ -59,6 +56,9 @@ namespace glaciar.Application.Services.Vendas
                 {
                     throw new DomainValidationException("Carrinho vazio ou não encontrado.");
                 }
+
+                // Revalidação de tempo: garante que a reserva temporária ainda está vigente
+                pedido.GarantirReservaVigente(DateTime.UtcNow);
 
                 // 1. Processar Endereço de Entrega
                 var enderecoFisico = await ProcessarEnderecoEntregaAsync(usuarioId, dto);
@@ -93,10 +93,7 @@ namespace glaciar.Application.Services.Vendas
                     ValidarPagamentoZeradoComCupom(pedido, resultadoCupons, dto.Cartoes);
                 }
 
-                // 5. Baixa de Estoque
-                await ProcessarBaixaEstoqueAsync(pedido);
-
-                // 6. Transição de Status e Persistência
+                // 5. Transição de Status e Persistência (Estoque já foi deduzido na entrada do carrinho!)
                 pedido.AlterarStatus(StatusPedido.EmProcessamento, AtorTransicao.Sistema);
 
                 await _pedidoRepository.UpdateAsync(pedido);
@@ -379,20 +376,6 @@ namespace glaciar.Application.Services.Vendas
             {
                 throw new DomainValidationException(
                     "O valor total da compra foi 100% coberto pelos cupons aplicados. Nenhum valor deve ser cobrado no cartão de crédito.");
-            }
-        }
-
-        private async Task ProcessarBaixaEstoqueAsync(Pedido pedido)
-        {
-            foreach (var item in pedido.ProdutosDoPedido)
-            {
-                var baixou = await _estoqueRepository.BaixarEstoqueAsync(item.EstoqueId, item.Quantidade);
-                if (!baixou)
-                {
-                    throw new DomainValidationException(
-                        $"Estoque insuficiente para o item {item.Estoque?.Produto?.Nome} " +
-                        $"(Tamanho: {item.Estoque?.Tamanho}, Cor: {item.Estoque?.Cor}).");
-                }
             }
         }
     }

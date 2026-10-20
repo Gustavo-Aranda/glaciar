@@ -26,7 +26,6 @@ namespace glaciar.Infrastructure.Repositories
             var agora = DateTime.UtcNow;
 
             // UPDATE condicional: só decrementa se ainda houver saldo no instante da baixa.
-            // Evita overselling mesmo com duas compras concorrentes do mesmo SKU.
             var linhasAfetadas = await _context.Estoques
                 .Where(e => e.Id == estoqueId && e.Quantidade >= quantidade)
                 .ExecuteUpdateAsync(s => s

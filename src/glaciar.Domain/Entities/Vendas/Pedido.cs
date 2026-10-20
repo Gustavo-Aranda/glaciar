@@ -57,6 +57,59 @@ namespace glaciar.Domain.Entities.Vendas
         public ICollection<Devolucao> Devolucoes { get; set; } = new List<Devolucao>();
 
         // =====================================================================
+        // GESTÃO DE CARRINHO (RESERVA TEMPORÁRIA E EXPIRAÇÃO - 15 MINUTOS)
+        // =====================================================================
+        public static readonly TimeSpan TempoReserva = TimeSpan.FromMinutes(15);
+        public static readonly TimeSpan AvisoAntecedencia = TimeSpan.FromMinutes(5);
+
+        public DateTime? ReservaExpiraEm { get; private set; }
+        public DateTime? CarrinhoExpiradoEm { get; private set; }
+
+        public bool ReservaExpirada(DateTime agora) =>
+            Status == StatusPedido.EmAberto && ReservaExpiraEm.HasValue && ReservaExpiraEm.Value <= agora;
+
+        public void IniciarOuManterReserva(DateTime agora)
+        {
+            if (ReservaExpiraEm.HasValue && !CarrinhoExpiradoEm.HasValue) return;
+            ReservaExpiraEm = agora + TempoReserva;
+            CarrinhoExpiradoEm = null;
+            UpdatedAt = agora;
+        }
+
+        public void GarantirReservaVigente(DateTime agora)
+        {
+            if (Status != StatusPedido.EmAberto) return;
+
+            if (CarrinhoExpiradoEm.HasValue || ReservaExpirada(agora))
+            {
+                throw new DomainValidationException("O tempo de reserva do carrinho (15 minutos) esgotou. Adicione os itens novamente.");
+            }
+        }
+
+        /// <summary>
+        /// Esvazia o carrinho expirado, devolvendo a lista de itens/quantidades que devem ser liberadas da reserva do estoque.
+        /// </summary>
+        public IReadOnlyList<ReposicaoEstoque> ExpirarCarrinho(DateTime agora)
+        {
+            if (Status != StatusPedido.EmAberto)
+            {
+                throw new DomainValidationException("Apenas carrinhos em aberto podem ser expirados.");
+            }
+
+            var itensParaLiberar = ProdutosDoPedido
+                .Select(i => new ReposicaoEstoque(i.EstoqueId, i.Quantidade))
+                .ToList();
+
+            ProdutosDoPedido.Clear();
+            ValorTotal = 0m;
+            ReservaExpiraEm = null;
+            CarrinhoExpiradoEm = agora;
+            UpdatedAt = agora;
+
+            return itensParaLiberar;
+        }
+
+        // =====================================================================
         // MÁQUINA DE ESTADOS — ÚNICA PORTA DE ENTRADA PARA MUDAR O STATUS
         // =====================================================================
 

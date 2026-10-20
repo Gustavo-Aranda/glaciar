@@ -21,7 +21,7 @@ namespace glaciar.Application.Mappings
                 {
                     var estoque = i.Estoque;
                     var produto = estoque?.Produto;
-                    var disponivel = produto != null && produto.Visivel && estoque!.Quantidade >= i.Quantidade;
+                    var disponivel = produto != null && produto.Visivel;
 
                     return new CarrinhoItemResponseDTO
                     {
@@ -41,13 +41,27 @@ namespace glaciar.Application.Mappings
                 })
                 .ToList();
 
+            var agora = DateTime.UtcNow;
+            var expirado = carrinho.CarrinhoExpiradoEm.HasValue;
+            var expiraEm = carrinho.ReservaExpiraEm;
+            int? segundosRestantes = expiraEm.HasValue && !expirado
+                ? Math.Max(0, (int)(expiraEm.Value - agora).TotalSeconds)
+                : null;
+            var aviso = segundosRestantes is > 0 && segundosRestantes <= (int)Pedido.AvisoAntecedencia.TotalSeconds;
+            var compraHabilitada = !expirado && itens.Any() && !itens.Any(i => !i.Disponivel);
+
             return new CarrinhoResponseDTO
             {
                 PedidoId = carrinho.Id,
                 Itens = itens,
                 QuantidadeItens = itens.Sum(i => i.Quantidade),
                 Subtotal = itens.Sum(i => i.Subtotal),
-                PossuiItensIndisponiveis = itens.Any(i => !i.Disponivel)
+                PossuiItensIndisponiveis = itens.Any(i => !i.Disponivel),
+                ExpiraEm = expiraEm,
+                SegundosRestantes = segundosRestantes,
+                ExibirAvisoExpiracao = aviso,
+                Expirado = expirado,
+                CompraHabilitada = compraHabilitada
             };
         }
 

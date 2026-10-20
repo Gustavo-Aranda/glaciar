@@ -362,10 +362,13 @@ namespace glaciar.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
-                    b.Property<int?>("PedidoId")
+                    b.Property<int>("PedidoId")
                         .HasColumnType("integer");
 
                     b.Property<int>("PedidoProdutoId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Quantidade")
                         .HasColumnType("integer");
 
                     b.Property<string>("Status")
@@ -468,6 +471,40 @@ namespace glaciar.Infrastructure.Migrations
                     b.ToTable("Cupons");
                 });
 
+            modelBuilder.Entity("glaciar.Domain.Entities.Vendas.Notificacao", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Lida")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Mensagem")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int?>("PedidoId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PedidoId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("Notificacoes");
+                });
+
             modelBuilder.Entity("glaciar.Domain.Entities.Vendas.Pagamento", b =>
                 {
                     b.Property<int>("Id")
@@ -522,6 +559,9 @@ namespace glaciar.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime?>("CarrinhoExpiradoEm")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Codigo")
                         .IsRequired()
                         .HasColumnType("text");
@@ -535,7 +575,11 @@ namespace glaciar.Infrastructure.Migrations
                     b.Property<int?>("EnderecoId")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("ReservaExpiraEm")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Status")
+                        .IsConcurrencyToken()
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -680,15 +724,19 @@ namespace glaciar.Infrastructure.Migrations
 
             modelBuilder.Entity("glaciar.Domain.Entities.Logisticas.Devolucao", b =>
                 {
-                    b.HasOne("glaciar.Domain.Entities.Vendas.Pedido", null)
+                    b.HasOne("glaciar.Domain.Entities.Vendas.Pedido", "Pedido")
                         .WithMany("Devolucoes")
-                        .HasForeignKey("PedidoId");
+                        .HasForeignKey("PedidoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("glaciar.Domain.Entities.Vendas.PedidoProduto", "PedidoProduto")
                         .WithMany()
                         .HasForeignKey("PedidoProdutoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Pedido");
 
                     b.Navigation("PedidoProduto");
                 });
@@ -709,6 +757,23 @@ namespace glaciar.Infrastructure.Migrations
                     b.HasOne("glaciar.Domain.Entities.Clientes.Usuario", "Usuario")
                         .WithMany()
                         .HasForeignKey("UsuarioId");
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("glaciar.Domain.Entities.Vendas.Notificacao", b =>
+                {
+                    b.HasOne("glaciar.Domain.Entities.Vendas.Pedido", "Pedido")
+                        .WithMany()
+                        .HasForeignKey("PedidoId");
+
+                    b.HasOne("glaciar.Domain.Entities.Clientes.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Pedido");
 
                     b.Navigation("Usuario");
                 });

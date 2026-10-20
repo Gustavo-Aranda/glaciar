@@ -142,5 +142,13 @@ namespace glaciar.Infrastructure.Repositories
 
             return await query.FirstOrDefaultAsync();
         }
+
+        public async Task<IReadOnlyList<Pedido>> GetCarrinhosVencidosAsync(DateTime agora)
+        {
+            return await _context.Pedidos
+                .Include(p => p.ProdutosDoPedido)
+                .Where(p => p.Status == StatusPedido.EmAberto && p.ReservaExpiraEm != null && p.ReservaExpiraEm <= agora)
+                .ToListAsync();
+        }
     }
 }

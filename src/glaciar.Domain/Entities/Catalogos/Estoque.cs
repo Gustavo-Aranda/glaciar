@@ -20,6 +20,27 @@ namespace glaciar.Domain.Entities.Catalogos
         [Required]
         public int Quantidade { get; set; }
 
+        public void Deduzir(int quantidadeDesejada)
+        {
+            GarantirDisponivel(quantidadeDesejada);
+            Quantidade -= quantidadeDesejada;
+        }
+
+        public void Repor(int quantidadeParaRepor)
+        {
+            if (quantidadeParaRepor <= 0) return;
+            Quantidade += quantidadeParaRepor;
+        }
+
+        public void GarantirDisponivel(int quantidadeDesejada)
+        {
+            if (quantidadeDesejada > Quantidade)
+            {
+                throw new glaciar.Domain.Exceptions.DomainValidationException(
+                    $"Quantidade indisponível para '{Produto?.Nome ?? "Produto"}' ({Cor}, {Tamanho}). Disponível: {Quantidade} unidade(s).");
+            }
+        }
+
         
         [Required]
         [MaxLength(100)]
