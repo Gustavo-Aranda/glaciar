@@ -11,9 +11,9 @@ appsettings.Local.json
 
 node_modules/
 
-cypress/videos/
-cypress/screenshots/
-cypress/downloads/
+**/cypress/videos/
+**/cypress/screenshots/
+**/cypress/downloads/
 
 cypress.env.json
 
