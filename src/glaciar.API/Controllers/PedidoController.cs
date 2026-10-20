@@ -118,5 +118,46 @@ namespace glaciar.API.Controllers
                 return StatusCode(500, new { message = "Erro interno no servidor ao atualizar o status." });
             }
         }
+
+        /// <summary>
+        /// Solicita a troca de unidades/itens do pedido ou do pedido completo (quando a lista for omitida/vazia).
+        /// Requer que o pedido esteja no status ENTREGUE.
+        /// </summary>
+        [HttpPost("{id}/troca")]
+        public async Task<IActionResult> SolicitarTroca(int id, [FromBody] SolicitarTrocaDTO dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var usuarioId = GetUsuarioId();
+                var resultado = await _pedidoStatusService.SolicitarTrocaAsync(id, usuarioId, dto);
+
+                return Ok(new
+                {
+                    message = "Solicitação de troca registrada com sucesso.",
+                    dados = resultado
+                });
+            }
+            catch (EntidadeNaoEncontradaException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ConflitoDeConcorrenciaException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+            catch (DomainValidationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "Erro interno no servidor ao solicitar a troca." });
+            }
+        }
     }
 }

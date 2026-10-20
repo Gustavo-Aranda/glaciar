@@ -11,37 +11,72 @@ namespace glaciar.Application.Services.Vendas
     /// <summary>
     /// Orquestra a mudança de status do Pedido. NÃO contém regra de transição:
     ///   1. Busca o agregado (com filtro de dono quando o ator é o cliente);
-    ///   2. Delega ao Domain (<see cref="Pedido.AlterarStatus"/>), que valida e aplica a transição;
-    ///   3. Persiste o pedido (compare-and-set do status) e executa os efeitos que exigem I/O,
-    ///      tudo dentro de uma única transação.
+    ///   2. Delega ao Domain (<see cref="Pedido.AlterarStatus"/> ou <see cref="Pedido.SolicitarTroca"/>), que valida e aplica a transição;
+    ///   3. Persiste o pedido (compare-and-set do status) e executa os efeitos que exigem I/O
+    ///      (reentrada no estoque, emissão de cupom, envio de notificações),
+    ///      tudo dentro de uma única transação atômica.
     /// </summary>
     public class PedidoStatusService : IPedidoStatusService
     {
         private readonly IPedidoRepository _pedidoRepository;
         private readonly IEstoqueRepository _estoqueRepository;
         private readonly ICupomRepository _cupomRepository;
+        private readonly INotificacaoRepository _notificacaoRepository;
         private readonly IUnitOfWork _unitOfWork;
 
         public PedidoStatusService(
             IPedidoRepository pedidoRepository,
             IEstoqueRepository estoqueRepository,
             ICupomRepository cupomRepository,
+            INotificacaoRepository notificacaoRepository,
             IUnitOfWork unitOfWork)
         {
             _pedidoRepository = pedidoRepository;
             _estoqueRepository = estoqueRepository;
             _cupomRepository = cupomRepository;
+            _notificacaoRepository = notificacaoRepository;
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<PedidoStatusAlteradoDTO> AlterarStatusAsync(
+        public Task<PedidoStatusAlteradoDTO> AlterarStatusAsync(
             int pedidoId,
             StatusPedido novoStatus,
             AtorTransicao ator,
             int? usuarioId = null)
         {
             var filtroDono = ResolverFiltroDeDono(ator, usuarioId);
+            return ExecutarTransicaoAsync(
+                pedidoId,
+                filtroDono,
+                ator,
+                pedido => pedido.AlterarStatus(novoStatus, ator));
+        }
 
+        public Task<PedidoStatusAlteradoDTO> SolicitarTrocaAsync(
+            int pedidoId,
+            int usuarioId,
+            SolicitarTrocaDTO dto)
+        {
+            if (usuarioId <= 0)
+                throw new DomainValidationException("Usuário não autenticado.");
+
+            var itensDominio = dto.Itens?
+                .Select(i => new ItemTroca(i.PedidoProdutoId, i.Quantidade))
+                .ToList();
+
+            return ExecutarTransicaoAsync(
+                pedidoId,
+                usuarioId,
+                AtorTransicao.Cliente,
+                pedido => pedido.SolicitarTroca(itensDominio, dto.Motivo));
+        }
+
+        private async Task<PedidoStatusAlteradoDTO> ExecutarTransicaoAsync(
+            int pedidoId,
+            int? filtroDono,
+            AtorTransicao ator,
+            Func<Pedido, ResultadoTransicaoPedido> acaoTransicao)
+        {
             await _unitOfWork.BeginTransactionAsync();
             try
             {
@@ -49,22 +84,27 @@ namespace glaciar.Application.Services.Vendas
                 var pedido = await _pedidoRepository.GetParaAlteracaoStatusAsync(pedidoId, filtroDono)
                     ?? throw new EntidadeNaoEncontradaException("Pedido não encontrado.");
 
-                // 2. Domínio valida (status anterior + ator) e aplica a transição
-                var resultado = pedido.AlterarStatus(novoStatus, ator);
+                // 2. Domínio valida e aplica os efeitos internos
+                var resultado = acaoTransicao(pedido);
 
-                // 3a. Persiste PRIMEIRO o pedido: o UPDATE com "WHERE Status = <anterior>" é o cadeado.
-                //     Se outra requisição chegou antes, estoura ConflitoDeConcorrenciaException aqui
-                //     e nenhum efeito colateral (estoque/cupom) é executado.
+                // 3a. Persiste PRIMEIRO o pedido: o UPDATE com "WHERE Status = <anterior>" é o cadeado de concorrência.
                 await _pedidoRepository.UpdateAsync(pedido);
 
-                // 3b. Efeitos com I/O decididos pelo domínio
+                // 3b. Efeitos colaterais com I/O decididos pelo domínio
                 foreach (var item in resultado.ItensParaReposicao)
                 {
                     await _estoqueRepository.ReporEstoqueAsync(item.EstoqueId, item.Quantidade);
                 }
 
                 if (resultado.CupomTrocaGerado != null)
+                {
                     await _cupomRepository.AddAsync(resultado.CupomTrocaGerado);
+                }
+
+                if (resultado.Notificacao != null)
+                {
+                    await _notificacaoRepository.AddAsync(resultado.Notificacao);
+                }
 
                 await _unitOfWork.CommitAsync();
 

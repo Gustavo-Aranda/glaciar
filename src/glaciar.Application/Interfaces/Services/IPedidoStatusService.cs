@@ -19,5 +19,14 @@ namespace glaciar.Application.Interfaces.Services
             StatusPedido novoStatus,
             AtorTransicao ator,
             int? usuarioId = null);
+
+        /// <summary>
+        /// Caso de uso específico para o Cliente solicitar a troca de um pedido ENTREGUE,
+        /// especificando quais itens/unidades deseja trocar e o motivo.
+        /// </summary>
+        Task<PedidoStatusAlteradoDTO> SolicitarTrocaAsync(
+            int pedidoId,
+            int usuarioId,
+            SolicitarTrocaDTO dto);
     }
 }
