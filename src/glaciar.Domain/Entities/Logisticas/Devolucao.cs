@@ -21,11 +21,19 @@ namespace glaciar.Domain.Entities.Logisticas
         [Column(TypeName = "decimal(18,2)")]
         public decimal Valor { get; set; }
 
+        [Required]
+        public int Quantidade { get; set; }
+
         [MaxLength(50)]
         public string? CodigoReverso { get; set; }
         
         [MaxLength(50)]
         public string? CodigoRastreioRetorno { get; set; }
+
+        [Required]
+        public int PedidoId { get; set; }
+        [ForeignKey("PedidoId")]
+        public Pedido Pedido { get; set; } = null!;
 
         [Required]
         public int PedidoProdutoId { get; set; }
@@ -39,5 +47,18 @@ namespace glaciar.Domain.Entities.Logisticas
         public DateTime CreatedAt { get; set; }
         [Required]
         public DateTime UpdatedAt { get; set; }
+
+        internal static Devolucao Criar(PedidoProduto item, int quantidade, string motivo, decimal valor, DateTime agora) => new()
+        {
+            PedidoId = item.PedidoId,
+            PedidoProdutoId = item.Id,
+            Quantidade = quantidade,
+            Motivo = motivo,
+            Valor = valor,
+            Status = StatusDevolucao.EmTroca,
+            DataDevolucao = agora,
+            CreatedAt = agora,
+            UpdatedAt = agora
+        };
     }
 }

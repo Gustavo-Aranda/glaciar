@@ -70,6 +70,70 @@ namespace glaciar.Domain.Entities.Vendas
         /// <remarks>
         /// Requer as coleções ProdutosDoPedido, Pagamentos, Entregas e CuponsAplicados(.Cupom) carregadas.
         /// </remarks>
+        /// <summary>
+        /// Solicita a troca de unidades/itens específicos ou do pedido inteiro (se itens for nulo ou vazio).
+        /// Valida se o pedido está ENTREGUE, gera os registros de Devolucao com o crédito rateado
+        /// e avança o status para TrocaSolicitada.
+        /// </summary>
+        public ResultadoTransicaoPedido SolicitarTroca(IEnumerable<ItemTroca>? itens, string motivo)
+        {
+            if (Status != StatusPedido.Entregue)
+            {
+                throw new DomainValidationException(
+                    $"Só é possível solicitar troca de pedidos ENTREGUES (status atual: {Status}).");
+            }
+
+            if (string.IsNullOrWhiteSpace(motivo))
+            {
+                throw new DomainValidationException("Informe o motivo da troca.");
+            }
+
+            if (!ProdutosDoPedido.Any())
+            {
+                throw new DomainValidationException("Os itens do pedido não foram carregados.");
+            }
+
+            var itensInformados = itens?.ToList() ?? new List<ItemTroca>();
+            var selecao = itensInformados.Count == 0
+                ? ProdutosDoPedido.Select(i => (Item: i, Qtd: i.Quantidade)).ToList()
+                : itensInformados.Select(t =>
+                {
+                    var item = ProdutosDoPedido.FirstOrDefault(i => i.Id == t.PedidoProdutoId)
+                        ?? throw new DomainValidationException("Item informado não pertence a este pedido.");
+
+                    if (t.Quantidade < 1 || t.Quantidade > item.Quantidade)
+                    {
+                        throw new DomainValidationException(
+                            $"Quantidade inválida para troca no item '{item.Estoque?.Produto?.Nome ?? "Produto"}'. Comprado: {item.Quantidade}, Solicitado: {t.Quantidade}.");
+                    }
+
+                    return (Item: item, Qtd: t.Quantidade);
+                }).ToList();
+
+            if (selecao.GroupBy(s => s.Item.Id).Any(g => g.Count() > 1))
+            {
+                throw new DomainValidationException("O mesmo item foi informado mais de uma vez para troca.");
+            }
+
+            var agora = DateTime.UtcNow;
+            var totalCredito = CalcularCreditoTroca(selecao);
+            var brutoTotal = selecao.Sum(s => s.Item.Preco * s.Qtd);
+            var acumulado = 0m;
+
+            for (var n = 0; n < selecao.Count; n++)
+            {
+                var (item, qtd) = selecao[n];
+                var valor = n == selecao.Count - 1
+                    ? totalCredito - acumulado
+                    : Math.Round(totalCredito * (item.Preco * qtd) / brutoTotal, 2, MidpointRounding.AwayFromZero);
+
+                acumulado += valor;
+                Devolucoes.Add(Devolucao.Criar(item, qtd, motivo.Trim(), valor, agora));
+            }
+
+            return AlterarStatus(StatusPedido.TrocaSolicitada, AtorTransicao.Cliente);
+        }
+
         public ResultadoTransicaoPedido AlterarStatus(StatusPedido novoStatus, AtorTransicao ator)
         {
             PedidoMaquinaEstados.ValidarTransicao(Status, novoStatus, ator);
@@ -90,13 +154,13 @@ namespace glaciar.Domain.Entities.Vendas
                 case StatusPedido.PagamentoReprovado:
                     AtualizarPagamentos(StatusPagamento.PagamentoRecusado, agora);
                     AtualizarEntrega(StatusEntrega.Cancelado, agora, obrigatoria: false);
-                    resultado.DevolverItensAoEstoque = true;
+                    ReporTodosOsItens(resultado);
                     break;
 
                 case StatusPedido.Cancelado:
                     AtualizarPagamentos(StatusPagamento.PagamentoCancelado, agora);
                     AtualizarEntrega(StatusEntrega.Cancelado, agora, obrigatoria: false);
-                    resultado.DevolverItensAoEstoque = true;
+                    ReporTodosOsItens(resultado);
                     break;
 
                 case StatusPedido.EmTransporte:
@@ -107,14 +171,38 @@ namespace glaciar.Domain.Entities.Vendas
                     AtualizarEntrega(StatusEntrega.Entregue, agora, obrigatoria: true)!.DataEntrega = agora;
                     break;
 
-                case StatusPedido.Trocado:
-                    var credito = CalcularValorCreditoTroca();
-                    if (credito > 0m)
-                        resultado.CupomTrocaGerado = Cupom.CriarCupomTroca(UsuarioId, credito);
+                case StatusPedido.TrocaSolicitada:
+                    if (!Devolucoes.Any(d => d.Status == StatusDevolucao.EmTroca))
+                    {
+                        throw new DomainValidationException("Use a solicitação de troca informando os itens e o motivo.");
+                    }
                     break;
 
-                // TrocaSolicitada, TrocaAceita, TrocaNegada, ItemEnviado, ItemRecebido:
-                // mudança puramente de status — a validação da máquina já é suficiente.
+                case StatusPedido.TrocaAceita:
+                    AtualizarDevolucoes(StatusDevolucao.TrocaAutorizada, agora);
+                    resultado.Notificacao = Notificacao.TrocaAutorizada(UsuarioId, Id, Codigo);
+                    break;
+
+                case StatusPedido.TrocaNegada:
+                    AtualizarDevolucoes(StatusDevolucao.TrocaRecusada, agora);
+                    break;
+
+                case StatusPedido.Trocado:
+                    var devolucoesAtivas = AtualizarDevolucoes(StatusDevolucao.TrocaProcessada, agora);
+                    foreach (var d in devolucoesAtivas)
+                    {
+                        var item = ProdutosDoPedido.First(i => i.Id == d.PedidoProdutoId);
+                        resultado.ItensParaReposicao.Add(new ReposicaoEstoque(item.EstoqueId, d.Quantidade));
+                    }
+
+                    var credito = devolucoesAtivas.Sum(d => d.Valor);
+                    if (credito > 0m)
+                    {
+                        resultado.CupomTrocaGerado = Cupom.CriarCupomTroca(UsuarioId, credito);
+                    }
+                    break;
+
+                // ItemEnviado, ItemRecebido: mudança puramente de status
             }
 
             Status = novoStatus;
@@ -123,22 +211,60 @@ namespace glaciar.Domain.Entities.Vendas
         }
 
         /// <summary>
-        /// Crédito de troca = valor dos itens − desconto PROMOCIONAL efetivamente aplicado.
-        /// Frete não é reembolsado e um cupom promocional não pode ser "convertido" em crédito de troca
-        /// (evita a fraude: comprar com cupom promocional → trocar → receber o valor cheio em cupom de troca).
+        /// Crédito de troca = valor dos itens selecionados − desconto PROMOCIONAL rateado proporcionalmente.
+        /// Cupons de troca (vale-troca) não reduzem o crédito, pois são créditos prévios do cliente.
         /// </summary>
-        public decimal CalcularValorCreditoTroca()
+        public decimal CalcularCreditoTroca(IReadOnlyCollection<(PedidoProduto Item, int Qtd)> selecao)
         {
-            if (!ProdutosDoPedido.Any())
+            var subtotalPedido = ProdutosDoPedido.Sum(i => i.Preco * i.Quantidade);
+            if (subtotalPedido <= 0m)
+            {
                 throw new DomainValidationException("Os itens do pedido não foram carregados para o cálculo do crédito de troca.");
+            }
 
-            var subtotalItens = ProdutosDoPedido.Sum(i => i.Preco * i.Quantidade);
+            var brutoSelecionado = selecao.Sum(s => s.Item.Preco * s.Qtd);
             var descontoPromocional = CuponsAplicados
                 .Where(pc => pc.Cupom != null && !pc.Cupom.EhTroca)
                 .Sum(pc => pc.Cupom.ValorDesconto);
 
-            var credito = subtotalItens - Math.Min(descontoPromocional, subtotalItens);
+            var descontoAplicado = Math.Min(descontoPromocional, subtotalPedido);
+            var parcelaDesconto = (brutoSelecionado / subtotalPedido) * descontoAplicado;
+
+            var credito = brutoSelecionado - parcelaDesconto;
             return Math.Round(credito, 2, MidpointRounding.AwayFromZero);
+        }
+
+        public decimal CalcularValorCreditoTroca()
+        {
+            if (!ProdutosDoPedido.Any())
+            {
+                throw new DomainValidationException("Os itens do pedido não foram carregados para o cálculo do crédito de troca.");
+            }
+
+            return CalcularCreditoTroca(ProdutosDoPedido.Select(i => (i, i.Quantidade)).ToList());
+        }
+
+        private void ReporTodosOsItens(ResultadoTransicaoPedido resultado)
+        {
+            foreach (var item in ProdutosDoPedido)
+            {
+                resultado.ItensParaReposicao.Add(new ReposicaoEstoque(item.EstoqueId, item.Quantidade));
+            }
+        }
+
+        private List<Devolucao> AtualizarDevolucoes(StatusDevolucao novoStatus, DateTime agora)
+        {
+            var alvo = Devolucoes
+                .Where(d => d.Status != StatusDevolucao.TrocaProcessada && d.Status != StatusDevolucao.TrocaRecusada)
+                .ToList();
+
+            foreach (var d in alvo)
+            {
+                d.Status = novoStatus;
+                d.UpdatedAt = agora;
+            }
+
+            return alvo;
         }
 
         // ---------- Pré-condições e efeitos internos ao agregado ----------

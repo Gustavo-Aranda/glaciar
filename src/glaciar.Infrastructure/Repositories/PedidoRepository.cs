@@ -42,6 +42,7 @@ namespace glaciar.Infrastructure.Repositories
                 .Include(p => p.CuponsAplicados)
                     .ThenInclude(pc => pc.Cupom)
                 .Include(p => p.Entregas)
+                .Include(p => p.Devolucoes)
                 .FirstOrDefaultAsync(p =>
                     p.Id == pedidoId &&
                     p.UsuarioId == usuarioId &&
@@ -133,6 +134,7 @@ namespace glaciar.Infrastructure.Repositories
                 .Include(p => p.Entregas)
                 .Include(p => p.CuponsAplicados)
                     .ThenInclude(pc => pc.Cupom)
+                .Include(p => p.Devolucoes)
                 .Where(p => p.Id == pedidoId && p.Status != StatusPedido.EmAberto);
 
             if (usuarioId.HasValue)

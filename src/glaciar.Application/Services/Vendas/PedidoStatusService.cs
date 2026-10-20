@@ -58,10 +58,9 @@ namespace glaciar.Application.Services.Vendas
                 await _pedidoRepository.UpdateAsync(pedido);
 
                 // 3b. Efeitos com I/O decididos pelo domínio
-                if (resultado.DevolverItensAoEstoque)
+                foreach (var item in resultado.ItensParaReposicao)
                 {
-                    foreach (var item in pedido.ProdutosDoPedido)
-                        await _estoqueRepository.ReporEstoqueAsync(item.EstoqueId, item.Quantidade);
+                    await _estoqueRepository.ReporEstoqueAsync(item.EstoqueId, item.Quantidade);
                 }
 
                 if (resultado.CupomTrocaGerado != null)

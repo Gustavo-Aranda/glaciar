@@ -35,6 +35,7 @@ namespace glaciar.Infrastructure.Data
         public DbSet<Cupom> Cupons { get; set; }
         public DbSet<PedidoCupom> PedidosCupons { get; set; }
         public DbSet<Pagamento> Pagamentos { get; set; }
+        public DbSet<Notificacao> Notificacoes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -109,6 +110,10 @@ namespace glaciar.Infrastructure.Data
                 .HasIndex(pc => new { pc.PedidoId, pc.CupomId })
                 .IsUnique();
 
+            modelBuilder.Entity<Pedido>()
+                .HasMany(p => p.Devolucoes)
+                .WithOne(d => d.Pedido)
+                .HasForeignKey(d => d.PedidoId);
         }
     }
 }
