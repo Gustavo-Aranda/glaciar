@@ -168,7 +168,6 @@ async function addToBag(produto, estoque, btnElement) {
             const err = await response.json().catch(() => null);
             const msg = err?.message || 'Não foi possível adicionar o item ao carrinho.';
             if (window.Toast) window.Toast.showError('Erro ao adicionar', msg);
-            else alert(msg);
             return;
         }
 
@@ -184,7 +183,6 @@ async function addToBag(produto, estoque, btnElement) {
     } catch (error) {
         console.error('Erro ao adicionar ao carrinho:', error);
         if (window.Toast) window.Toast.showError('Erro de conexão', 'Não foi possível conectar ao servidor.');
-        else alert('Erro de conexão com o servidor.');
     } finally {
         if (btnElement) {
             btnElement.disabled = false;

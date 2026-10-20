@@ -72,6 +72,123 @@
     flex-shrink: 0;
 }
 
+.toast-icon-warning {
+    background-color: #e67e22;
+    color: #fff;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+/* =========================================
+   POP-UP MODAL DE CONFIRMAÇÃO UNIFICADO (GLACIAR)
+   ========================================= */
+.glaciar-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(44, 62, 80, 0.65);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 1rem;
+    animation: fadeInOverlay 0.2s ease-out;
+}
+
+.glaciar-confirm-modal {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 2rem;
+    max-width: 440px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+    animation: scaleInModal 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.glaciar-confirm-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background-color: var(--laranja-alpinista-fundo, #FBEFE7);
+    color: var(--laranja-alpinista, #d35400);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 auto 1.25rem;
+}
+
+.glaciar-confirm-titulo {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--cinza-rocha, #2c3e50);
+    margin-bottom: 0.5rem;
+}
+
+.glaciar-confirm-mensagem {
+    font-size: 0.95rem;
+    color: var(--cinza-rocha-claro, #7f8c8d);
+    line-height: 1.5;
+    margin-bottom: 1.75rem;
+}
+
+.glaciar-confirm-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.glaciar-confirm-btn-cancel {
+    background: transparent;
+    border: 1px solid var(--borda-cinza, #dcdde1);
+    color: var(--cinza-rocha, #2c3e50);
+    padding: 0.7rem 1.4rem;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.glaciar-confirm-btn-cancel:hover {
+    background: #f5f6fa;
+}
+
+.glaciar-confirm-btn-confirm {
+    background: var(--preto, #1a1a1a);
+    border: 1px solid var(--preto, #1a1a1a);
+    color: #ffffff;
+    padding: 0.7rem 1.4rem;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.glaciar-confirm-btn-confirm:hover {
+    background: var(--preto-hover, #333333);
+}
+
+@keyframes fadeInOverlay {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleInModal {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
 
 .toast-content {
     flex-grow: 1;

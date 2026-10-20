@@ -166,6 +166,13 @@ function renderizarDevolucoes(container, devolucoes) {
             `;
         }
 
+        const motivoHtml = pedido.motivoTroca
+            ? `<div class="return-reason-box" style="margin: 0.5rem 0 0.8rem; padding: 0.6rem 0.9rem; background: var(--fundo-app, #F5F7FA); border-left: 3px solid var(--azul-gelo, #2B4C7E); border-radius: 4px;">
+                   <span style="font-size: 0.8rem; font-weight: 600; color: var(--cinza-rocha); display: block; margin-bottom: 0.2rem;">Motivo da solicitação de troca:</span>
+                   <span style="font-size: 0.85rem; color: var(--cinza-rocha-claro); font-style: italic;">"${escaparHtml(pedido.motivoTroca)}"</span>
+               </div>`
+            : '';
+
         const card = `
             <article class="return-card">
                 <div class="return-header">
@@ -175,6 +182,7 @@ function renderizarDevolucoes(container, devolucoes) {
                     </div>
                     <span class="status ${info.classeCss}">${info.label}</span>
                 </div>
+                ${motivoHtml}
                 ${itensHtml}
                 ${acoesHtml}
             </article>
@@ -194,7 +202,15 @@ function renderizarErro(container, mensagem) {
 }
 
 async function confirmarDespacho(pedidoId, codigo) {
-    if (!confirm(`Confirmar que você despachou o pacote nos Correios para a Glaciar referente ao pedido #${codigo}?`)) return;
+    let confirmou = true;
+    if (window.Toast && typeof window.Toast.confirm === 'function') {
+        confirmou = await window.Toast.confirm(
+            'Confirmar Despacho',
+            `Deseja confirmar que você despachou o pacote nos Correios para a Glaciar referente ao pedido #${codigo}?`,
+            { confirmText: 'Sim, despachei', cancelText: 'Voltar', icon: '📦' }
+        );
+    }
+    if (!confirmou) return;
 
     if (window.LoadingService) window.LoadingService.show('Informando despacho...');
 
@@ -209,22 +225,25 @@ async function confirmarDespacho(pedidoId, codigo) {
         });
 
         if (response.ok) {
-            if (window.NotificationService && typeof window.NotificationService.showSuccess === 'function') {
-                window.NotificationService.showSuccess('Pacote Enviado', 'Despacho registrado com sucesso!');
-            } else if (window.Toast && typeof window.Toast.showSuccess === 'function') {
+            if (window.Toast && typeof window.Toast.showSuccess === 'function') {
                 window.Toast.showSuccess('Pacote Enviado', 'Despacho registrado com sucesso!');
-            } else {
-                alert('Despacho registrado com sucesso!');
+            } else if (window.NotificationService && typeof window.NotificationService.showSuccess === 'function') {
+                window.NotificationService.showSuccess('Pacote Enviado', 'Despacho registrado com sucesso!');
             }
             await carregarDevolucoes();
         } else {
             const err = await response.json().catch(() => ({ message: 'Erro ao informar despacho.' }));
-            if (window.NotificationService) window.NotificationService.showError('Atenção', err.message);
-            else alert(err.message);
+            if (window.Toast && typeof window.Toast.showError === 'function') {
+                window.Toast.showError('Atenção', err.message);
+            } else if (window.NotificationService && typeof window.NotificationService.showError === 'function') {
+                window.NotificationService.showError('Atenção', err.message);
+            }
         }
     } catch (e) {
         console.error(e);
-        alert('Erro ao se conectar ao servidor.');
+        if (window.Toast && typeof window.Toast.showError === 'function') {
+            window.Toast.showError('Erro de conexão', 'Erro ao se conectar ao servidor.');
+        }
     } finally {
         if (window.LoadingService) window.LoadingService.hide();
     }

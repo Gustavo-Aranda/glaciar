@@ -16,21 +16,67 @@ const statusDisplayMap = {
     'Trocado': 'Trocado'
 };
 
+const STATUS_FLUXO_TROCA = new Set([
+    'TrocaSolicitada',
+    'TrocaAceita',
+    'TrocaNegada',
+    'ItemEnviado',
+    'ItemRecebido',
+    'Trocado'
+]);
+
+let todosPedidosVenda = [];
+
 document.addEventListener("DOMContentLoaded", () => {
+    configurarBusca();
     carregarPedidos();
 });
+
+function configurarBusca() {
+    const inputBusca = document.getElementById('search-pedidos');
+    const btnBusca = document.getElementById('btn-buscar-pedidos');
+
+    if (inputBusca) {
+        inputBusca.addEventListener('input', () => filtrarPedidos(inputBusca.value));
+    }
+    if (btnBusca && inputBusca) {
+        btnBusca.addEventListener('click', () => filtrarPedidos(inputBusca.value));
+    }
+}
+
+function filtrarPedidos(termo) {
+    const container = document.getElementById('pedidos-container');
+    if (!container) return;
+
+    if (!termo || !termo.trim()) {
+        renderizarPedidos(todosPedidosVenda, container);
+        return;
+    }
+
+    const t = termo.trim().toLowerCase();
+    const filtrados = todosPedidosVenda.filter(p => {
+        const codigo = (p.codigo || p.id || '').toString().toLowerCase();
+        const cliente = (p.cliente || '').toLowerCase();
+        const status = (statusDisplayMap[p.status] || p.status || '').toLowerCase();
+        return codigo.includes(t) || cliente.includes(t) || status.includes(t);
+    });
+
+    renderizarPedidos(filtrados, container);
+}
 
 async function carregarPedidos() {
     const container = document.getElementById('pedidos-container');
     if (!container) return;
-    container.innerHTML = '<p>Carregando...</p>';
+    container.innerHTML = '<p>Carregando pedidos...</p>';
 
     try {
-        const response = await fetch(`${API_BASE_URL}/admin/pedidos`);
+        const response = await fetch(`${API_BASE_URL}/admin/pedidos?tipo=venda`);
         if (!response.ok) throw new Error('Erro ao buscar pedidos');
 
         const pedidos = await response.json();
-        renderizarPedidos(pedidos, container);
+        // Dupla blindagem: assegura que nenhum pedido de devolução/troca apareça na aba de pedidos
+        todosPedidosVenda = (Array.isArray(pedidos) ? pedidos : []).filter(p => !STATUS_FLUXO_TROCA.has(p.status));
+        renderizarPedidos(todosPedidosVenda, container);
     } catch (err) {
         console.error(err);
         container.innerHTML = '<p style="color:red">Erro ao carregar os pedidos.</p>';
@@ -41,7 +87,7 @@ function renderizarPedidos(pedidos, container) {
     container.innerHTML = '';
 
     if (!Array.isArray(pedidos) || pedidos.length === 0) {
-        container.innerHTML = '<p>Não há pedidos para exibir.</p>';
+        container.innerHTML = '<p>Não há pedidos de venda para exibir.</p>';
         return;
     }
 
@@ -114,29 +160,37 @@ async function atualizarStatus(pedidoId) {
             if (data.dados?.cupomTrocaGerado) {
                 const cupom = data.dados.cupomTrocaGerado;
                 const msg = `Troca concluída com sucesso! Cupom de Troca gerado: ${cupom.codigo} no valor de R$ ${cupom.valorDesconto.toFixed(2)}.`;
-                if (typeof mostrarNotificacao === 'function') {
-                    mostrarNotificacao(msg, 'sucesso');
-                } else {
-                    alert(msg);
-                }
-            } else if (typeof mostrarNotificacao === 'function') {
-                mostrarNotificacao(data.message || 'Status atualizado com sucesso!', 'sucesso');
+                notificarAdmin(msg, 'sucesso');
+            } else {
+                notificarAdmin(data.message || 'Status atualizado com sucesso!', 'sucesso');
             }
             carregarPedidos();
         } else {
             const err = await response.json().catch(() => ({ message: 'Falha ao atualizar status.' }));
-            if (typeof mostrarNotificacao === 'function') {
-                mostrarNotificacao(err.message, 'erro');
-            } else {
-                alert(`Erro: ${err.message}`);
-            }
+            notificarAdmin(err.message, 'erro');
         }
     } catch (err) {
         console.error(err);
-        if (typeof mostrarNotificacao === 'function') {
-            mostrarNotificacao('Erro de conexão ao se comunicar com a API.', 'erro');
-        } else {
-            alert('Erro ao se comunicar com a API.');
-        }
+        notificarAdmin('Erro de conexão ao se comunicar com a API.', 'erro');
     }
+}
+
+function notificarAdmin(mensagem, tipo = 'erro') {
+    if (typeof mostrarNotificacao === 'function') {
+        mostrarNotificacao(mensagem, tipo);
+        return;
+    }
+    let container = document.getElementById('notificacoes-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'notificacoes-container';
+        container.className = 'notificacoes-container';
+        document.body.appendChild(container);
+    }
+    const notificacao = document.createElement('div');
+    notificacao.className = `notificacao notificacao-${tipo}`;
+    notificacao.setAttribute('role', 'alert');
+    notificacao.textContent = mensagem;
+    container.appendChild(notificacao);
+    setTimeout(() => notificacao.remove(), 4500);
 }

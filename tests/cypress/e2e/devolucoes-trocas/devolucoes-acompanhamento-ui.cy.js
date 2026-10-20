@@ -32,6 +32,7 @@ describe('Devoluções e Trocas - Acompanhamento do Fluxo Reversivo (UI)', () =>
         codigo: '801',
         status: 'TrocaAceita',
         valorTotal: 450.0,
+        motivoTroca: 'Produto com numeração apertada para o meu pé',
         itens: [
           { id: 1, nomeProduto: 'Bota Alpina Gore-Tex', quantidade: 1, precoUnitario: 450.0 }
         ]
@@ -60,10 +61,11 @@ describe('Devoluções e Trocas - Acompanhamento do Fluxo Reversivo (UI)', () =>
 
     cy.wait('@carregarDevolucoes');
 
-    // 1. Pedido 801 em Troca Autorizada: exibe código reverso dos correios
+    // 1. Pedido 801 em Troca Autorizada: exibe código reverso dos correios e motivo da troca
     cy.contains('Troca #801').should('be.visible');
     cy.contains('Troca Autorizada').should('be.visible');
     cy.contains('REV-801').should('be.visible');
+    cy.contains('Produto com numeração apertada para o meu pé').should('be.visible');
 
     // 2. Pedido 802 em Troca Concluída: informa que o cupom foi emitido
     cy.contains('Troca #802').should('be.visible');
@@ -80,10 +82,11 @@ describe('Devoluções e Trocas - Acompanhamento do Fluxo Reversivo (UI)', () =>
       }
     }).as('despacharPacote');
 
-    // Simula confirmação do window.confirm
-    cy.on('window:confirm', () => true);
-
     cy.get('[data-acao="despachar-item"][data-pedido-id="801"]').click();
+    
+    // Confirma pelo modal/popup customizado da Glaciar (sem window.confirm)
+    cy.get('#btn-modal-confirm-ok').should('be.visible').click();
+
     cy.wait('@despacharPacote');
   });
 

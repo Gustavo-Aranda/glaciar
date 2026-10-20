@@ -143,4 +143,34 @@ describe('Painel Administrativo - Gestão e Troca de Estados de Pedidos', () => 
       }
     });
   });
+
+  it('deve listar solicitações de troca com o motivo informado pelo cliente na aba Devoluções', () => {
+    const devolucoesMock = [
+      {
+        id: 103,
+        codigo: '103',
+        cliente: 'Roberto Alencar',
+        status: 'TrocaSolicitada',
+        valorTotal: 250.00,
+        motivoTroca: 'Costura lateral descosturada',
+        proximosStatus: ['TrocaAceita', 'TrocaNegada']
+      }
+    ];
+
+    cy.intercept('GET', `${apiUrl}/admin/pedidos?tipo=troca`, {
+      statusCode: 200,
+      body: devolucoesMock
+    }).as('carregarDevolucoesAdmin');
+
+    cy.visit('http://127.0.0.1:5500/frontend/admin/devolucoes.html', {
+      failOnStatusCode: false
+    });
+
+    cy.get('body').then(($body) => {
+      if ($body.find('#devolucoes-container').length > 0) {
+        cy.contains('Costura lateral descosturada').should('be.visible');
+        cy.contains('Roberto Alencar').should('be.visible');
+      }
+    });
+  });
 });

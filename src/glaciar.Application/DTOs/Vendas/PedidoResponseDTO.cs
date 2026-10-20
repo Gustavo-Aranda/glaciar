@@ -30,6 +30,9 @@ namespace glaciar.Application.DTOs.Vendas
         /// <summary>Preenchido somente na resposta do checkout, quando os cupons excedem o total.</summary>
         public CupomResponseDTO? CupomTrocaGerado { get; set; }
 
+        /// <summary>Motivo informado pelo cliente ao registrar a solicitação de troca.</summary>
+        public string? MotivoTroca { get; set; }
+
         /// <summary>Ações que o CLIENTE pode executar agora (ex.: Entregue, TrocaSolicitada, ItemEnviado).</summary>
         public List<StatusPedido> ProximosStatus { get; set; } = new();
     }

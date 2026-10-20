@@ -213,12 +213,12 @@ async function carregarHistoricoPedidos() {
  * Exibe notificação de erro usando exclusivamente o NotificationService/Toast
  */
 function exibirErro(titulo, mensagem) {
-    if (window.NotificationService && typeof window.NotificationService.showError === 'function') {
-        window.NotificationService.showError(titulo, mensagem);
-    } else if (window.Toast && typeof window.Toast.showError === 'function') {
+    if (window.Toast && typeof window.Toast.showError === 'function') {
         window.Toast.showError(titulo, mensagem);
+    } else if (window.NotificationService && typeof window.NotificationService.showError === 'function') {
+        window.NotificationService.showError(titulo, mensagem);
     } else {
-        alert(`${titulo}: ${mensagem}`);
+        console.error(`${titulo}: ${mensagem}`);
     }
 }
 
@@ -353,7 +353,12 @@ function gerarBotoesAcao(pedido) {
  * Envia PATCH à API para transicionar o pedido de EmTransporte para Entregue
  */
 async function confirmarRecebimento(pedidoId, codigo) {
-    if (!confirm(`Deseja confirmar o recebimento do pedido #${codigo}?`)) return;
+    const confirmou = await Toast.confirm(
+        'Confirmar Recebimento',
+        `Deseja confirmar o recebimento de todos os itens do pedido #${codigo}?`,
+        { confirmText: 'Confirmar Recebimento', cancelText: 'Voltar', icon: '📦' }
+    );
+    if (!confirmou) return;
 
     if (window.LoadingService) window.LoadingService.show('Confirmando recebimento...');
     try {
@@ -367,13 +372,7 @@ async function confirmarRecebimento(pedidoId, codigo) {
         });
 
         if (response.ok) {
-            if (window.NotificationService && typeof window.NotificationService.showSuccess === 'function') {
-                window.NotificationService.showSuccess('Recebimento Confirmado', `Pedido #${codigo} marcado como Entregue!`);
-            } else if (window.Toast && typeof window.Toast.showSuccess === 'function') {
-                window.Toast.showSuccess('Recebimento Confirmado', `Pedido #${codigo} marcado como Entregue!`);
-            } else {
-                alert(`Recebimento do pedido #${codigo} confirmado com sucesso!`);
-            }
+            Toast.showSuccess('Recebimento Confirmado', `Pedido #${codigo} marcado como Entregue!`);
             await carregarHistoricoPedidos();
         } else {
             const err = await response.json().catch(() => ({ message: 'Erro ao confirmar recebimento.' }));
@@ -574,13 +573,7 @@ async function submeterSolicitacaoTroca(event) {
         if (response.ok) {
             fecharModalTroca();
             const msg = 'Sua solicitação de troca foi registrada com sucesso! Nossa equipe irá avaliá-la.';
-            if (window.NotificationService && typeof window.NotificationService.showSuccess === 'function') {
-                window.NotificationService.showSuccess('Troca Solicitada', msg);
-            } else if (window.Toast && typeof window.Toast.showSuccess === 'function') {
-                window.Toast.showSuccess('Troca Solicitada', msg);
-            } else {
-                alert(msg);
-            }
+            Toast.showSuccess('Troca Solicitada', msg);
             await carregarHistoricoPedidos();
         } else {
             const err = await response.json().catch(() => ({ message: 'Erro ao solicitar troca.' }));
@@ -598,7 +591,12 @@ async function submeterSolicitacaoTroca(event) {
  * Cliente informa que despachou o pacote nos correios (TrocaAceita -> ItemEnviado)
  */
 async function confirmarDespacho(pedidoId, codigo) {
-    if (!confirm(`Confirmar que você despachou o pacote de troca referente ao pedido #${codigo}?`)) return;
+    const confirmou = await Toast.confirm(
+        'Confirmar Despacho',
+        `Confirmar que você despachou nos Correios o pacote de troca referente ao pedido #${codigo}?`,
+        { confirmText: 'Confirmar Envio', cancelText: 'Voltar', icon: '🚚' }
+    );
+    if (!confirmou) return;
 
     if (window.LoadingService) window.LoadingService.show('Registrando despacho do pacote...');
     try {
@@ -613,13 +611,7 @@ async function confirmarDespacho(pedidoId, codigo) {
 
         if (response.ok) {
             const msg = `Despacho informado com sucesso! Assim que a mercadoria chegar ao nosso centro de distribuição, realizaremos a conferência.`;
-            if (window.NotificationService && typeof window.NotificationService.showSuccess === 'function') {
-                window.NotificationService.showSuccess('Pacote Despachado', msg);
-            } else if (window.Toast && typeof window.Toast.showSuccess === 'function') {
-                window.Toast.showSuccess('Pacote Despachado', msg);
-            } else {
-                alert(msg);
-            }
+            Toast.showSuccess('Pacote Despachado', msg);
             await carregarHistoricoPedidos();
         } else {
             const err = await response.json().catch(() => ({ message: 'Erro ao atualizar status.' }));

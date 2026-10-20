@@ -17,14 +17,14 @@
         <section class="admin-content">
             <div class="content-wrapper">
                 <div class="content-header">
-                    <h2>Gestão Operacional</h2>
-                    <p>Gerencie a fila de tarefas logísticas, pedidos pendentes e aprovação de trocas.</p>
+                    <h2>Gestão Operacional de Pedidos</h2>
+                    <p>Gerencie a fila de tarefas logísticas, aprovação de pagamentos e despacho de mercadorias.</p>
                 </div>
 
                 <section class="admin-section">
                     <div class="search-bar-container">
-                        <input type="text" class="admin-search-input" placeholder="Buscar pedido por número, cliente ou status...">
-                        <button class="btn btn-secondary">Buscar</button>
+                        <input type="text" id="search-pedidos" class="admin-search-input" placeholder="Buscar pedido por número, cliente ou status...">
+                        <button class="btn btn-secondary" id="btn-buscar-pedidos">Buscar</button>
                     </div>
                     <div id="pedidos-container">
                         <p>Carregando pedidos...</p>
@@ -34,7 +34,10 @@
         </section>
     </main>
 
+    <div id="notificacoes-container" class="notificacoes-container" aria-live="polite"></div>
+
     <script src="./js/components/layout.js"></script>
+    <script src="./js/components/notifications.js"></script>
     <script src="./js/pages/pedidos.js"></script>
 </body>
 </html>

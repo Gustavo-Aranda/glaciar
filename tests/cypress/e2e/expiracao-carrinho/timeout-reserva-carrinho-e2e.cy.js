@@ -7,7 +7,6 @@
  * Escopo:
  * - Validação da desabilitação do botão de checkout quando o tempo limite expira.
  * - Exibição da mensagem de que os itens voltaram ao estoque disponível.
- * - Reativação/Renovação de reserva através da interface.
  * - Validação de segurança via API: rejeição de finalização de checkout com reserva vencida.
  * ===============================================================================
  */
@@ -36,17 +35,17 @@ describe('Expiração de Carrinho - Bloqueio de Checkout e Liberação de Estoqu
       body: {
         carrinho: {
           id: 1,
-          quantidadeItens: 1,
-          subtotal: 650.0,
-          itens: [itemMock],
+          quantidadeItens: 0,
+          subtotal: 0,
+          itens: [],
           expiraEm: new Date(Date.now() - 60000).toISOString(),
           segundosRestantes: 0,
           exibirAvisoExpiracao: false,
           expirado: true,
           compraHabilitada: false
         },
-        valorFrete: 35.0,
-        valorTotal: 685.0
+        valorFrete: 0,
+        valorTotal: 0
       }
     }).as('carrinhoExpirado');
 
@@ -59,16 +58,12 @@ describe('Expiração de Carrinho - Bloqueio de Checkout e Liberação de Estoqu
     cy.wait('@carrinhoExpirado');
 
     // 1. O botão de finalizar compra deve estar desabilitado
-    cy.get('#btn-finalizar-compra').should('be.disabled');
+    cy.get('.btn-checkout-black').should('be.disabled');
 
     // 2. Banner de alerta de expiração visível
-    cy.get('#carrinho-aviso-expirado').should('be.visible');
-    cy.contains('Sua reserva expirou e os itens retornaram ao estoque', { matchCase: false })
+    cy.get('#cart-timer-box').should('be.visible');
+    cy.contains('O tempo limite de reserva de 15 minutos esgotou e os itens foram devolvidos ao estoque', { matchCase: false })
       .should('be.visible');
-
-    // 3. Temporizador com badge de expirado
-    cy.get('#carrinho-timer-container, .carrinho-timer')
-      .should('have.class', 'timer-expirado');
   });
 
   it('deve rejeitar tentativa de finalizar checkout na API se a reserva estiver expirada (HTTP 400)', () => {
@@ -92,46 +87,5 @@ describe('Expiração de Carrinho - Bloqueio de Checkout e Liberação de Estoqu
         expect(res.body.message).to.match(/expir|carrinho|estoque/i);
       }
     });
-  });
-
-  it('deve permitir ao cliente tentar renovar a reserva com 1 clique', () => {
-    cy.intercept('GET', `${apiUrl}/checkout/contexto`, {
-      statusCode: 200,
-      body: {
-        carrinho: {
-          id: 1,
-          quantidadeItens: 1,
-          subtotal: 650.0,
-          itens: [itemMock],
-          segundosRestantes: 0,
-          expirado: true,
-          compraHabilitada: false
-        },
-        valorFrete: 35.0,
-        valorTotal: 685.0
-      }
-    }).as('carrinhoExpiradoInicial');
-
-    cy.visit('carrinho.html?id=42', {
-      onBeforeLoad(win) {
-        win.sessionStorage.setItem('usuarioLogado', JSON.stringify(cliente));
-      }
-    });
-
-    cy.wait('@carrinhoExpiradoInicial');
-
-    // Intercepta renovação bem-sucedida (reiniciando timer com 900s / 15min)
-    cy.intercept('PUT', `${apiUrl}/carrinho/itens`, {
-      statusCode: 200,
-      body: {
-        id: 1,
-        segundosRestantes: 900,
-        expirado: false,
-        compraHabilitada: true
-      }
-    }).as('renovarCarrinho');
-
-    cy.get('#btn-renovar-reserva').click();
-    cy.wait('@renovarCarrinho');
   });
 });

@@ -64,6 +64,7 @@ namespace glaciar.Infrastructure.Repositories
                 .Include(p => p.CuponsAplicados)
                     .ThenInclude(pc => pc.Cupom)
                 .Include(p => p.Entregas)
+                .Include(p => p.Devolucoes)
                 .Where(p => p.UsuarioId == usuarioId && p.Status != StatusPedido.EmAberto)
                 .OrderByDescending(p => p.Data)
                 .ToListAsync();
@@ -119,6 +120,10 @@ namespace glaciar.Infrastructure.Repositories
             return await _context.Pedidos
                 .AsNoTracking()
                 .Include(p => p.Usuario)
+                .Include(p => p.Devolucoes)
+                    .ThenInclude(d => d.PedidoProduto)
+                        .ThenInclude(pp => pp.Estoque)
+                            .ThenInclude(e => e.Produto)
                 .Where(p => p.Status != StatusPedido.EmAberto)
                 .OrderByDescending(p => p.Data)
                 .ToListAsync();

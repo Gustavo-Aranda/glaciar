@@ -29,7 +29,8 @@ describe('Troca de Estados - Máquina de Estados do Pedido (DRS)', () => {
         method: 'PATCH',
         url: `${apiUrl}/pedidos/99999/status`,
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-Usuario-Id': String(usuarioId)
         },
         body: {
           status: 'Entregue'
@@ -50,7 +51,8 @@ describe('Troca de Estados - Máquina de Estados do Pedido (DRS)', () => {
         method: 'PATCH',
         url: `${apiUrl}/pedidos/99999/status`,
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-Usuario-Id': String(usuarioId)
         },
         body: {
           status: 'EmProcessamento'
@@ -106,16 +108,9 @@ describe('Troca de Estados - Máquina de Estados do Pedido (DRS)', () => {
 
     transicoesEsperadas.forEach(({ de, para, ator, label }) => {
       it(`garante transição válida: [${de}] ➔ [${para}] executada por [${ator}]`, () => {
-        // Intercepta a transição simulando persistência bem-sucedida
-        cy.intercept('PATCH', `${apiUrl}/pedidos/${pedidoBase.id}/status`, {
-          statusCode: 200,
-          body: {
-            id: pedidoBase.id,
-            statusAnterior: de,
-            statusNovo: para,
-            mensagem: `Status atualizado para ${label} com sucesso.`
-          }
-        }).as(`transicao_${de}_${para}`);
+        const endpoint = ator === 'Admin'
+          ? `${apiUrl}/admin/pedidos/${pedidoBase.id}/status`
+          : `${apiUrl}/pedidos/${pedidoBase.id}/status`;
 
         const headers = ator === 'Cliente'
           ? { 'Content-Type': 'application/json', 'X-Usuario-Id': String(usuarioId) }
@@ -123,7 +118,7 @@ describe('Troca de Estados - Máquina de Estados do Pedido (DRS)', () => {
 
         cy.request({
           method: 'PATCH',
-          url: `${apiUrl}/pedidos/${pedidoBase.id}/status`,
+          url: endpoint,
           headers: headers,
           body: { status: para },
           failOnStatusCode: false

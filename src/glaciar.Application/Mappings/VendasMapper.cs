@@ -133,12 +133,15 @@ namespace glaciar.Application.Mappings
                     .Select(pc => ParaCupom(pc.Cupom))
                     .ToList(),
                 CupomTrocaGerado = cupomTrocaGerado == null ? null : ParaCupom(cupomTrocaGerado),
+                MotivoTroca = pedido.Devolucoes?.OrderByDescending(d => d.DataDevolucao).FirstOrDefault()?.Motivo,
                 ProximosStatus = PedidoMaquinaEstados.ProximosStatus(pedido.Status, AtorTransicao.Cliente).ToList()
             };
         }
 
         public static PedidoAdminResumoDTO ParaPedidoAdminResumo(Pedido pedido)
         {
+            var ultimaDevolucao = pedido.Devolucoes?.OrderByDescending(d => d.DataDevolucao).FirstOrDefault();
+
             return new PedidoAdminResumoDTO
             {
                 Id = pedido.Id,
@@ -147,6 +150,11 @@ namespace glaciar.Application.Mappings
                 ValorTotal = pedido.ValorTotal,
                 Status = pedido.Status,
                 Data = pedido.Data,
+                MotivoTroca = ultimaDevolucao?.Motivo,
+                ItensTroca = pedido.Devolucoes?
+                    .Select(d => $"{d.Quantidade}x {d.PedidoProduto?.Estoque?.Produto?.Nome ?? "Item"}")
+                    .Distinct()
+                    .ToList() ?? new List<string>(),
                 ProximosStatus = PedidoMaquinaEstados.ProximosStatus(pedido.Status, AtorTransicao.Administrador).ToList()
             };
         }

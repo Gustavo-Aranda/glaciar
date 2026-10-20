@@ -59,12 +59,13 @@ describe('Expiração de Carrinho - Temporizador e Alerta Visual de 5 Minutos', 
 
     cy.wait('@carrinhoAtivo');
 
-    // O container do timer deve estar visível
-    cy.get('#carrinho-timer-container, .carrinho-timer').should('be.visible');
-    cy.get('#carrinho-timer-regressivo').should('contain', '14:');
+    // O container do timer deve estar visível com contagem regressiva
+    cy.get('#cart-timer-box').should('be.visible');
+    cy.get('#cart-timer-box').should('contain', '14:');
+    cy.contains('Estoque reservado por mais', { matchCase: false }).should('be.visible');
   });
 
-  it('deve acionar classe de alerta e aviso visual quando restarem 5 minutos ou menos (<= 300s)', () => {
+  it('deve acionar aviso visual quando restarem 5 minutos ou menos (<= 300s)', () => {
     // 4 minutos e 30 segundos restantes = 270 segundos (gatilho de aviso aos 5 min)
     cy.intercept('GET', `${apiUrl}/checkout/contexto`, {
       statusCode: 200,
@@ -93,12 +94,10 @@ describe('Expiração de Carrinho - Temporizador e Alerta Visual de 5 Minutos', 
 
     cy.wait('@carrinhoQuaseExpirando');
 
-    // Timer em estado de atenção (classe CSS de alerta ativa)
-    cy.get('#carrinho-timer-container, .carrinho-timer')
-      .should('have.class', 'timer-alerta');
-
-    // Mensagem de aviso deve estar presente
-    cy.contains('Atenção: finalize sua compra nos próximos minutos', { matchCase: false })
-      .should('be.visible');
+    // Timer visível com mensagem de alerta e contagem
+    cy.get('#cart-timer-box').should('be.visible');
+    cy.get('#cart-timer-box').should('contain', '04:30');
+    cy.contains('Sua reserva expira em', { matchCase: false }).should('be.visible');
+    cy.contains('Finalize sua compra antes que os itens retornem ao estoque', { matchCase: false }).should('be.visible');
   });
 });

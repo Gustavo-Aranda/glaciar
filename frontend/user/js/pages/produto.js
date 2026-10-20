@@ -23,8 +23,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (!produtoId) {
         if (window.Toast) window.Toast.showError('Erro', 'Produto não especificado.');
-        else alert("Produto não especificado.");
-        window.location.href = "index.html";
+        setTimeout(() => { window.location.href = "index.html"; }, 1500);
         return;
     }
 
@@ -44,7 +43,6 @@ async function loadProductData(produtoId) {
     } catch (err) {
         console.error(err);
         if (window.Toast) window.Toast.showError('Erro ao carregar produto', err.message);
-        else alert(err.message);
     } finally {
         if (window.LoadingService) window.LoadingService.hide();
     }
@@ -157,8 +155,7 @@ function selectSize(tamanho, estoqueId, btnElement) {
 
 async function addToBag() {
     if (!selectedEstoqueId) {
-        if (window.Toast) window.Toast.showError('Seleção incompleta', 'Por favor, selecione um tamanho e cor disponíveis.');
-        else alert("Por favor, selecione um tamanho e cor disponíveis.");
+        if (window.Toast) window.Toast.showWarning('Seleção incompleta', 'Por favor, selecione um tamanho e cor disponíveis.');
         return;
     }
 
@@ -186,7 +183,6 @@ async function addToBag() {
         if (!response.ok) {
             const erro = await response.json();
             if (window.Toast) window.Toast.showError('Erro ao adicionar ao carrinho', erro.message || 'Falha desconhecida.');
-            else alert('Erro ao adicionar ao carrinho: ' + (erro.message || 'Falha desconhecida.'));
             return;
         }
 
@@ -205,7 +201,6 @@ async function addToBag() {
     } catch (error) {
         console.error('Erro de rede:', error);
         if (window.Toast) window.Toast.showError('Erro de conexão', 'Erro ao se conectar ao servidor.');
-        else alert('Erro ao se conectar ao servidor.');
     } finally {
         if (btnElement) {
             btnElement.disabled = false;

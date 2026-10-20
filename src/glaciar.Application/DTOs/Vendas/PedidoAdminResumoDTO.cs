@@ -12,6 +12,12 @@ namespace glaciar.Application.DTOs.Vendas
         public StatusPedido Status { get; set; }
         public DateTime Data { get; set; }
 
+        /// <summary>Motivo informado pelo cliente ao registrar a troca (quando houver solicitação).</summary>
+        public string? MotivoTroca { get; set; }
+
+        /// <summary>Lista de itens e quantidades solicitados para troca.</summary>
+        public List<string> ItensTroca { get; set; } = new();
+
         /// <summary>
         /// Status que o ADMINISTRADOR pode aplicar a partir do status atual, calculados pela
         /// PedidoMaquinaEstados. O &lt;select&gt; do painel é montado exclusivamente com esta lista.

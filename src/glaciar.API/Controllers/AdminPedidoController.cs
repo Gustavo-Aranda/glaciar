@@ -22,11 +22,35 @@ namespace glaciar.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ListarPedidos()
+        public async Task<IActionResult> ListarPedidos([FromQuery] string? tipo = null)
         {
             try
             {
                 var pedidos = await _pedidoService.ListarParaAdminAsync();
+
+                if (string.Equals(tipo, "troca", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(tipo, "devolucao", StringComparison.OrdinalIgnoreCase))
+                {
+                    pedidos = pedidos.Where(p =>
+                        p.Status == StatusPedido.TrocaSolicitada ||
+                        p.Status == StatusPedido.TrocaAceita ||
+                        p.Status == StatusPedido.TrocaNegada ||
+                        p.Status == StatusPedido.ItemEnviado ||
+                        p.Status == StatusPedido.ItemRecebido ||
+                        p.Status == StatusPedido.Trocado);
+                }
+                else if (string.Equals(tipo, "venda", StringComparison.OrdinalIgnoreCase) ||
+                         string.Equals(tipo, "pedido", StringComparison.OrdinalIgnoreCase))
+                {
+                    pedidos = pedidos.Where(p =>
+                        p.Status == StatusPedido.EmProcessamento ||
+                        p.Status == StatusPedido.PagamentoRealizado ||
+                        p.Status == StatusPedido.PagamentoReprovado ||
+                        p.Status == StatusPedido.EmTransporte ||
+                        p.Status == StatusPedido.Entregue ||
+                        p.Status == StatusPedido.Cancelado);
+                }
+
                 return Ok(pedidos);
             }
             catch (Exception)
