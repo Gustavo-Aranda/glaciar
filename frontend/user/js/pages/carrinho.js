@@ -31,7 +31,8 @@ const dom = {
     get btnCheckout() { return document.querySelector('.btn-checkout-black'); },
     get subtotal() { return document.querySelector('.summary-details .summary-line:nth-child(1) span:nth-child(2)'); },
     get frete() { return document.querySelector('.summary-details .summary-line:nth-child(2) span:nth-child(2)'); },
-    get total() { return document.querySelector('.summary-total span:nth-child(2)'); }
+    get total() { return document.querySelector('.summary-total span:nth-child(2)'); },
+    get timerBox() { return document.getElementById('cart-timer-box'); }
 };
 
 /* =====================================================================
@@ -96,6 +97,74 @@ function aplicarEstadoDoServidor(contexto) {
         total: contexto?.valorTotal ?? carrinho.subtotal ?? 0,
         temEndereco: Boolean(contexto?.enderecoPrincipal)
     };
+
+    estado.carrinhoInfo = {
+        expirado: Boolean(carrinho.expirado),
+        segundosRestantes: carrinho.segundosRestantes,
+        compraHabilitada: carrinho.compraHabilitada !== false
+    };
+
+    iniciarTimerReserva(estado.carrinhoInfo);
+}
+
+function iniciarTimerReserva(info) {
+    clearInterval(window.__timerReserva);
+    const box = dom.timerBox;
+    if (!box) return;
+
+    if (info.expirado) {
+        box.style.display = 'block';
+        box.innerHTML = `<div style="background-color: #fee2e2; color: #991b1b; border: 1px solid #f87171; border-radius: 6px; padding: 10px;">
+            ⚠️ <strong>Carrinho Expirado:</strong> O tempo limite de reserva de 15 minutos esgotou e os itens foram devolvidos ao estoque.
+        </div>`;
+        alternarBotaoCheckout(true);
+        return;
+    }
+
+    if (info.segundosRestantes == null || estado.itens.length === 0) {
+        box.style.display = 'none';
+        return;
+    }
+
+    let restante = info.segundosRestantes;
+    let avisou = restante <= 300;
+
+    function atualizarVisual() {
+        if (restante <= 0) {
+            clearInterval(window.__timerReserva);
+            box.style.display = 'block';
+            box.innerHTML = `<div style="background-color: #fee2e2; color: #991b1b; border: 1px solid #f87171; border-radius: 6px; padding: 10px;">
+                ⚠️ <strong>Tempo Esgotado:</strong> Sua reserva expirou. Atualizando carrinho...
+            </div>`;
+            alternarBotaoCheckout(true);
+            setTimeout(() => carregarCarrinho(), 1500);
+            return;
+        }
+
+        const minutos = Math.floor(restante / 60).toString().padStart(2, '0');
+        const segundos = (restante % 60).toString().padStart(2, '0');
+
+        box.style.display = 'block';
+        if (restante <= 300) {
+            box.innerHTML = `<div style="background-color: #fef3c7; color: #92400e; border: 1px solid #f59e0b; border-radius: 6px; padding: 10px;">
+                ⏳ <strong>Atenção:</strong> Sua reserva expira em <strong>${minutos}:${segundos}</strong>! Finalize sua compra antes que os itens retornem ao estoque.
+            </div>`;
+            if (!avisou) {
+                avisou = true;
+                window.Toast?.showWarning('Atenção', 'Seu carrinho expira em menos de 5 minutos!');
+            }
+        } else {
+            box.innerHTML = `<div style="background-color: #f0fdf4; color: #166534; border: 1px solid #86efac; border-radius: 6px; padding: 10px;">
+                ⏱️ Estoque reservado por mais <strong>${minutos}:${segundos}</strong>.
+            </div>`;
+        }
+    }
+
+    atualizarVisual();
+    window.__timerReserva = setInterval(() => {
+        restante--;
+        atualizarVisual();
+    }, 1000);
 }
 
 /* =====================================================================

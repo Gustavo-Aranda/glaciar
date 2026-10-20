@@ -99,12 +99,17 @@ function obterInfoStatus(status) {
     };
 }
 
-/* =====================================================================
+// Estado em memória dos pedidos carregados
+let _pedidosCarregados = [];
+
+/* =========================================
  * INICIALIZAÇÃO
- * ===================================================================== */
+ * ========================================= */
 document.addEventListener('DOMContentLoaded', async () => {
     configurarEventosGlobais();
+    configurarModalTroca();
     await carregarHistoricoPedidos();
+    await carregarNotificacoesUsuario();
 });
 
 function configurarEventosGlobais() {
@@ -129,6 +134,21 @@ function configurarEventosGlobais() {
             const pedidoId = btnConfirmar.dataset.pedidoId;
             const codigo = btnConfirmar.dataset.codigo;
             confirmarRecebimento(pedidoId, codigo);
+            return;
+        }
+
+        const btnTroca = event.target.closest('[data-acao="solicitar-troca"]');
+        if (btnTroca) {
+            const pedidoId = Number(btnTroca.dataset.pedidoId);
+            abrirModalTroca(pedidoId);
+            return;
+        }
+
+        const btnDespacho = event.target.closest('[data-acao="confirmar-despacho"]');
+        if (btnDespacho) {
+            const pedidoId = Number(btnDespacho.dataset.pedidoId);
+            const codigo = btnDespacho.dataset.codigo;
+            confirmarDespacho(pedidoId, codigo);
             return;
         }
     });
@@ -172,7 +192,8 @@ async function carregarHistoricoPedidos() {
 
         // 3. Sucesso: processa dados e renderiza
         const pedidos = await response.json();
-        renderizarPedidos(container, pedidos);
+        _pedidosCarregados = Array.isArray(pedidos) ? pedidos : [];
+        renderizarPedidos(container, _pedidosCarregados);
 
     } catch (erro) {
         // 4. Tratamento de falha de rede ou exceção inesperada
@@ -313,7 +334,15 @@ function gerarBotoesAcao(pedido) {
         `;
     } else if (status === 'Entregue') {
         html += `
-            <a href="devolucoes.html" class="btn btn-warning">Solicitar Troca / Devolução</a>
+            <button type="button" class="btn btn-warning" data-acao="solicitar-troca" data-pedido-id="${pedido.id}">Solicitar Troca</button>
+        `;
+    } else if (status === 'TrocaAceita') {
+        html += `
+            <button type="button" class="btn btn-primary" data-acao="confirmar-despacho" data-pedido-id="${pedido.id}" data-codigo="${escaparHtml(pedido.codigo || pedido.id)}">Informar Despacho do Pacote</button>
+        `;
+    } else if (['TrocaSolicitada', 'ItemEnviado', 'ItemRecebido', 'Trocado'].includes(status)) {
+        html += `
+            <a href="devolucoes.html" class="btn btn-secondary">Acompanhar Devolução</a>
         `;
     }
 
@@ -403,3 +432,273 @@ function gerarHtmlDetalhesPedido(pedido) {
         </div>
     `;
 }
+
+/* =========================================
+ * MODAL DE TROCA / DEVOLUÇÃO (Fase 2)
+ * ========================================= */
+function configurarModalTroca() {
+    const modal = document.getElementById('modal-troca');
+    if (!modal) return;
+
+    document.getElementById('btn-fechar-modal-troca')?.addEventListener('click', fecharModalTroca);
+    document.getElementById('btn-cancelar-modal-troca')?.addEventListener('click', fecharModalTroca);
+
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) fecharModalTroca();
+    });
+
+    const radioParcial = document.getElementById('radio-troca-parcial');
+    const radioTotal = document.getElementById('radio-troca-total');
+    const containerItens = document.getElementById('container-selecao-itens');
+
+    radioParcial?.addEventListener('change', () => {
+        if (containerItens) containerItens.style.display = 'block';
+    });
+
+    radioTotal?.addEventListener('change', () => {
+        if (containerItens) containerItens.style.display = 'none';
+    });
+
+    document.getElementById('form-solicitar-troca')?.addEventListener('submit', submeterSolicitacaoTroca);
+}
+
+function abrirModalTroca(pedidoId) {
+    const pedido = _pedidosCarregados.find(p => p.id === pedidoId);
+    if (!pedido) {
+        exibirErro('Erro', 'Pedido não encontrado.');
+        return;
+    }
+
+    const modal = document.getElementById('modal-troca');
+    const inputPedidoId = document.getElementById('troca-pedido-id');
+    const listaItens = document.getElementById('troca-itens-lista');
+    const textareaMotivo = document.getElementById('troca-motivo');
+    const radioParcial = document.getElementById('radio-troca-parcial');
+    const containerItens = document.getElementById('container-selecao-itens');
+
+    if (inputPedidoId) inputPedidoId.value = pedido.id;
+    if (textareaMotivo) textareaMotivo.value = '';
+    if (radioParcial) radioParcial.checked = true;
+    if (containerItens) containerItens.style.display = 'block';
+
+    const titulo = document.getElementById('modal-troca-titulo');
+    if (titulo) titulo.textContent = `Solicitar Troca do Pedido #${pedido.codigo || pedido.id}`;
+
+    if (listaItens) {
+        listaItens.innerHTML = '';
+        const itens = pedido.itens || [];
+
+        itens.forEach(item => {
+            const linha = document.createElement('div');
+            linha.className = 'troca-item-linha';
+            linha.innerHTML = `
+                <div class="troca-item-info">
+                    <input type="checkbox" class="troca-item-checkbox" data-item-id="${item.id}" id="chk-item-${item.id}" checked>
+                    <div class="troca-item-detalhes">
+                        <label for="chk-item-${item.id}" class="troca-item-nome">${escaparHtml(item.nomeProduto)}</label>
+                        <span class="troca-item-sub">Comprado: ${item.quantidade}x ${formatarMoeda(item.precoUnitario)}</span>
+                    </div>
+                </div>
+                <div class="troca-item-qtd-control">
+                    <label for="qtd-item-${item.id}">Qtd:</label>
+                    <input type="number" 
+                           id="qtd-item-${item.id}" 
+                           class="troca-item-qtd-input" 
+                           data-item-id="${item.id}" 
+                           min="1" 
+                           max="${item.quantidade}" 
+                           value="${item.quantidade}">
+                </div>
+            `;
+            listaItens.appendChild(linha);
+        });
+    }
+
+    modal?.classList.remove('hidden');
+}
+
+function fecharModalTroca() {
+    const modal = document.getElementById('modal-troca');
+    modal?.classList.add('hidden');
+}
+
+async function submeterSolicitacaoTroca(event) {
+    event.preventDefault();
+
+    const pedidoId = Number(document.getElementById('troca-pedido-id')?.value);
+    const motivo = document.getElementById('troca-motivo')?.value?.trim();
+    const trocaTotal = document.getElementById('radio-troca-total')?.checked;
+
+    if (!motivo) {
+        exibirErro('Atenção', 'Informe o motivo da troca.');
+        return;
+    }
+
+    const payload = {
+        motivo: motivo,
+        trocarPedidoInteiro: !!trocaTotal,
+        itens: []
+    };
+
+    if (!trocaTotal) {
+        const checkboxes = document.querySelectorAll('.troca-item-checkbox:checked');
+        if (checkboxes.length === 0) {
+            exibirErro('Atenção', 'Selecione pelo menos um item para trocar.');
+            return;
+        }
+
+        checkboxes.forEach(chk => {
+            const itemId = Number(chk.dataset.itemId);
+            const inputQtd = document.querySelector(`.troca-item-qtd-input[data-item-id="${itemId}"]`);
+            const quantidade = inputQtd ? Number(inputQtd.value) : 1;
+
+            payload.itens.push({
+                pedidoProdutoId: itemId,
+                quantidade: quantidade
+            });
+        });
+    }
+
+    if (window.LoadingService) window.LoadingService.show('Enviando solicitação de troca...');
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/pedidos/${pedidoId}/troca`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Usuario-Id': USUARIO_ID.toString()
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+            fecharModalTroca();
+            const msg = 'Sua solicitação de troca foi registrada com sucesso! Nossa equipe irá avaliá-la.';
+            if (window.NotificationService && typeof window.NotificationService.showSuccess === 'function') {
+                window.NotificationService.showSuccess('Troca Solicitada', msg);
+            } else if (window.Toast && typeof window.Toast.showSuccess === 'function') {
+                window.Toast.showSuccess('Troca Solicitada', msg);
+            } else {
+                alert(msg);
+            }
+            await carregarHistoricoPedidos();
+        } else {
+            const err = await response.json().catch(() => ({ message: 'Erro ao solicitar troca.' }));
+            exibirErro('Não foi possível solicitar a troca', err.message);
+        }
+    } catch (e) {
+        console.error(e);
+        exibirErro('Erro de Conexão', 'Não foi possível se comunicar com o servidor.');
+    } finally {
+        if (window.LoadingService) window.LoadingService.hide();
+    }
+}
+
+/**
+ * Cliente informa que despachou o pacote nos correios (TrocaAceita -> ItemEnviado)
+ */
+async function confirmarDespacho(pedidoId, codigo) {
+    if (!confirm(`Confirmar que você despachou o pacote de troca referente ao pedido #${codigo}?`)) return;
+
+    if (window.LoadingService) window.LoadingService.show('Registrando despacho do pacote...');
+    try {
+        const response = await fetch(`${API_BASE_URL}/pedidos/${pedidoId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Usuario-Id': USUARIO_ID.toString()
+            },
+            body: JSON.stringify({ status: 'ItemEnviado' })
+        });
+
+        if (response.ok) {
+            const msg = `Despacho informado com sucesso! Assim que a mercadoria chegar ao nosso centro de distribuição, realizaremos a conferência.`;
+            if (window.NotificationService && typeof window.NotificationService.showSuccess === 'function') {
+                window.NotificationService.showSuccess('Pacote Despachado', msg);
+            } else if (window.Toast && typeof window.Toast.showSuccess === 'function') {
+                window.Toast.showSuccess('Pacote Despachado', msg);
+            } else {
+                alert(msg);
+            }
+            await carregarHistoricoPedidos();
+        } else {
+            const err = await response.json().catch(() => ({ message: 'Erro ao atualizar status.' }));
+            exibirErro('Atenção', err.message);
+        }
+    } catch (e) {
+        console.error(e);
+        exibirErro('Erro de Conexão', 'Não foi possível se comunicar com o servidor.');
+    } finally {
+        if (window.LoadingService) window.LoadingService.hide();
+    }
+}
+
+/* =========================================
+ * NOTIFICAÇÕES DO CLIENTE (Fase 2)
+ * ========================================= */
+async function carregarNotificacoesUsuario() {
+    const container = document.getElementById('notificacoes-container');
+    if (!container) return;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/notificacoes`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Usuario-Id': USUARIO_ID.toString()
+            }
+        });
+
+        if (!response.ok) return;
+
+        const notificacoes = await response.json();
+        const naoLidas = Array.isArray(notificacoes) ? notificacoes.filter(n => !n.lida) : [];
+
+        if (naoLidas.length === 0) {
+            container.classList.add('hidden');
+            container.innerHTML = '';
+            return;
+        }
+
+        container.classList.remove('hidden');
+        container.innerHTML = naoLidas.map(notif => `
+            <div class="notificacao-card-alerta tipo-troca" id="notificacao-${notif.id}">
+                <div class="notificacao-card-conteudo">
+                    <span class="notificacao-card-titulo">📢 ${escaparHtml(notif.titulo)}</span>
+                    <span class="notificacao-card-texto">${escaparHtml(notif.mensagem)}</span>
+                </div>
+                <button type="button" class="notificacao-btn-fechar" onclick="marcarNotificacaoComoLida(${notif.id})">
+                    Marcar como lida
+                </button>
+            </div>
+        `).join('');
+
+    } catch (e) {
+        console.warn('Não foi possível verificar notificações:', e);
+    }
+}
+
+async function marcarNotificacaoComoLida(notificacaoId) {
+    try {
+        await fetch(`${API_BASE_URL}/notificacoes/${notificacaoId}/lida`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Usuario-Id': USUARIO_ID.toString()
+            }
+        });
+
+        const elemento = document.getElementById(`notificacao-${notificacaoId}`);
+        if (elemento) {
+            elemento.remove();
+        }
+
+        const container = document.getElementById('notificacoes-container');
+        if (container && container.children.length === 0) {
+            container.classList.add('hidden');
+        }
+    } catch (e) {
+        console.error('Erro ao marcar notificação como lida:', e);
+    }
+}
+

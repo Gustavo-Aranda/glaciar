@@ -23,69 +23,8 @@
             <p>Acompanhe os processos de logística reversa e geração de reembolso/cupons.</p>
         </div>
 
-        <section class="returns-list">
-            <!-- Devolução: Aguardando envio-->
-            <article class="return-card">
-                <div class="return-header">
-                    <div class="return-info">
-                        <span class="return-number">Refound #DEV-88750</span>
-                        <span class="return-date">Ref. ao Pedido: #88750</span>
-                    </div>
-                    <span class="status status-atencao">Aguardando Despacho</span>
-                </div>
-                <div class="return-body">
-                    <div class="product-img" style="background-image: url();"></div>
-                    <div class="product-details">
-                        <p class="product-title">1x Calça Ascent XT - M</p>
-                        <p class="product-reason">Motivo: Defeito</p>
-                        <p class="alert-text">Vá aos Correios com o código reverso <strong>987654321</strong>.</p>
-                    </div>
-                </div>
-                <div class="return-actions">
-                    <button class="btn btn-warning">Cancelar Devolução</button>
-                    <button class="btn btn-primary">Informar Rastreio de Despacho</button>
-                </div>
-            </article>
-
-            <!-- Devolução: Recebido -->
-            <article class="return-card">
-                <div class="return-header">
-                    <div class="return-info">
-                        <span class="return-number">Refound #DEV-88600</span>
-                        <span class="return-date">Ref. ao Pedido: #88600</span>
-                    </div>
-                    <span class="status status-neutro">Em Análise Técnica</span>
-                </div>
-                <div class="return-body">
-                    <div class="product-img" style="background-image: url();"></div>
-                    <div class="product-details">
-                        <p class="product-title">1x Bota de Neve Arctica - 41</p>
-                        <p class="product-reason">Motivo: Tamanho</p>
-                        <p class="info-text">Status: Item recebido na Glaciar. Avaliando condição.</p>
-                    </div>
-                </div>
-            </article>
-
-            <!-- Devolução: Finalizada -->
-            <article class="return-card">
-                <div class="return-header">
-                    <div class="return-info">
-                        <span class="return-number">Refound #DEV-88220</span>
-                        <span class="return-date">Finalizado em: 10/07/2026</span>
-                    </div>
-                    <span class="status status-neutro">Devolução Concluída</span>
-                </div>
-                <div class="return-body">
-                    <div class="product-img" style="background-image: url();"></div>
-                    <div class="product-details">
-                        <p class="product-title">1x Fleece Midlayer - P</p>
-                        <p class="success-text"><strong>Reembolso Processado:</strong> Cupom de Troca emitido com sucesso.</p>
-                    </div>
-                </div>
-                <div class="return-actions">
-                    <button class="btn btn-info">Ver Código do Cupom</button>
-                </div>
-            </article>
+        <section class="returns-list" id="returns-container">
+            <!-- As devoluções e trocas ativas serão injetadas dinamicamente via devolucoes.js -->
         </section>
     </main>
 
@@ -94,5 +33,6 @@
     <script src="./js/components/loading.js"></script>
     <script src="./js/components/layout.js"></script>
     <script src="./js/components/chatbot.js"></script>
+    <script src="./js/pages/devolucoes.js"></script>
 </body>
 </html>

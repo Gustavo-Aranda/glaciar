@@ -270,3 +270,300 @@
     from { opacity: 0; transform: translateY(-5px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* =========================================
+   BANNER DE NOTIFICAÇÕES (Fase 2)
+   ========================================= */
+.notificacoes-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+}
+
+.notificacoes-wrapper.hidden {
+    display: none;
+}
+
+.notificacao-card-alerta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #EBF5FB;
+    border: 1px solid #AED6F1;
+    border-left: 4px solid #2980B9;
+    padding: 1rem 1.25rem;
+    border-radius: 6px;
+    gap: 1rem;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.notificacao-card-alerta.tipo-troca {
+    background: #E8F8F5;
+    border-color: #A3E4D7;
+    border-left-color: #16A085;
+}
+
+.notificacao-card-conteudo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.notificacao-card-titulo {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--cinza-rocha);
+}
+
+.notificacao-card-texto {
+    font-size: 0.88rem;
+    color: var(--cinza-rocha-claro);
+    line-height: 1.4;
+}
+
+.notificacao-btn-fechar {
+    background: transparent;
+    border: 1px solid var(--cinza-rocha-claro);
+    color: var(--cinza-rocha);
+    border-radius: 4px;
+    font-size: 0.8rem;
+    padding: 0.35rem 0.75rem;
+    cursor: pointer;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.notificacao-btn-fechar:hover {
+    background: var(--branco);
+    border-color: var(--cinza-rocha);
+}
+
+/* =========================================
+   MODAL DE TROCA / DEVOLUÇÃO
+   ========================================= */
+.address-modal {
+    align-items: center;
+    background: rgba(44, 62, 80, 0.6);
+    backdrop-filter: blur(2px);
+    display: flex;
+    inset: 0;
+    justify-content: center;
+    padding: 1rem;
+    position: fixed;
+    z-index: 999;
+}
+
+.address-modal.hidden {
+    display: none;
+}
+
+.address-modal-content {
+    background: var(--branco);
+    border-radius: 8px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
+    max-height: 90vh;
+    max-width: 650px;
+    overflow-y: auto;
+    padding: 1.75rem;
+    width: 100%;
+}
+
+.address-modal-header {
+    align-items: flex-start;
+    border-bottom: 1px solid var(--borda-cinza);
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.85rem;
+}
+
+.address-modal-kicker {
+    color: var(--laranja-alpinista);
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+}
+
+.address-modal-header h3 {
+    color: var(--cinza-rocha);
+    font-size: 1.3rem;
+}
+
+.address-close-button {
+    background: transparent;
+    border: 0;
+    color: var(--cinza-rocha-claro);
+    cursor: pointer;
+    font-size: 1.8rem;
+    line-height: 1;
+    padding: 0 0.25rem;
+}
+
+.troca-tipo-container {
+    background: #F8FAFC;
+    border: 1px solid var(--borda-cinza);
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.troca-label-destaque {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--cinza-rocha);
+    margin-bottom: 0.6rem;
+}
+
+.troca-radios {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.troca-radio-opcao {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+    color: var(--cinza-rocha);
+    cursor: pointer;
+}
+
+.troca-itens-container {
+    margin-bottom: 1.2rem;
+}
+
+.troca-itens-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 0.25rem 0.1rem;
+}
+
+.troca-item-linha {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--borda-cinza);
+    border-radius: 6px;
+    background: var(--branco);
+    gap: 1rem;
+}
+
+.troca-item-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+.troca-item-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--laranja-alpinista);
+    cursor: pointer;
+}
+
+.troca-item-detalhes {
+    display: flex;
+    flex-direction: column;
+}
+
+.troca-item-nome {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--cinza-rocha);
+}
+
+.troca-item-sub {
+    font-size: 0.8rem;
+    color: var(--cinza-rocha-claro);
+}
+
+.troca-item-qtd-control {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.troca-item-qtd-control label {
+    font-size: 0.8rem;
+    color: var(--cinza-rocha-claro);
+}
+
+.troca-item-qtd-input {
+    width: 55px;
+    padding: 0.35rem 0.45rem;
+    border: 1px solid var(--borda-cinza);
+    border-radius: 4px;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.troca-textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--borda-cinza);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.troca-textarea:focus {
+    border-color: var(--laranja-alpinista);
+    outline: none;
+}
+
+.troca-alerta-info {
+    background: #FFF9E6;
+    border: 1px solid #FFE082;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    font-size: 0.82rem;
+    color: #795548;
+    line-height: 1.4;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.address-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.address-cancel-button {
+    background: transparent;
+    border: 1px solid var(--cinza-rocha-claro);
+    color: var(--cinza-rocha);
+    border-radius: 4px;
+    padding: 0.6rem 1.25rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.address-save-button {
+    background: var(--laranja-alpinista);
+    border: 1px solid var(--laranja-alpinista);
+    color: var(--branco);
+    border-radius: 4px;
+    padding: 0.6rem 1.25rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.address-save-button:hover {
+    opacity: 0.9;
+}

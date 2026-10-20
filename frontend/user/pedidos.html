@@ -21,10 +21,65 @@
             <p>Acompanhe a entrega de seus equipamentos e confirme o recebimento.</p>
         </div>
 
+        <!-- Banner de Notificações do Usuário (ex: Troca Autorizada) -->
+        <section id="notificacoes-container" class="notificacoes-wrapper hidden" aria-live="polite"></section>
+
         <section class="orders-list" id="orders-container">
             <!-- Os cards dos pedidos serão injetados dinamicamente via pedidos.js -->
         </section>
     </main>
+
+    <!-- Modal de Solicitação de Troca / Devolução -->
+    <div id="modal-troca" class="address-modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-troca-titulo">
+        <div class="address-modal-content" style="max-width: 650px;">
+            <div class="address-modal-header">
+                <div>
+                    <span class="address-modal-kicker">Logística Reversa</span>
+                    <h3 id="modal-troca-titulo">Solicitar Troca / Devolução</h3>
+                </div>
+                <button type="button" class="address-close-button" id="btn-fechar-modal-troca" aria-label="Fechar">&times;</button>
+            </div>
+
+            <form id="form-solicitar-troca" class="address-form">
+                <input type="hidden" id="troca-pedido-id" value="">
+
+                <div class="troca-tipo-container">
+                    <label class="troca-label-destaque">O que você deseja trocar?</label>
+                    <div class="troca-radios">
+                        <label class="troca-radio-opcao">
+                            <input type="radio" name="tipoTroca" value="parcial" id="radio-troca-parcial" checked>
+                            <span>Itens selecionados</span>
+                        </label>
+                        <label class="troca-radio-opcao">
+                            <input type="radio" name="tipoTroca" value="total" id="radio-troca-total">
+                            <span>Trocar todos os itens do pedido</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="container-selecao-itens" class="troca-itens-container">
+                    <label class="troca-label-destaque">Selecione os itens e quantidades:</label>
+                    <div id="troca-itens-lista" class="troca-itens-lista">
+                        <!-- Injetado dinamicamente via JS -->
+                    </div>
+                </div>
+
+                <div class="address-field">
+                    <label for="troca-motivo">Motivo da Troca / Devolução *</label>
+                    <textarea id="troca-motivo" class="troca-textarea" rows="3" placeholder="Explique o motivo (ex: tamanho inadequado, defeito na costura, arrependimento...)" required></textarea>
+                </div>
+
+                <div class="troca-alerta-info">
+                    ℹ️ O crédito correspondente aos itens devolvidos será gerado como <strong>Cupom de Troca</strong> (sem vencimento) após o recebimento e conferência física na Glaciar.
+                </div>
+
+                <div class="address-modal-actions">
+                    <button type="button" class="address-cancel-button" id="btn-cancelar-modal-troca">Cancelar</button>
+                    <button type="submit" class="address-save-button" id="btn-confirmar-troca">Enviar Solicitação</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script src="./js/components/usuario-session.js"></script>
     <script src="./js/components/notification.js"></script>

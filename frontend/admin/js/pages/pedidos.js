@@ -111,7 +111,15 @@ async function atualizarStatus(pedidoId) {
 
         if (response.ok) {
             const data = await response.json();
-            if (typeof mostrarNotificacao === 'function') {
+            if (data.dados?.cupomTrocaGerado) {
+                const cupom = data.dados.cupomTrocaGerado;
+                const msg = `Troca concluída com sucesso! Cupom de Troca gerado: ${cupom.codigo} no valor de R$ ${cupom.valorDesconto.toFixed(2)}.`;
+                if (typeof mostrarNotificacao === 'function') {
+                    mostrarNotificacao(msg, 'sucesso');
+                } else {
+                    alert(msg);
+                }
+            } else if (typeof mostrarNotificacao === 'function') {
                 mostrarNotificacao(data.message || 'Status atualizado com sucesso!', 'sucesso');
             }
             carregarPedidos();
