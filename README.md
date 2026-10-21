@@ -146,8 +146,8 @@ npx cypress run --spec "cypress/e2e/troca-estados/**,cypress/e2e/devolucoes-troc
 
 #### 4. Abrir no modo interativo (com interface visual)
 ```bash
-npm run cypress:open
-# ou: npx cypress open
+npx cypress open
+# ou: npm run cypress:open
 ```
 
 ---
