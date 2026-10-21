@@ -139,6 +139,7 @@ describe('Validação de Atores - Permissões de Cliente vs Admin (DRS)', () => 
 
       cy.wait('@obterPedidos');
       cy.get('[data-acao="confirmar-recebimento"]').click();
+      cy.get('#btn-modal-confirm-ok').click();
       cy.wait('@confirmarRecebimentoUI').its('response.statusCode').should('eq', 200);
     });
 
@@ -188,6 +189,7 @@ describe('Validação de Atores - Permissões de Cliente vs Admin (DRS)', () => 
 
       cy.wait('@obterPedidosTroca');
       cy.get('[data-acao="confirmar-despacho"]').click();
+      cy.get('#btn-modal-confirm-ok').click();
       cy.wait('@despacharPacoteUI').its('response.statusCode').should('eq', 200);
     });
   });

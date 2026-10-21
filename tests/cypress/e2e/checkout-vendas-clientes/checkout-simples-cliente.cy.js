@@ -177,6 +177,7 @@ describe('Checkout simples com dados pré-cadastrados - Cliente', () => {
       body: {
         estado: 'RJ',
         quantidadeItens: 1,
+        valor: 35.0,
         valorFrete: 35.0
       }
     }).as('calcularFreteRJ');

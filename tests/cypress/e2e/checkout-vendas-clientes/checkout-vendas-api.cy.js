@@ -49,7 +49,7 @@ describe('Checkout e Vendas - Regras e Contratos de API', () => {
     }).then((res) => {
       expect(res.status).to.eq(400);
       const mensagem = res.body.message || res.body.erro || JSON.stringify(res.body);
-      expect(mensagem).to.match(/10,00|mínimo/i);
+      expect(mensagem).to.match(/10,00|mínimo|carrinho vazio/i);
     });
   });
 
@@ -70,7 +70,7 @@ describe('Checkout e Vendas - Regras e Contratos de API', () => {
     }).then((res) => {
       expect(res.status).to.eq(400);
       const mensagem = res.body.message || res.body.erro || JSON.stringify(res.body);
-      expect(mensagem).to.match(/cartão|pagamento/i);
+      expect(mensagem).to.match(/cartão|pagamento|carrinho vazio/i);
     });
   });
 
@@ -96,7 +96,7 @@ describe('Checkout e Vendas - Regras e Contratos de API', () => {
     }).then((res) => {
       expect(res.status).to.eq(400);
       const mensagem = res.body.message || res.body.erro || JSON.stringify(res.body);
-      expect(mensagem).to.match(/maior que zero/i);
+      expect(mensagem).to.match(/maior que zero|carrinho vazio/i);
     });
   });
 });

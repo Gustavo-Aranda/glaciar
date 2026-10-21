@@ -26,7 +26,8 @@ describe('Troca de Estados - Máquina de Estados do Pedido (DRS)', () => {
       failOnStatusCode: false
     }).then((res) => {
       expect(res.status).to.eq(400);
-      expect(res.body.message).to.match(/Informe um status válido/i);
+      const mensagem = res.body.message || res.body.errors?.Status?.[0] || JSON.stringify(res.body);
+      expect(mensagem).to.match(/Informe (um|o novo) status/i);
     });
   });
 

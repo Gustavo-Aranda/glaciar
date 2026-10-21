@@ -183,7 +183,7 @@ describe('Checkout com troco em cupom de troca (RN0036) - Cliente', () => {
     cy.get('#btn-aplicar-cupom').click();
     cy.wait('@validarPrimeiroPromo');
 
-    cy.get('#cupom-feedback')
+    cy.get('#cupom-mensagem-feedback')
       .should('be.visible')
       .and('contain', "Cupom 'PROMO20' aplicado com sucesso!");
 
@@ -193,7 +193,7 @@ describe('Checkout com troco em cupom de troca (RN0036) - Cliente', () => {
     cy.wait('@validarSegundoPromo');
 
     // Feedback bloqueando segundo cupom promocional conforme RN0033
-    cy.get('#cupom-feedback')
+    cy.get('#cupom-mensagem-feedback')
       .should('be.visible')
       .and('contain', 'Apenas 1 cupom promocional é permitido por compra');
   });

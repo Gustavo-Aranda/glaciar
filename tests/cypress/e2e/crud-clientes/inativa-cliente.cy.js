@@ -32,6 +32,8 @@ describe('Inativar cadastro de Cliente (C)', () => {
           email: 'maria@example.com',
           telefone: '11987654321'
         }))
+        window.mostrarLoadingUsuario = () => {}
+        window.esconderLoadingUsuario = () => {}
       }
     })
 

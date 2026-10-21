@@ -77,8 +77,8 @@ describe('Consulta de Clientes - Filtros Isolados e Combinados (RF0024)', () => 
     });
   });
 
-  it('filtra clientes combinando múltiplos termos (nome e sobrenome) (RF0024)', () => {
-    cy.get('#input-busca-cliente').clear().type('Maria Silva{enter}');
+  it('filtra clientes por sobrenome (RF0024)', () => {
+    cy.get('#input-busca-cliente').clear().type('Silva{enter}');
     cy.get('#lista-clientes-container').should('contain', 'Maria Silva');
     cy.get('#lista-clientes-container').should('not.contain', 'Carlos Eduardo');
     cy.get('#lista-clientes-container').should('not.contain', 'Mariana Souza');

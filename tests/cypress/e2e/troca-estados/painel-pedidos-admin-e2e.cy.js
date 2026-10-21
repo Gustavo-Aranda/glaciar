@@ -52,7 +52,7 @@ describe('Painel Administrativo - Ciclo Logístico, Estoque e Trocas', () => {
     cy.contains('Carlos Eduardo').should('be.visible');
     cy.contains('Em Processamento').should('be.visible');
     cy.contains('Pedido #102').should('be.visible');
-    cy.contains('Pagamento Realizado').should('be.visible');
+    cy.contains('.status', 'Pagamento Realizado').should('be.visible');
   });
 
   it('permite ao Admin APROVAR pagamento consolidando a baixa definitiva de estoque (RF0053, RN0028)', () => {
@@ -242,6 +242,8 @@ describe('Painel Administrativo - Ciclo Logístico, Estoque e Trocas', () => {
     cy.get('#notificacoes-container')
       .should('be.visible')
       .and('contain', 'TRC-104-TROCA')
-      .and('contain', '120,00');
+      .and(($el) => {
+        expect($el.text()).to.match(/120[,.]00/);
+      });
   });
 });

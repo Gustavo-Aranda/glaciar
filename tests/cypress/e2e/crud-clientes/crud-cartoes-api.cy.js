@@ -1,8 +1,21 @@
 const apiUrl = Cypress.expose('apiUrl') || 'http://localhost:5205/api';
 
 describe('CRUD de cartões de crédito (C) - API', () => {
-  const usuarioId = 13
+  let usuarioId = 1
   const cartoesCriados = []
+
+  before(() => {
+    cy.request({
+      method: 'GET',
+      url: `${apiUrl}/conta`,
+      failOnStatusCode: false
+    }).then((res) => {
+      const usuarioAtivo = Array.isArray(res.body) ? res.body.find(u => u.ativo) : null;
+      if (usuarioAtivo) {
+        usuarioId = usuarioAtivo.id;
+      }
+    });
+  });
 
   afterEach(() => {
     cartoesCriados.reverse().forEach(cartaoId => {

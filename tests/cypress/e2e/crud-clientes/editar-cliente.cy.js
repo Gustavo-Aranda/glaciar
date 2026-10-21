@@ -16,6 +16,8 @@ describe('Alterar Cliente (C)', () => {
     cy.visit('editar-perfil.html?id=42', {
       onBeforeLoad(window) {
         window.sessionStorage.setItem('usuarioLogado', JSON.stringify(cliente))
+        window.mostrarLoadingUsuario = () => {}
+        window.esconderLoadingUsuario = () => {}
       }
     })
   })
