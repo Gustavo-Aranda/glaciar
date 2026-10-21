@@ -19,3 +19,5 @@ cypress.env.json
 
 .DS_Store
 Thumbs.db
+
+docs/*
