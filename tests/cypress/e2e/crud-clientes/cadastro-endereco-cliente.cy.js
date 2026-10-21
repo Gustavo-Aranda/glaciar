@@ -62,4 +62,28 @@ describe('Cadastro de endereços (C)', () => {
       .and('contain', 'Preencha todos os campos obrigatórios.')
     cy.get('@naoDeveCadastrar.all').should('have.length', 0)
   })
+
+  it('associa múltiplos endereços de entrega com frase curta/apelido identificador (RF0026)', () => {
+    cy.intercept('POST', 'http://localhost:5205/api/enderecos', {
+      statusCode: 201,
+      body: { id: 20 }
+    }).as('cadastrarSegundoEndereco')
+
+    cy.get('#endereco-apelido').type('Base Camp Montanha')
+    cy.get('#endereco-cep').type('12460000')
+    cy.get('#endereco-logradouro').type('Estrada dos Picos')
+    cy.get('#endereco-numero').type('850')
+    cy.get('#endereco-bairro').type('Serra')
+    cy.get('#endereco-cidade').type('Campos do Jordao')
+    cy.get('#endereco-estado').select('SP')
+    cy.get('#form-endereco').submit()
+
+    cy.wait('@cadastrarSegundoEndereco').its('request.body').should('deep.include', {
+      usuarioId: 42,
+      apelido: 'Base Camp Montanha',
+      cidade: 'Campos do Jordao',
+      logradouro: 'Estrada dos Picos',
+      numero: '850'
+    })
+  })
 })

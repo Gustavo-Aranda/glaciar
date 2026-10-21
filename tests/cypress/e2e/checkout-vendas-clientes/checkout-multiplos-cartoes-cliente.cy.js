@@ -97,56 +97,75 @@ describe('Checkout com múltiplos cartões (RN0034) - Cliente', () => {
     });
   };
 
-  it('bloqueia pagamento quando qualquer um dos cartões tiver valor inferior a R$ 10,00 (RN0034 - Unhappy Path)', () => {
-    // Intercept para garantir que a API NÃO é chamada se a validação falhar
-    cy.intercept('POST', `${apiUrl}/checkout/finalizar`).as('tentativaEnvio');
+  const cenariosLimiteRN0034 = [
+    {
+      descricao: 'rejeita cartão 2 com valor abaixo do piso (R$ 5,00 < R$ 10,00)',
+      valor1: '45.00',
+      valor2: '5.00',
+      valido: false,
+      mensagemEsperada: 'O valor mínimo por cartão de crédito é R$ 10,00.'
+    },
+    {
+      descricao: 'rejeita cartão 1 com valor de borda inválido (R$ 9,99 < R$ 10,00)',
+      valor1: '9.99',
+      valor2: '40.01',
+      valido: false,
+      mensagemEsperada: 'O valor mínimo por cartão de crédito é R$ 10,00.'
+    },
+    {
+      descricao: 'aprova pagamento exatamente no piso mínimo (R$ 10,00 e R$ 40,00)',
+      valor1: '10.00',
+      valor2: '40.00',
+      valido: true
+    },
+    {
+      descricao: 'aprova pagamento com divisão equilibrada (R$ 30,00 e R$ 20,00)',
+      valor1: '30.00',
+      valor2: '20.00',
+      valido: true
+    }
+  ];
 
-    // Divide R$ 50,00 em R$ 45,00 no Cartão 1 e R$ 5,00 no Cartão 2 (inválido pela RN0034)
-    cy.get('.input-valor-cartao[data-cartao-id="5"]').clear().type('45.00');
-    cy.get('.input-valor-cartao[data-cartao-id="6"]').clear().type('5.00');
+  cenariosLimiteRN0034.forEach(({ descricao, valor1, valor2, valido, mensagemEsperada }) => {
+    it(`RN0034: ${descricao}`, () => {
+      if (!valido) {
+        cy.intercept('POST', `${apiUrl}/checkout/finalizar`).as('tentativaEnvio');
 
-    cy.get('.btn-submit').click();
+        cy.get('.input-valor-cartao[data-cartao-id="5"]').clear().type(valor1);
+        cy.get('.input-valor-cartao[data-cartao-id="6"]').clear().type(valor2);
+        cy.get('.btn-submit').click();
 
-    // Mensagem de bloqueio da RN0034 exibida no toast
-    cy.get('.toast-error')
-      .should('be.visible')
-      .and('contain', 'O valor mínimo por cartão de crédito é R$ 10,00.');
+        cy.get('.toast-error')
+          .should('be.visible')
+          .and('contain', mensagemEsperada);
+        cy.get('@tentativaEnvio.all').should('have.length', 0);
+      } else {
+        cy.intercept('POST', `${apiUrl}/checkout/finalizar`, (req) => {
+          expect(req.body.cartoes).to.have.length(2);
+          expect(req.body.cartoes[0].valor).to.eq(parseFloat(valor1));
+          expect(req.body.cartoes[1].valor).to.eq(parseFloat(valor2));
 
-    // Nenhuma requisição deve ter sido disparada
-    cy.get('@tentativaEnvio.all').should('have.length', 0);
-  });
+          req.reply({
+            statusCode: 200,
+            body: {
+              id: 701,
+              codigo: 'PED-701-MULTI',
+              status: 'EmProcessamento',
+              valorTotal: 50.0,
+              valorPagoCartoes: 50.0
+            }
+          });
+        }).as('finalizarMultiplos');
 
-  it('permite finalizar a compra quando o valor for distribuído respeitando o mínimo de R$ 10,00 em cada cartão (RN0034 - Happy Path)', () => {
-    cy.intercept('POST', `${apiUrl}/checkout/finalizar`, (req) => {
-      expect(req.body.cartoes).to.have.length(2);
-      expect(req.body.cartoes[0].usuarioCartaoId).to.eq(5);
-      expect(req.body.cartoes[0].valor).to.eq(30.0);
-      expect(req.body.cartoes[1].usuarioCartaoId).to.eq(6);
-      expect(req.body.cartoes[1].valor).to.eq(20.0);
+        cy.get('.input-valor-cartao[data-cartao-id="5"]').clear().type(valor1);
+        cy.get('.input-valor-cartao[data-cartao-id="6"]').clear().type(valor2);
+        cy.get('.btn-submit').click();
 
-      req.reply({
-        statusCode: 200,
-        body: {
-          id: 701,
-          codigo: 'PED-701-MULTI',
-          status: 'EmProcessamento',
-          valorTotal: 50.0,
-          valorPagoCartoes: 50.0
-        }
-      });
-    }).as('finalizarMultiplos');
-
-    // Distribui R$ 30,00 e R$ 20,00 (ambos >= R$ 10,00)
-    cy.get('.input-valor-cartao[data-cartao-id="5"]').clear().type('30.00');
-    cy.get('.input-valor-cartao[data-cartao-id="6"]').clear().type('20.00');
-
-    cy.get('.btn-submit').click();
-
-    cy.wait('@finalizarMultiplos').its('response.body.status').should('eq', 'EmProcessamento');
-
-    cy.get('.checkout-main')
-      .should('contain', 'Compra finalizada com sucesso! 🎉')
-      .and('contain', 'PED-701-MULTI')
-      .and('contain', '50,00');
+        cy.wait('@finalizarMultiplos').its('response.body.status').should('eq', 'EmProcessamento');
+        cy.get('.checkout-main')
+          .should('contain', 'Compra finalizada com sucesso! 🎉')
+          .and('contain', 'PED-701-MULTI');
+      }
+    });
   });
 });

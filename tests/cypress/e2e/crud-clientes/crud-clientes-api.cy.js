@@ -125,4 +125,50 @@ describe('CRUD de Clientes (API)', () => {
       expect(resposta.body.erro).to.contain('Email');
     });
   });
+
+  it('inativa cliente preservando integridade referencial em vez de exclusão física (Inativação vs Exclusão)', () => {
+    const cpf = gerarCpfValido(5);
+    const email = `qa.inativacao.${Date.now()}@glaciar.com`;
+    const senha = 'Senha123!';
+    let usuarioIdCriado;
+
+    cy.request('POST', `${apiUrl}/conta/registrar`, {
+      nome: 'Cliente',
+      sobrenome: 'ParaInativar',
+      cpf,
+      email,
+      telefone: '11987654321',
+      senha
+    }).then(criacao => {
+      expect(criacao.status).to.eq(201);
+      usuarioIdCriado = criacao.body.id;
+      registrosCriados.push(usuarioIdCriado);
+
+      // Inativa a conta através do PATCH de status (RF0023)
+      return cy.request('PATCH', `${apiUrl}/conta/${usuarioIdCriado}/status`, {
+        ativo: false
+      });
+    }).then(respostaStatus => {
+      expect(respostaStatus.status).to.eq(200);
+      expect(respostaStatus.body.ativo).to.be.false;
+
+      // O registro permanece consultável pelo ID com flag ativo: false (integridade preservada)
+      return cy.request('GET', `${apiUrl}/conta/${usuarioIdCriado}`);
+    }).then(consulta => {
+      expect(consulta.status).to.eq(200);
+      expect(consulta.body.ativo).to.be.false;
+      expect(consulta.body.cpf).to.eq(cpf);
+
+      // Tentativa de login com conta inativada deve ser recusada (401)
+      return cy.request({
+        method: 'POST',
+        url: `${apiUrl}/conta/login`,
+        failOnStatusCode: false,
+        body: { email, senha }
+      });
+    }).then(loginInativado => {
+      expect(loginInativado.status).to.eq(401);
+      expect(loginInativado.body.erro).to.contain('inativada');
+    });
+  });
 });

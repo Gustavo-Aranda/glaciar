@@ -1,150 +1,163 @@
 /**
  * ===============================================================================
- * TaaC - Test Automation as Code (E2E)
- * Suite: Painel de Pedidos Admin - Transição de Estados e Gestão
+ * Teste E2E: Painel de Pedidos Admin - Ciclo Logístico, Estoque e Trocas
  * Arquivo: tests/cypress/e2e/troca-estados/painel-pedidos-admin-e2e.cy.js
  * ===============================================================================
- * Escopo:
- * - Acesso à tela de administração de pedidos (/frontend/admin/pedidos.html).
- * - Renderização da lista de pedidos e filtros por status.
- * - Transição de status via botões administrativos:
- *   - EmProcessamento -> PagamentoRealizado
- *   - PagamentoRealizado -> EmTransporte
- *   - TrocaSolicitada -> TrocaAceita
- *   - ItemRecebido -> Trocado (com exibição do cupom gerado e reposição de estoque)
+ * Regras do DRS e Entregas do Professor:
+ * - Ciclo Logístico: EmProcessamento ➔ PagamentoRealizado ➔ EmTransporte ➔ Entregue.
+ * - RN0028 & RF0053: Compra APROVADA consolida baixa física definitiva no estoque.
+ * - RN0028: Compra REPROVADA desbloqueia itens e devolve ao estoque sem baixa física.
+ * - RF0042 a RF0045 & RF0054: Autorização de troca pelo admin, recebimento de itens
+ *   com reentrada em estoque e emissão de cupom de troca correspondente.
  * ===============================================================================
  */
 
 const apiUrl = Cypress.expose('apiUrl') || 'http://localhost:5205/api';
 
-describe('Painel Administrativo - Gestão e Troca de Estados de Pedidos', () => {
-
-  const pedidosMock = [
+describe('Painel Administrativo - Ciclo Logístico, Estoque e Trocas', () => {
+  const pedidosVendaMock = [
     {
       id: 101,
-      codigo: '#PED-101',
-      clienteNome: 'Carlos Eduardo',
+      codigo: '101',
+      cliente: 'Carlos Eduardo',
       status: 'EmProcessamento',
       valorTotal: 349.90,
-      dataCriacao: new Date().toISOString(),
+      data: new Date().toISOString(),
+      proximosStatus: ['PagamentoRealizado', 'PagamentoReprovado', 'Cancelado'],
       itens: [{ id: 1, nomeProduto: 'Bota Trilha Pro', quantidade: 1, precoUnitario: 349.90 }]
     },
     {
       id: 102,
-      codigo: '#PED-102',
-      clienteNome: 'Mariana Souza',
+      codigo: '102',
+      cliente: 'Mariana Souza',
       status: 'PagamentoRealizado',
       valorTotal: 180.00,
-      dataCriacao: new Date().toISOString(),
+      data: new Date().toISOString(),
+      proximosStatus: ['EmTransporte', 'Cancelado'],
       itens: [{ id: 2, nomeProduto: 'Mochila Impermeável 40L', quantidade: 1, precoUnitario: 180.00 }]
-    },
-    {
-      id: 103,
-      codigo: '#PED-103',
-      clienteNome: 'Roberto Alencar',
-      status: 'TrocaSolicitada',
-      valorTotal: 250.00,
-      dataCriacao: new Date().toISOString(),
-      itens: [{ id: 3, nomeProduto: 'Anorak Corta Vento', quantidade: 1, precoUnitario: 250.00 }]
-    },
-    {
-      id: 104,
-      codigo: '#PED-104',
-      clienteNome: 'Fernanda Lima',
-      status: 'ItemRecebido',
-      valorTotal: 120.00,
-      dataCriacao: new Date().toISOString(),
-      itens: [{ id: 4, nomeProduto: 'Calça Térmica Segunda Pele', quantidade: 1, precoUnitario: 120.00 }]
     }
   ];
 
-  beforeEach(() => {
-    cy.intercept('GET', `${apiUrl}/pedidos`, {
+  it('lista os pedidos de venda com seus respectivos status, valores e próximos passos permitidos', () => {
+    cy.intercept('GET', `${apiUrl}/admin/pedidos?tipo=venda`, {
       statusCode: 200,
-      body: pedidosMock
-    }).as('carregarPedidosAdmin');
+      body: pedidosVendaMock
+    }).as('carregarPedidosVenda');
 
-    // Visita a página administrativa de pedidos
-    cy.visit('http://127.0.0.1:5500/frontend/admin/pedidos.html', {
-      failOnStatusCode: false
-    });
+    cy.visit('http://127.0.0.1:5500/frontend/admin/pedidos.html');
+    cy.wait('@carregarPedidosVenda');
+
+    cy.get('#pedidos-container').should('be.visible');
+    cy.contains('Pedido #101').should('be.visible');
+    cy.contains('Carlos Eduardo').should('be.visible');
+    cy.contains('Em Processamento').should('be.visible');
+    cy.contains('Pedido #102').should('be.visible');
+    cy.contains('Pagamento Realizado').should('be.visible');
   });
 
-  it('deve listar os pedidos pendentes com seus respectivos status e valores', () => {
-    cy.get('body').then(($body) => {
-      // Se o servidor local estiver servindo a página admin
-      if ($body.find('#tabela-pedidos, .pedidos-container, table').length > 0) {
-        cy.contains('#PED-101').should('be.visible');
-        cy.contains('#PED-102').should('be.visible');
-        cy.contains('#PED-103').should('be.visible');
-        cy.contains('#PED-104').should('be.visible');
-      }
-    });
-  });
-
-  it('deve permitir ao Admin aprovar pagamento de pedido EmProcessamento', () => {
-    cy.intercept('PATCH', `${apiUrl}/pedidos/101/status`, {
+  it('permite ao Admin APROVAR pagamento consolidando a baixa definitiva de estoque (RF0053, RN0028)', () => {
+    cy.intercept('GET', `${apiUrl}/admin/pedidos?tipo=venda`, {
       statusCode: 200,
-      body: {
-        id: 101,
-        status: 'PagamentoRealizado',
-        message: 'Status atualizado para Pagamento Aprovado com sucesso!'
-      }
+      body: pedidosVendaMock
+    }).as('carregarPedidosVenda');
+
+    cy.intercept('PATCH', `${apiUrl}/admin/pedidos/101/status`, (req) => {
+      expect(req.body.status).to.eq('PagamentoRealizado');
+      req.reply({
+        statusCode: 200,
+        body: {
+          message: 'Status atualizado com sucesso.',
+          dados: {
+            pedidoId: 101,
+            statusAnterior: 'EmProcessamento',
+            statusAtual: 'PagamentoRealizado',
+            proximosStatus: ['EmTransporte', 'Cancelado']
+          }
+        }
+      });
     }).as('aprovarPagamento');
 
-    cy.get('body').then(($body) => {
-      const btnAprovar = $body.find('[data-pedido-id="101"][data-novo-status="PagamentoRealizado"], button:contains("Aprovar")');
-      if (btnAprovar.length > 0) {
-        cy.wrap(btnAprovar.first()).click();
-        cy.wait('@aprovarPagamento');
-        cy.contains('sucesso', { matchCase: false }).should('be.visible');
-      }
-    });
+    cy.visit('http://127.0.0.1:5500/frontend/admin/pedidos.html');
+    cy.wait('@carregarPedidosVenda');
+
+    cy.get('#status-select-101').select('PagamentoRealizado');
+    cy.get('#status-select-101').siblings('button').click();
+
+    cy.wait('@aprovarPagamento');
+    cy.get('#notificacoes-container')
+      .should('be.visible')
+      .and('contain', 'Status atualizado com sucesso');
   });
 
-  it('deve permitir ao Admin autorizar troca solicitada (TrocaSolicitada -> TrocaAceita)', () => {
-    cy.intercept('PATCH', `${apiUrl}/pedidos/103/status`, {
+  it('permite ao Admin REPROVAR pagamento liberando/desbloqueando itens sem baixa física (RN0028)', () => {
+    cy.intercept('GET', `${apiUrl}/admin/pedidos?tipo=venda`, {
       statusCode: 200,
-      body: {
-        id: 103,
-        status: 'TrocaAceita',
-        message: 'Status atualizado para Troca Autorizada com sucesso!'
-      }
-    }).as('autorizarTroca');
+      body: pedidosVendaMock
+    }).as('carregarPedidosVenda');
 
-    cy.get('body').then(($body) => {
-      const btnAutorizar = $body.find('[data-pedido-id="103"][data-novo-status="TrocaAceita"], button:contains("Autorizar")');
-      if (btnAutorizar.length > 0) {
-        cy.wrap(btnAutorizar.first()).click();
-        cy.wait('@autorizarTroca');
-      }
-    });
+    cy.intercept('PATCH', `${apiUrl}/admin/pedidos/101/status`, (req) => {
+      expect(req.body.status).to.eq('PagamentoReprovado');
+      req.reply({
+        statusCode: 200,
+        body: {
+          message: 'Pagamento reprovado. Itens desbloqueados e devolvidos ao estoque.',
+          dados: {
+            pedidoId: 101,
+            statusAnterior: 'EmProcessamento',
+            statusAtual: 'PagamentoReprovado',
+            proximosStatus: []
+          }
+        }
+      });
+    }).as('reprovarPagamento');
+
+    cy.visit('http://127.0.0.1:5500/frontend/admin/pedidos.html');
+    cy.wait('@carregarPedidosVenda');
+
+    cy.get('#status-select-101').select('PagamentoReprovado');
+    cy.get('#status-select-101').siblings('button').click();
+
+    cy.wait('@reprovarPagamento');
+    cy.get('#notificacoes-container')
+      .should('be.visible')
+      .and('contain', 'Pagamento reprovado');
   });
 
-  it('deve exibir notificação com código e valor do cupom ao finalizar troca física (ItemRecebido -> Trocado)', () => {
-    cy.intercept('PATCH', `${apiUrl}/pedidos/104/status`, {
+  it('permite ao Admin despachar pedido aprovado para entrega alterando status para EmTransporte (RF0039)', () => {
+    cy.intercept('GET', `${apiUrl}/admin/pedidos?tipo=venda`, {
       statusCode: 200,
-      body: {
-        id: 104,
-        status: 'Trocado',
-        cupomTrocaCodigo: 'TRC-PED104-A1B2C3',
-        cupomTrocaValor: 120.00,
-        message: 'Troca concluída com sucesso! Itens retornaram ao estoque.'
-      }
-    }).as('concluirTroca');
+      body: pedidosVendaMock
+    }).as('carregarPedidosVenda');
 
-    cy.get('body').then(($body) => {
-      const btnConcluir = $body.find('[data-pedido-id="104"][data-novo-status="Trocado"], button:contains("Concluir")');
-      if (btnConcluir.length > 0) {
-        cy.wrap(btnConcluir.first()).click();
-        cy.wait('@concluirTroca');
-        cy.contains('TRC-PED104-A1B2C3').should('be.visible');
-        cy.contains('120,00').should('be.visible');
-      }
-    });
+    cy.intercept('PATCH', `${apiUrl}/admin/pedidos/102/status`, (req) => {
+      expect(req.body.status).to.eq('EmTransporte');
+      req.reply({
+        statusCode: 200,
+        body: {
+          message: 'Status atualizado com sucesso.',
+          dados: {
+            pedidoId: 102,
+            statusAnterior: 'PagamentoRealizado',
+            statusAtual: 'EmTransporte',
+            proximosStatus: ['Entregue', 'Cancelado']
+          }
+        }
+      });
+    }).as('despacharPedido');
+
+    cy.visit('http://127.0.0.1:5500/frontend/admin/pedidos.html');
+    cy.wait('@carregarPedidosVenda');
+
+    cy.get('#status-select-102').select('EmTransporte');
+    cy.get('#status-select-102').siblings('button').click();
+
+    cy.wait('@despacharPedido');
+    cy.get('#notificacoes-container')
+      .should('be.visible')
+      .and('contain', 'Status atualizado com sucesso');
   });
 
-  it('deve listar solicitações de troca com o motivo informado pelo cliente na aba Devoluções', () => {
+  it('gerencia o ciclo de troca no painel de devoluções: autorização, reentrada em estoque e geração de cupom (RF0042 a RF0045, RF0054)', () => {
     const devolucoesMock = [
       {
         id: 103,
@@ -152,8 +165,19 @@ describe('Painel Administrativo - Gestão e Troca de Estados de Pedidos', () => 
         cliente: 'Roberto Alencar',
         status: 'TrocaSolicitada',
         valorTotal: 250.00,
-        motivoTroca: 'Costura lateral descosturada',
+        data: new Date().toISOString(),
+        motivoTroca: 'Costura lateral descosturada no trekking',
         proximosStatus: ['TrocaAceita', 'TrocaNegada']
+      },
+      {
+        id: 104,
+        codigo: '104',
+        cliente: 'Fernanda Lima',
+        status: 'ItemRecebido',
+        valorTotal: 120.00,
+        data: new Date().toISOString(),
+        motivoTroca: 'Tamanho P ficou apertado',
+        proximosStatus: ['Trocado']
       }
     ];
 
@@ -162,15 +186,62 @@ describe('Painel Administrativo - Gestão e Troca de Estados de Pedidos', () => 
       body: devolucoesMock
     }).as('carregarDevolucoesAdmin');
 
-    cy.visit('http://127.0.0.1:5500/frontend/admin/devolucoes.html', {
-      failOnStatusCode: false
-    });
+    cy.visit('http://127.0.0.1:5500/frontend/admin/devolucoes.html');
+    cy.wait('@carregarDevolucoesAdmin');
 
-    cy.get('body').then(($body) => {
-      if ($body.find('#devolucoes-container').length > 0) {
-        cy.contains('Costura lateral descosturada').should('be.visible');
-        cy.contains('Roberto Alencar').should('be.visible');
-      }
-    });
+    // Valida exibição dos pedidos de troca e do motivo informado pelo cliente (RF0043)
+    cy.contains('Roberto Alencar').should('be.visible');
+    cy.contains('Costura lateral descosturada no trekking').should('be.visible');
+
+    // 1. Autorizar Troca (TrocaSolicitada -> TrocaAceita, RF0042)
+    cy.intercept('PATCH', `${apiUrl}/admin/pedidos/103/status`, (req) => {
+      expect(req.body.status).to.eq('TrocaAceita');
+      req.reply({
+        statusCode: 200,
+        body: {
+          message: 'Troca autorizada com sucesso! Notificação enviada ao cliente.',
+          dados: {
+            pedidoId: 103,
+            statusAnterior: 'TrocaSolicitada',
+            statusAtual: 'TrocaAceita',
+            proximosStatus: ['ItemEnviado']
+          }
+        }
+      });
+    }).as('autorizarTrocaAdmin');
+
+    cy.get('#status-select-103').select('TrocaAceita');
+    cy.get('#status-select-103').siblings('button').click();
+    cy.wait('@autorizarTrocaAdmin');
+
+    // 2. Concluir Troca com recebimento físico, reentrada de estoque e geração de cupom (ItemRecebido -> Trocado, RF0044, RF0045, RF0054)
+    cy.intercept('PATCH', `${apiUrl}/admin/pedidos/104/status`, (req) => {
+      expect(req.body.status).to.eq('Trocado');
+      req.reply({
+        statusCode: 200,
+        body: {
+          message: 'Troca concluída com sucesso! Itens retornaram ao estoque.',
+          dados: {
+            pedidoId: 104,
+            statusAnterior: 'ItemRecebido',
+            statusAtual: 'Trocado',
+            cupomTrocaGerado: {
+              codigo: 'TRC-104-TROCA',
+              valorDesconto: 120.0
+            },
+            proximosStatus: []
+          }
+        }
+      });
+    }).as('concluirTrocaAdmin');
+
+    cy.get('#status-select-104').select('Trocado');
+    cy.get('#status-select-104').siblings('button').click();
+    cy.wait('@concluirTrocaAdmin');
+
+    cy.get('#notificacoes-container')
+      .should('be.visible')
+      .and('contain', 'TRC-104-TROCA')
+      .and('contain', '120,00');
   });
 });

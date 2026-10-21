@@ -169,4 +169,27 @@ describe('Checkout simples com dados pré-cadastrados - Cliente', () => {
       .should('have.class', 'status-atencao')
       .and('contain', 'Em Processamento');
   });
+
+  it('recalcula o frete dinamicamente com base no endereço de entrega selecionado (RF0034)', () => {
+    // Intercepta cálculo de frete para destino RJ com valor R$ 35,00
+    cy.intercept('GET', `${apiUrl}/carrinho/frete/RJ`, {
+      statusCode: 200,
+      body: {
+        estado: 'RJ',
+        quantidadeItens: 1,
+        valorFrete: 35.0
+      }
+    }).as('calcularFreteRJ');
+
+    // Abre seção de novo endereço e seleciona Estado RJ
+    cy.get('#btn-toggle-endereco').click();
+    cy.get('#novo-endereco-form').should('have.class', 'active');
+    cy.get('#estado').select('RJ');
+
+    cy.wait('@calcularFreteRJ');
+
+    // Frete reativo atualizado no resumo (R$ 35,00) e total recalculado (100 subtotal + 35 frete = 135)
+    cy.get('#resumo-frete').should('contain', '35,00');
+    cy.get('#resumo-total').should('contain', '135,00');
+  });
 });

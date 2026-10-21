@@ -111,4 +111,109 @@ describe('Devoluções e Trocas - Acompanhamento do Fluxo Reversivo (UI)', () =>
     cy.contains('Nenhuma devolução ou troca ativa', { matchCase: false }).should('be.visible');
     cy.contains('Acessar Meus Pedidos').should('be.visible');
   });
+
+  it('permite a reutilização do cupom de troca gerado como forma de pagamento em uma nova compra (Logística Reversa Completa)', () => {
+    const cupomTrocaGerado = {
+      id: 99,
+      codigo: 'TRC-NOVO-150',
+      valorDesconto: 150.0,
+      categoria: 'Troca'
+    };
+
+    const contextoNovaCompra = {
+      carrinho: {
+        id: 1,
+        quantidadeItens: 1,
+        subtotal: 180.0,
+        itens: [
+          {
+            id: 205,
+            nomeProduto: 'Mochila Técnica Glaciar 45L',
+            precoUnitario: 180.0,
+            quantidade: 1,
+            estoqueDisponivel: 5,
+            disponivel: true
+          }
+        ]
+      },
+      enderecoPrincipal: {
+        id: 10,
+        apelido: 'Casa',
+        padrao: true,
+        cep: '08700000',
+        logradouro: 'Rua das Flores',
+        numero: '123',
+        bairro: 'Centro',
+        cidade: 'Mogi das Cruzes',
+        estado: 'SP'
+      },
+      valorFrete: 20.0,
+      valorTotal: 200.0,
+      cartoes: [
+        {
+          id: 5,
+          ultimosDigitos: '1234',
+          bandeira: 'Mastercard',
+          mesValidade: 12,
+          anoValidade: 2028,
+          padrao: true
+        }
+      ]
+    };
+
+    cy.intercept('GET', `${apiUrl}/checkout/contexto`, {
+      statusCode: 200,
+      body: contextoNovaCompra
+    }).as('carregarContexto');
+
+    cy.intercept('GET', `${apiUrl}/cupons/validar/${cupomTrocaGerado.codigo}`, {
+      statusCode: 200,
+      body: cupomTrocaGerado
+    }).as('validarCupomTrocaReutilizado');
+
+    cy.intercept('POST', `${apiUrl}/checkout/finalizar`, (req) => {
+      expect(req.body.codigosCupons).to.deep.equal(['TRC-NOVO-150']);
+      expect(req.body.cartoes).to.have.length(1);
+      // Saldo restante: 200 total - 150 cupom = 50 no cartão
+      expect(req.body.cartoes[0].valor).to.eq(50.0);
+
+      req.reply({
+        statusCode: 200,
+        body: {
+          id: 999,
+          codigo: 'PED-NOVO-REUTILIZA-CUPOM',
+          status: 'EmProcessamento',
+          valorTotal: 50.0,
+          valorPagoCartoes: 50.0
+        }
+      });
+    }).as('finalizarNovaCompra');
+
+    cy.visit('checkout.html?id=42', {
+      onBeforeLoad(win) {
+        win.sessionStorage.setItem('usuarioLogado', JSON.stringify(cliente));
+      }
+    });
+
+    cy.wait('@carregarContexto');
+
+    // Aplica o cupom de troca gerado pela devolução
+    cy.get('#btn-toggle-cupom').click();
+    cy.get('#cupom-codigo').type(cupomTrocaGerado.codigo);
+    cy.get('#btn-aplicar-cupom').click();
+    cy.wait('@validarCupomTrocaReutilizado');
+
+    // O resumo abate R$ 150,00 e ajusta saldo restante para R$ 50,00 no cartão
+    cy.get('#resumo-desconto').should('contain', '150,00');
+    cy.get('#resumo-total').should('contain', '50,00');
+
+    // Submete e quita a nova compra
+    cy.get('.btn-submit').click();
+    cy.wait('@finalizarNovaCompra').its('response.body.status').should('eq', 'EmProcessamento');
+
+    cy.get('.checkout-main')
+      .should('contain', 'Compra finalizada com sucesso! 🎉')
+      .and('contain', 'PED-NOVO-REUTILIZA-CUPOM')
+      .and('contain', '50,00');
+  });
 });

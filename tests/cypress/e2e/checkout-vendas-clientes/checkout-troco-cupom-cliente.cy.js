@@ -163,4 +163,77 @@ describe('Checkout com troco em cupom de troca (RN0036) - Cliente', () => {
       .and('contain', 'TROCA-RESTO-50')
       .and('contain', '50,00');
   });
+
+  it('rejeita a aplicação de um segundo cupom promocional na mesma compra permitindo apenas múltiplos cupons de troca (RN0033)', () => {
+    // 1º cupom promocional
+    cy.intercept('GET', `${apiUrl}/cupons/validar/PROMO20`, {
+      statusCode: 200,
+      body: { id: 11, codigo: 'PROMO20', valorDesconto: 20.0, categoria: 'Promocional' }
+    }).as('validarPrimeiroPromo');
+
+    // 2º cupom promocional
+    cy.intercept('GET', `${apiUrl}/cupons/validar/PROMO30`, {
+      statusCode: 200,
+      body: { id: 12, codigo: 'PROMO30', valorDesconto: 30.0, categoria: 'Promocional' }
+    }).as('validarSegundoPromo');
+
+    // Aplica o primeiro cupom promocional
+    cy.get('#btn-toggle-cupom').click();
+    cy.get('#cupom-codigo').type('PROMO20');
+    cy.get('#btn-aplicar-cupom').click();
+    cy.wait('@validarPrimeiroPromo');
+
+    cy.get('#cupom-feedback')
+      .should('be.visible')
+      .and('contain', "Cupom 'PROMO20' aplicado com sucesso!");
+
+    // Tenta aplicar o segundo cupom promocional
+    cy.get('#cupom-codigo').type('PROMO30');
+    cy.get('#btn-aplicar-cupom').click();
+    cy.wait('@validarSegundoPromo');
+
+    // Feedback bloqueando segundo cupom promocional conforme RN0033
+    cy.get('#cupom-feedback')
+      .should('be.visible')
+      .and('contain', 'Apenas 1 cupom promocional é permitido por compra');
+  });
+
+  it('bloqueia inserção desnecessária de cupons quando o saldo da compra já foi 100% quitado (RN0036)', () => {
+    cy.intercept('GET', `${apiUrl}/cupons/validar/TROCA100`, {
+      statusCode: 200,
+      body: { id: 21, codigo: 'TROCA100', valorDesconto: 100.0, categoria: 'Troca' }
+    }).as('validarTrocaTotal');
+
+    cy.intercept('GET', `${apiUrl}/cupons/validar/TROCA50`, {
+      statusCode: 200,
+      body: { id: 22, codigo: 'TROCA50', valorDesconto: 50.0, categoria: 'Troca' }
+    }).as('validarTrocaExtra');
+
+    // Simula resposta do backend rejeitando cupom desnecessário pela RN0036
+    cy.intercept('POST', `${apiUrl}/checkout/finalizar`, {
+      statusCode: 400,
+      body: {
+        message: "O cupom de troca 'TROCA50' é desnecessário, pois o valor total da compra já foi coberto pelos cupons anteriores."
+      }
+    }).as('rejeitarCupomDesnecessario');
+
+    // Aplica cupom de troca que já cobre 100% da compra (R$ 100,00)
+    cy.get('#btn-toggle-cupom').click();
+    cy.get('#cupom-codigo').type('TROCA100');
+    cy.get('#btn-aplicar-cupom').click();
+    cy.wait('@validarTrocaTotal');
+
+    // Aplica um segundo cupom desnecessário
+    cy.get('#cupom-codigo').type('TROCA50');
+    cy.get('#btn-aplicar-cupom').click();
+    cy.wait('@validarTrocaExtra');
+
+    // Tenta finalizar compra com cupons excessivos
+    cy.get('.btn-submit').click();
+    cy.wait('@rejeitarCupomDesnecessario');
+
+    cy.get('.toast-error')
+      .should('be.visible')
+      .and('contain', 'é desnecessário');
+  });
 });

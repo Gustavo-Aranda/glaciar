@@ -300,38 +300,4 @@ describe('Checkout com dois cartões e cupom de desconto - Cliente', () => {
     // Nenhuma requisição deve ter sido disparada
     cy.get('@tentativaEnvio.all').should('have.length', 0);
   });
-
-  it('bloqueia pagamento quando qualquer um dos dois cartões tiver valor inferior a R$ 10,00 com saldo >= R$ 10,00 (RN0034 - Unhappy Path)', () => {
-    cy.intercept('POST', `${apiUrl}/checkout/finalizar`).as('tentativaEnvio');
-
-    cy.intercept('GET', `${apiUrl}/cupons/validar/*`, {
-      statusCode: 200,
-      body: {
-        id: 50,
-        codigo: 'PROMO50',
-        valorDesconto: 50.0,
-        categoria: 'Promocional'
-      }
-    }).as('validarCupom');
-
-    // Aplica cupom de R$ 50,00 (saldo restante: R$ 100,00)
-    cy.get('#btn-toggle-cupom').click();
-    cy.get('#cupom-codigo').type('PROMO50');
-    cy.get('#btn-aplicar-cupom').click();
-    cy.wait('@validarCupom');
-
-    // Divide em R$ 95,00 no Cartão 1 e R$ 5,00 no Cartão 2 (R$ 5,00 viola a RN0034)
-    cy.get('.input-valor-cartao[data-cartao-id="5"]').clear().type('95.00');
-    cy.get('.input-valor-cartao[data-cartao-id="6"]').clear().type('5.00');
-
-    cy.get('.btn-submit').click();
-
-    // Mensagem de bloqueio do piso mínimo de R$ 10,00
-    cy.get('.toast-error')
-      .should('be.visible')
-      .and('contain', 'O valor mínimo por cartão de crédito é R$ 10,00.');
-
-    // Nenhuma requisição deve ter sido disparada
-    cy.get('@tentativaEnvio.all').should('have.length', 0);
-  });
 });

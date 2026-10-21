@@ -74,4 +74,40 @@ describe('Inativar cadastro de Cliente (C)', () => {
     cy.wait('@inativarClienteAdmin').its('request.body').should('deep.equal', { ativo: false })
     cy.get('#resultado-titulo').should('contain', 'Status atualizado')
   })
+
+  it('preserva histórico de transações e integridade referencial após inativação (Inativação vs Exclusão)', () => {
+    const pedidosCliente = [
+      {
+        id: 301,
+        codigo: 'PED-301-HISTORICO',
+        status: 'Entregue',
+        valorTotal: 490.0,
+        data: '2026-02-10T14:30:00Z',
+        itens: [
+          { id: 1, nomeProduto: 'Mochila Cargueira 70L', quantidade: 1, precoUnitario: 490.0 }
+        ]
+      }
+    ];
+
+    // Consulta de transações do cliente inativado permanece íntegra (RF0025)
+    cy.intercept('GET', 'http://localhost:5205/api/pedidos*', {
+      statusCode: 200,
+      body: pedidosCliente
+    }).as('historicoTransacoes');
+
+    cy.visit('pedidos.html?id=42', {
+      onBeforeLoad(win) {
+        win.sessionStorage.setItem('usuarioLogado', JSON.stringify({
+          id: 42,
+          nome: 'Maria Silva (Inativada)',
+          ativo: false
+        }));
+      }
+    });
+
+    cy.wait('@historicoTransacoes');
+    cy.get('.order-card').should('be.visible');
+    cy.get('.order-number').should('contain', 'PED-301-HISTORICO');
+    cy.get('.status').should('contain', 'Entregue');
+  })
 })
