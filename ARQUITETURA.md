@@ -145,4 +145,41 @@ Para o módulo de gestão pós-checkout e devoluções do **Glaciar**, foi adota
 1. **Regra de Negócio 100% no Domínio (DDD Puro):** Nenhum Controller ou Service possui `if (status == ...)` espalhado. A matriz declarativa de transições é a **única fonte da verdade** para o backend e alimenta dinamicamente o frontend.
 2. **Impossível Burlar Etapas:** Um pedido em `EmProcessamento` nunca pode ir para `EmTransporte` sem antes ter passado por `PagamentoRealizado`.
 3. **Imune a Race Conditions:** O status é um **Concurrency Token**, transformando a atualização em um *Compare-And-Set* atômico no banco de dados.
-4. **Isolamento de I/O:** O domínio não depende de repositórios nem de banco; ele apenas decide *quais* efeitos devem ocorrer (`ResultadoTransicaoPedido`) e a Application executa o I/O de forma segura e transacional.
+4. **Isolamento de I/O:** O domínio não depende de repositórios nem de banco; ele apenas decide *quais* efeitos devem ocorrer (`ResultadoTransicaoPedido`) e a Application executa o I/O de forma segura e transacional.
+
+---
+
+## 💻 Arquitetura de Front-end (Vanilla Modular)
+
+O front-end adota Vanilla JavaScript modular (ES6+), HTML5 e Vanilla CSS com zero dependências em runtime, garantindo máxima performance e componentização nativa.
+
+### 1. Gestão de Estado Local com Sincronização em Lote (Batch Diff) no Carrinho
+
+Para evitar chamadas desnecessárias de rede a cada clique do usuário, o carrinho adota o padrão de gestão em memória:
+* **Experiência do Usuário (UX Fluida):** Ações de quantidade (`+` e `-`) alteram instantaneamente o estado em memória (`estado.itens`), recalculando subtotais, estoque limite e valores na tela sem delay de rede ou oscilação de layout (*layout thrashing*).
+* **Snapshot de Comparação:** A aplicação retém o snapshot oficial do servidor (`estado.quantidadesOriginais`). Quando o usuário clica em **"Continuar para o checkout"**, a função `montarPayloadAlteracoes()` gera um payload diferencial contendo apenas os itens alterados ou removidos (`quantidade: 0`).
+* **Sincronização Atômica (`PUT /api/carrinho/itens`):** Uma única chamada HTTP sincroniza todas as modificações no banco antes de navegar para `checkout.html`.
+
+```javascript
+// Exemplo do cálculo de diff no carrinho (carrinho.js)
+function montarPayloadAlteracoes() {
+    const atuais = new Map(estado.itens.map(({ id, quantidade }) => [id, quantidade]));
+    return [...estado.quantidadesOriginais]
+        .map(([itemId, original]) => ({ itemId, quantidade: atuais.get(itemId) ?? 0, original }))
+        .filter(({ quantidade, original }) => quantidade !== original)
+        .map(({ itemId, quantidade }) => ({ itemId, quantidade }));
+}
+```
+
+### 2. Serviços Globais de UI/UX (Singletons)
+
+* **`LoadingService`:** Gerencia um overlay bloqueante (`.loading-overlay`) com spinner estilizado e backdrop blur durante operações assíncronas críticas, prevenindo múltiplos disparos acidentais (*double submission*).
+* **`NotificationService` (`window.Toast`):** Sistema reativo e categorizado de alertas flutuantes (`showError`, `showSuccess`, `showInfo`) posicionado em container dedicado, com autodismiss e animações CSS suaves.
+
+---
+
+## 🔗 Documentos Técnicos Relacionados
+* [Regras de Negócio e Checkout](./REGRAS_CHECKOUT.md)
+* [Máquina de Estados e Ciclo de Vida do Pedido](./MAQUINA_DE_ESTADOS.md)
+* [Contratos de API](./CONTRATOS_API.md)
+* [Catálogo de Testes Automatizados](./CASOS_DE_TESTE.md)
