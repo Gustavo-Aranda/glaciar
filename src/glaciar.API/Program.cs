@@ -45,6 +45,8 @@ builder.Services.AddScoped<ICupomService, glaciar.Application.Services.Vendas.Cu
 builder.Services.AddScoped<IPedidoService, glaciar.Application.Services.Vendas.PedidoService>();
 builder.Services.AddScoped<IPedidoStatusService, glaciar.Application.Services.Vendas.PedidoStatusService>();
 builder.Services.AddScoped<ICarrinhoExpiracaoService, glaciar.Application.Services.Vendas.CarrinhoExpiracaoService>();
+builder.Services.AddScoped<IRelatorioVendasRepository, RelatorioVendasRepository>();
+builder.Services.AddScoped<IRelatorioVendasService, glaciar.Application.Services.Vendas.RelatorioVendasService>();
 builder.Services.AddHostedService<glaciar.API.Workers.CarrinhoExpiracaoWorker>();
 
 // ==========================================
