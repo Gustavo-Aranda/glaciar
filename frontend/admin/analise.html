@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Análise Financeira | Glaciar Admin</title>
+    <title>Análise de Vendas por Categoria | Glaciar Admin</title>
     <link rel="stylesheet" href="../user/css/global.css">
     <link rel="stylesheet" href="./css/global.css">
     <link rel="stylesheet" href="./css/pages/analise.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
     <div id="navbar-placeholder"></div>
 
@@ -17,44 +19,91 @@
 
         <section class="admin-content">
             <div class="content-wrapper">
-                
+
                 <div class="content-header">
                     <nav class="breadcrumb" aria-label="Breadcrumb">
-                        <a href="index.html">Painel Administrativo</a>
+                        <a href="pedidos.html">Painel Administrativo</a>
                         <span class="separator">&gt;</span>
-                        <span class="current">Análise Financeira</span>
+                        <span class="current">Análise de Vendas por Categoria</span>
                     </nav>
 
-                    <h2>Análise de Volume Financeiro</h2>
-                    <p>Filtre o faturamento por período para analisar o desempenho de vendas.</p>
+                    <h2>Histórico de Vendas por Categoria</h2>
+                    <p>Analise e compare a evolução mensal do volume financeiro (R$) de pedidos entregues por categoria
+                        (intervalo de 1 a 24 meses).</p>
                 </div>
 
-                <div class="filter-bar">
-                    <div class="input-group">
-                        <label>Data Inicial:</label>
-                        <input type="date" class="date-input" value="2026-08-01">
-                    </div>
-                    <div class="input-group">
-                        <label>Data Final:</label>
-                        <input type="date" class="date-input" value="2026-08-31">
-                    </div>
-                    <button class="btn btn-primary btn-filter">Gerar Gráfico</button>
-                </div>
+                        <form id="form-filtro-analise" class="filter-panel" novalidate>
+                            <div class="filter-row">
+                                <div class="input-group">
+                                    <label for="data-inicio">Data Inicial:</label>
+                                    <input type="date" id="data-inicio" name="dataInicio" class="date-input"
+                                        value="2026-05-01" required>
+                                </div>
+                                <div class="input-group">
+                                    <label for="data-fim">Data Final:</label>
+                                    <input type="date" id="data-fim" name="dataFim" class="date-input"
+                                        value="2026-10-31" required>
+                                </div>
+                                <div class="filter-actions">
+                                    <button type="submit" id="btn-gerar-grafico"
+                                        class="btn btn-primary btn-filter">Gerar Gráfico</button>
+                                </div>
+                            </div>
 
-                <section class="admin-section">
-                    <div class="chart-container">
-                        <canvas id="financeChart"></canvas>
-                    </div>
-                </section>
+                                <div class="categories-filter-group">
+                                    <div class="categories-header">
+                                        <label>Categorias para Comparação (selecione uma ou mais):</label>
+                                        <div class="categories-quick-actions">
+                                            <button type="button" id="btn-selecionar-todas"
+                                                class="btn-link-action">Selecionar todas</button>
+                                            <span class="divider">|</span>
+                                            <button type="button" id="btn-limpar-categorias"
+                                                class="btn-link-action">Limpar seleção</button>
+                                        </div>
+                                    </div>
+                                    <div id="categorias-selector" class="categories-chips" role="group"
+                                        aria-label="Seleção de categorias de produtos">
+                                        <span class="loading-categories">Carregando categorias...</span>
+                                    </div>
+                                </div>
+                        </form>
 
-            </div>
+                        <div class="kpi-summary-bar" id="kpi-summary-bar">
+                            <div class="kpi-card">
+                                <span class="kpi-label">Faturamento Entregue no Período</span>
+                                <strong class="kpi-value" id="kpi-total-geral">R$ 0,00</strong>
+                            </div>
+                            <div class="kpi-card">
+                                <span class="kpi-label">Intervalo Temporal (Mês/Ano)</span>
+                                <strong class="kpi-value" id="kpi-periodo">-</strong>
+                            </div>
+                            <div class="kpi-card">
+                                <span class="kpi-label">Categorias Comparadas</span>
+                                <strong class="kpi-value" id="kpi-qtd-categorias">0</strong>
+                            </div>
+                        </div>
+
+                        <section class="admin-section">
+                                <div class="chart-card">
+                                    <div class="chart-card-header">
+                                        <h3>Evolução Mensal de Vendas (Pedidos Entregues)</h3>
+                                        <span class="badge-status-entregue">Somente Status: ENTREGUE</span>
+                                    </div>
+                                    <div class="chart-container">
+                                        <canvas id="financeChart"></canvas>
+                                    </div>
+                                </div>
+                        </section>
+
+                    </div>
         </section>
     </main>
 
-    <!-- Script de Layout -->
+    <div id="notificacoes-container" class="notificacoes-container" aria-live="polite"></div>
+
     <script src="./js/components/layout.js"></script>
-    
-    <!-- Script do Gráfico -->
-     <script src="./js/components/chart.js"></script>
+    <script src="./js/components/notifications.js"></script>
+    <script src="./js/pages/analise.js"></script>
 </body>
+
 </html>
