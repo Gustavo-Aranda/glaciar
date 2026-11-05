@@ -181,7 +181,7 @@ function obterCategoriaIdsSelecionadas() {
  */
 function validarParametrosFiltro(dataInicioStr, dataFimStr, categoriaIds) {
     if (!dataInicioStr || !dataFimStr) {
-        return 'Informe a Data Inicial e a Data Final para realizar a consulta (RF0055).';
+        return 'Informe a Data Inicial e a Data Final para realizar a consulta.';
     }
 
     const [anoIni, mesIni, diaIni] = dataInicioStr.split('-').map(Number);
@@ -192,7 +192,7 @@ function validarParametrosFiltro(dataInicioStr, dataFimStr, categoriaIds) {
 
     // RF0056: DataFim >= DataInicio
     if (fim < inicio) {
-        return 'A Data Final não pode ser anterior à Data Inicial (RF0056).';
+        return 'A Data Final não pode ser anterior à Data Inicial.';
     }
 
     // RN0072: Intervalo entre 1 e 24 meses
@@ -200,19 +200,19 @@ function validarParametrosFiltro(dataInicioStr, dataFimStr, categoriaIds) {
     limiteMinimo.setUTCDate(limiteMinimo.getUTCDate() - 1);
 
     if (fim < limiteMinimo) {
-        return 'O intervalo entre a data inicial e a data final deve ser de no mínimo 1 mês (RN0072).';
+        return 'O intervalo entre a data inicial e a data final deve ser de no mínimo 1 mês.';
     }
 
     const mesesDiferenca = ((anoFim - anoIni) * 12) + (mesFim - mesIni);
     const limiteMaximo = new Date(Date.UTC(anoIni + 2, mesIni - 1, diaIni));
 
     if (fim > limiteMaximo || mesesDiferenca > 24) {
-        return 'O intervalo entre a data inicial e a data final deve ser de no máximo 24 meses (RN0072).';
+        return 'O intervalo entre a data inicial e a data final deve ser de no máximo 24 meses.';
     }
 
     // RF0057: Ao menos uma categoria selecionada
     if (!Array.isArray(categoriaIds) || categoriaIds.length === 0) {
-        return 'Selecione ao menos uma categoria de produto para comparação (RF0057).';
+        return 'Selecione ao menos uma categoria de produto para comparação.';
     }
 
     return null;
@@ -284,8 +284,8 @@ function atualizarIndicadoresResumo(dados) {
     }
 
     if (elPeriodo) {
-        elPeriodo.textContent = labels.length > 0
-            ? `${labels[0]} a ${labels[labels.length - 1]} (${labels.length} ${labels.length === 1 ? 'mês' : 'meses'})`
+        elPeriodo.innerHTML = labels.length > 0
+            ? `${labels[0]} a ${labels[labels.length - 1]}<br><span style="font-size: 0.95rem; font-weight: normal; color: var(--cinza-rocha-claro);">(${labels.length} ${labels.length === 1 ? 'mês' : 'meses'})</span>`
             : '-';
     }
 

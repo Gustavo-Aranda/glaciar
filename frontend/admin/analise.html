@@ -32,70 +32,69 @@
                         (intervalo de 1 a 24 meses).</p>
                 </div>
 
-                        <form id="form-filtro-analise" class="filter-panel" novalidate>
-                            <div class="filter-row">
-                                <div class="input-group">
-                                    <label for="data-inicio">Data Inicial:</label>
-                                    <input type="date" id="data-inicio" name="dataInicio" class="date-input"
-                                        value="2026-05-01" required>
-                                </div>
-                                <div class="input-group">
-                                    <label for="data-fim">Data Final:</label>
-                                    <input type="date" id="data-fim" name="dataFim" class="date-input"
-                                        value="2026-10-31" required>
-                                </div>
-                                <div class="filter-actions">
-                                    <button type="submit" id="btn-gerar-grafico"
-                                        class="btn btn-primary btn-filter">Gerar Gráfico</button>
-                                </div>
-                            </div>
+                <form id="form-filtro-analise" class="filter-panel" novalidate>
+                    <div class="filter-row">
+                        <div class="input-group">
+                            <label for="data-inicio">Data Inicial:</label>
+                            <input type="date" id="data-inicio" name="dataInicio" class="date-input" value="2026-05-01"
+                                required>
+                        </div>
+                        <div class="input-group">
+                            <label for="data-fim">Data Final:</label>
+                            <input type="date" id="data-fim" name="dataFim" class="date-input" value="2026-10-31"
+                                required>
+                        </div>
+                        <div class="filter-actions">
+                            <button type="submit" id="btn-gerar-grafico" class="btn btn-primary btn-filter">Gerar
+                                Gráfico</button>
+                        </div>
+                    </div>
 
-                                <div class="categories-filter-group">
-                                    <div class="categories-header">
-                                        <label>Categorias para Comparação (selecione uma ou mais):</label>
-                                        <div class="categories-quick-actions">
-                                            <button type="button" id="btn-selecionar-todas"
-                                                class="btn-link-action">Selecionar todas</button>
-                                            <span class="divider">|</span>
-                                            <button type="button" id="btn-limpar-categorias"
-                                                class="btn-link-action">Limpar seleção</button>
-                                        </div>
-                                    </div>
-                                    <div id="categorias-selector" class="categories-chips" role="group"
-                                        aria-label="Seleção de categorias de produtos">
-                                        <span class="loading-categories">Carregando categorias...</span>
-                                    </div>
-                                </div>
-                        </form>
-
-                        <div class="kpi-summary-bar" id="kpi-summary-bar">
-                            <div class="kpi-card">
-                                <span class="kpi-label">Faturamento Entregue no Período</span>
-                                <strong class="kpi-value" id="kpi-total-geral">R$ 0,00</strong>
-                            </div>
-                            <div class="kpi-card">
-                                <span class="kpi-label">Intervalo Temporal (Mês/Ano)</span>
-                                <strong class="kpi-value" id="kpi-periodo">-</strong>
-                            </div>
-                            <div class="kpi-card">
-                                <span class="kpi-label">Categorias Comparadas</span>
-                                <strong class="kpi-value" id="kpi-qtd-categorias">0</strong>
+                    <div class="categories-filter-group">
+                        <div class="categories-header">
+                            <label>Categorias para Comparação (selecione uma ou mais):</label>
+                            <div class="categories-quick-actions">
+                                <button type="button" id="btn-selecionar-todas" class="btn-link-action">Selecionar
+                                    todas</button>
+                                <span class="divider">|</span>
+                                <button type="button" id="btn-limpar-categorias" class="btn-link-action">Limpar
+                                    seleção</button>
                             </div>
                         </div>
-
-                        <section class="admin-section">
-                                <div class="chart-card">
-                                    <div class="chart-card-header">
-                                        <h3>Evolução Mensal de Vendas (Pedidos Entregues)</h3>
-                                        <span class="badge-status-entregue">Somente Status: ENTREGUE</span>
-                                    </div>
-                                    <div class="chart-container">
-                                        <canvas id="financeChart"></canvas>
-                                    </div>
-                                </div>
-                        </section>
-
+                        <div id="categorias-selector" class="categories-chips" role="group"
+                            aria-label="Seleção de categorias de produtos">
+                            <span class="loading-categories">Carregando categorias...</span>
+                        </div>
                     </div>
+                </form>
+
+                <div class="kpi-summary-bar" id="kpi-summary-bar">
+                    <div class="kpi-card">
+                        <span class="kpi-label">Faturamento Entregue no Período</span>
+                        <strong class="kpi-value" id="kpi-total-geral">R$ 0,00</strong>
+                    </div>
+                    <div class="kpi-card">
+                        <span class="kpi-label">Intervalo Temporal (Mês/Ano)</span>
+                        <strong class="kpi-value" id="kpi-periodo">-</strong>
+                    </div>
+                    <div class="kpi-card">
+                        <span class="kpi-label">Categorias Comparadas</span>
+                        <strong class="kpi-value" id="kpi-qtd-categorias">0</strong>
+                    </div>
+                </div>
+
+                <section class="admin-section">
+                    <div class="chart-card">
+                        <div class="chart-card-header">
+                            <h3>Evolução Mensal de Vendas</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="financeChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
         </section>
     </main>
 

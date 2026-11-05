@@ -30,7 +30,7 @@ namespace glaciar.Application.Services.Vendas
         {
             if (filtro == null || !filtro.DataInicio.HasValue || !filtro.DataFim.HasValue)
             {
-                throw new DomainValidationException("Informe a Data de Início e a Data de Fim para consultar o histórico de vendas (RF0055, RF0056).");
+                throw new DomainValidationException("Informe a Data de Início e a Data de Fim para consultar o histórico de vendas.");
             }
 
             var inicio = filtro.DataInicio.Value.Date;
@@ -39,20 +39,20 @@ namespace glaciar.Application.Services.Vendas
             // RF0056: A data de fim não pode ser anterior à data de início.
             if (fim < inicio)
             {
-                throw new DomainValidationException("A data final não pode ser anterior à data inicial (RF0056).");
+                throw new DomainValidationException("A data final não pode ser anterior à data inicial.");
             }
 
             // RN0072: O intervalo entre a data de início e a data de fim deve ser de no mínimo 1 mês e no máximo 24 meses.
             var dataMinimaFim = inicio.AddMonths(1).AddDays(-1);
             if (fim < dataMinimaFim)
             {
-                throw new DomainValidationException("O intervalo do período de análise deve ser de no mínimo 1 mês (RN0072).");
+                throw new DomainValidationException("O intervalo do período de análise deve ser de no mínimo 1 mês.");
             }
 
             var mesesDiferenca = ((fim.Year - inicio.Year) * 12) + fim.Month - inicio.Month;
             if (fim > inicio.AddMonths(24) || mesesDiferenca > 24)
             {
-                throw new DomainValidationException("O intervalo do período de análise deve ser de no máximo 24 meses (RN0072).");
+                throw new DomainValidationException("O intervalo do período de análise deve ser de no máximo 24 meses.");
             }
 
             // RF0057: Permitir escolher uma ou mais categorias de produtos simultaneamente para comparação.
@@ -65,7 +65,7 @@ namespace glaciar.Application.Services.Vendas
 
             if (idsFiltro.Count == 0 && nomesFiltro.Count == 0)
             {
-                throw new DomainValidationException("Selecione ao menos uma categoria de produto para comparação no gráfico (RF0057).");
+                throw new DomainValidationException("Selecione ao menos uma categoria de produto para comparação no gráfico.");
             }
 
             var categoriasSelecionadas = await _relatorioRepository.ObterCategoriasPorFiltroAsync(idsFiltro, nomesFiltro);

@@ -75,8 +75,7 @@ function renderizarItensResumo(carrinho) {
             <div class="product-img" style="background-color: #eee;"></div>
             <div class="product-details">
                 <p class="product-name">${item.nomeProduto}</p>
-                <p class="product-meta">SKU: ${item.sku} / ${item.cor} / ${item.tamanho}</p>
-                <p class="product-meta">Qtd: ${item.quantidade}</p>
+                <p class="product-meta">${item.quantidade}x / ${item.cor} / ${item.tamanho}</p>
                 <p class="product-price">${formatarBRL(item.subtotal)}</p>
             </div>
         </div>
@@ -803,17 +802,17 @@ function exibirMensagem(texto, tipo, html = false) {
         window.Toast.showError('Erro', texto);
         return;
     }
-    
+
     const div = $('mensagem');
     if (!div) return;
-    
+
     div.style.display = 'block';
     const cores = { erro: 'red', sucesso: 'green', info: 'blue' };
     div.style.color = cores[tipo];
     div.style.padding = '1rem';
     div.style.marginBottom = '1rem';
     div.style.border = `1px solid ${cores[tipo]}`;
-    
+
     if (html) div.innerHTML = texto; else div.textContent = texto;
     div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
