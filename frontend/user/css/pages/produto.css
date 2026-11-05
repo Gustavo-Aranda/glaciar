@@ -21,7 +21,10 @@
 .product-gallery {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    grid-auto-rows: min-content;
     gap: 1rem;
+    align-self: start;
+    align-content: start;
 }
 
 .gallery-item {
@@ -31,6 +34,7 @@
     background-size: cover;
     background-position: center;
     position: relative;
+    align-self: start;
 }
 
 /* Faz a primeira imagem ocupar as duas colunas */

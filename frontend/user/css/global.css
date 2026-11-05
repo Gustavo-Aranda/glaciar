@@ -32,6 +32,10 @@
     box-sizing: border-box;
 }
 
+html {
+    scrollbar-gutter: stable;
+}
+
 body {
     font-family: var(--fonte-principal);
     background-color: var(--branco);
