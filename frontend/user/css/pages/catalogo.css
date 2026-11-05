@@ -54,6 +54,7 @@
     color: var(--cinza-rocha-claro);
     transform: scaleY(0.7);
 }
+
 /* =========================================
    QUICK ADD & SELETOR DE TAMANHOS
    ========================================= */
@@ -74,6 +75,10 @@
 
 .size-selector-overlay:not(.hidden) {
     transform: translateY(0);
+}
+
+.size-selector-overlay.overlay-equipamentos {
+    grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
 }
 
 .size-selector-overlay.hidden {
@@ -117,7 +122,7 @@
     height: 25px;
     font-size: 1.2rem;
     cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 /* =========================================
@@ -182,11 +187,11 @@
 }
 
 .btn-quick-add {
-position: absolute;
+    position: absolute;
     bottom: -60px;
     left: 50%;
     transform: translateX(-50%);
-    width: 65%; 
+    width: 65%;
     background-color: #000;
     color: #fff;
     border: none;
@@ -204,7 +209,7 @@ position: absolute;
 }
 
 .btn-quick-add:hover {
-    background-color: transparent;
+    background-color: #f6f6f6;
     color: var(--preto);
     border: 1px solid var(--preto);
     transition: all 0.3s ease;
@@ -240,6 +245,7 @@ position: absolute;
     left: 2px;
     color: var(--branco);
     font-size: 0.8rem;
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.7);
 }
 
 .swatch-more {
@@ -292,7 +298,7 @@ position: absolute;
     width: 380px;
     background-color: #fff;
     border-radius: 8px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
     padding: 1.5rem;
     z-index: 1000;
     transition: opacity 0.3s ease, transform 0.3s ease;
@@ -318,8 +324,16 @@ position: absolute;
     gap: 0.5rem;
 }
 
-.check-icon { font-size: 1rem; }
-.btn-close-toast { background: none; border: none; font-size: 1.5rem; cursor: pointer; }
+.check-icon {
+    font-size: 1rem;
+}
+
+.btn-close-toast {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
 
 .toast-body {
     display: flex;
@@ -335,10 +349,24 @@ position: absolute;
     background-position: center;
 }
 
-.toast-details p { margin-bottom: 0.3rem; }
-.toast-title { font-weight: 700; font-size: 0.95rem; }
-.toast-price { font-size: 0.95rem; margin-bottom: 0.5rem !important; }
-.toast-attr { font-size: 0.85rem; color: #555; }
+.toast-details p {
+    margin-bottom: 0.3rem;
+}
+
+.toast-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.toast-price {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem !important;
+}
+
+.toast-attr {
+    font-size: 0.85rem;
+    color: #555;
+}
 
 .toast-actions {
     display: flex;
@@ -346,7 +374,8 @@ position: absolute;
     gap: 0.8rem;
 }
 
-.btn-black-full, .btn-outline-full {
+.btn-black-full,
+.btn-outline-full {
     width: 100%;
     padding: 1rem;
     border-radius: 30px;
@@ -357,8 +386,22 @@ position: absolute;
     transition: all 0.2s;
 }
 
-.btn-black-full { background-color: #000; color: #fff; border: none; }
-.btn-black-full:hover { background-color: #333; }
+.btn-black-full {
+    background-color: #000;
+    color: #fff;
+    border: none;
+}
 
-.btn-outline-full { background-color: transparent; color: #000; border: 1px solid #000; }
-.btn-outline-full:hover { background-color: #f2f2f2; }
+.btn-black-full:hover {
+    background-color: #333;
+}
+
+.btn-outline-full {
+    background-color: transparent;
+    color: #000;
+    border: 1px solid #000;
+}
+
+.btn-outline-full:hover {
+    background-color: #f2f2f2;
+}

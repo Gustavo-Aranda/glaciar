@@ -6,6 +6,7 @@ namespace glaciar.Application.DTOs.Vendas
         public string Nome { get; set; } = string.Empty;
         public string Descricao { get; set; } = string.Empty;
         public string Tipo { get; set; } = string.Empty;
+        public string Categoria { get; set; } = string.Empty;
         public decimal Preco { get; set; }
         public List<ProdutoCatalogoEstoqueDTO> Estoques { get; set; } = new();
     }

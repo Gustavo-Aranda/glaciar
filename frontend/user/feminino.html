@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vestuário Feminino | Glaciar</title>
+    <link rel="stylesheet" href="./css/global.css">
+    <link rel="stylesheet" href="./css/pages/catalogo.css">
+    <link rel="stylesheet" href="./css/components/notification.css">
+    <link rel="stylesheet" href="./css/components/chatbot.css">
+</head>
+
+<body>
+    <div id="navbar-placeholder"></div>
+
+    <main class="catalog-page" data-categoria="Feminino">
+        <header class="catalog-header">
+            <nav class="breadcrumb" aria-label="Breadcrumb">
+                <a href="index.html">Home</a>
+                <span class="separator">&gt;</span>
+                <span class="current">Feminino</span>
+            </nav>
+            <h1>Feminino</h1>
+        </header>
+
+        <div class="catalog-layout">
+            <!-- Barra Lateral -->
+            <aside class="filters-sidebar">
+                <div class="filter-group">
+                    <h4>Categoria <span class="arrow">v</span></h4>
+                </div>
+                <div class="filter-group">
+                    <h4>Preço <span class="arrow">v</span></h4>
+                </div>
+                <div class="filter-group">
+                    <h4>Tamanho <span class="arrow">v</span></h4>
+                </div>
+                <div class="filter-group">
+                    <h4>Cor <span class="arrow">v</span></h4>
+                </div>
+            </aside>
+
+            <section class="products-grid-container">
+                <div class="grid-controls">
+                    <span class="items-count" id="items-count">3 Itens</span>
+                    <div class="sort-by">Ordenar Por <strong>Mais Relevantes</strong> <span class="arrow">v</span></div>
+                </div>
+
+                <div class="products-grid" id="products-grid">
+                    <!-- Produto 1: Calça Ascent XT Feminina -->
+                    <article class="product-card" data-produto-id="6">
+                        <div class="product-img-wrapper">
+                            <span class="badge badge-white">Destaque</span>
+                            <a href="produto.html?produto=6" class="img-link">
+                                <div class="img-placeholder"
+                                    style="background-image: url('./assets/img/feminino/calca-ascent.jpg')"></div>
+                            </a>
+                            <button class="btn-quick-add" onclick="toggleSizeSelector(this)">Adição Rápida</button>
+                            <div class="size-selector-overlay hidden">
+                                <button class="btn-size" onclick="addToBag('PP', this)">PP</button>
+                                <button class="btn-size" onclick="addToBag('P', this)">P</button>
+                                <button class="btn-size" onclick="addToBag('M', this)">M</button>
+                                <button class="btn-size" onclick="addToBag('G', this)">G</button>
+                                <button class="btn-close-sizes" onclick="toggleSizeSelector(this)">&times;</button>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <div class="color-swatches">
+                                <span class="swatch checked" title="Berry Fig"
+                                    style="background: #6a2e41; cursor: pointer;"
+                                    onclick="selecionarCor(6, 'Berry Fig', this)"></span>
+                                <span class="swatch" title="Preto" style="background: #111111; cursor: pointer;"
+                                    onclick="selecionarCor(6, 'Preto', this)"></span>
+                                <span class="swatch" title="Verde" style="background: #2e5e3e; cursor: pointer;"
+                                    onclick="selecionarCor(6, 'Verde', this)"></span>
+                            </div>
+                            <h3 class="product-title"><a href="produto.html?produto=6">Calça Ascent XT Feminina</a></h3>
+                            <p class="product-price">R$ 620,00</p>
+                            <div class="product-tags">
+                                <span class="tag">elasticidade 4D</span>
+                                <span class="tag">escalada</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Produto 2: Jaqueta Térmica Aurora Down Hoody -->
+                    <article class="product-card" data-produto-id="7">
+                        <div class="product-img-wrapper">
+                            <span class="badge badge-white">Novo</span>
+                            <a href="produto.html?produto=7" class="img-link">
+                                <div class="img-placeholder"
+                                    style="background-image: url('./assets/img/feminino/jaqueta-aurora.jpg')"></div>
+                            </a>
+                            <button class="btn-quick-add" onclick="toggleSizeSelector(this)">Adição Rápida</button>
+                            <div class="size-selector-overlay hidden">
+                                <button class="btn-size" onclick="addToBag('PP', this)">PP</button>
+                                <button class="btn-size" onclick="addToBag('P', this)">P</button>
+                                <button class="btn-size" onclick="addToBag('M', this)">M</button>
+                                <button class="btn-size" onclick="addToBag('G', this)">G</button>
+                                <button class="btn-close-sizes" onclick="toggleSizeSelector(this)">&times;</button>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <div class="color-swatches">
+                                <span class="swatch checked" title="Bordo" style="background: #6a2e41; cursor: pointer;"
+                                    onclick="selecionarCor(7, 'Bordo', this)"></span>
+                                <span class="swatch" title="Azul" style="background: #2c3e50; cursor: pointer;"
+                                    onclick="selecionarCor(7, 'Azul', this)"></span>
+                                <span class="swatch" title="Branco" style="background: #f5f5f5; cursor: pointer;"
+                                    onclick="selecionarCor(7, 'Branco', this)"></span>
+                            </div>
+                            <h3 class="product-title"><a href="produto.html?produto=7">Jaqueta Térmica Aurora Down
+                                    Hoody</a></h3>
+                            <p class="product-price">R$ 1.190,00</p>
+                            <div class="product-tags">
+                                <span class="tag">pluma 800-fill</span>
+                                <span class="tag">ultraleve</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Produto 3: Top Segunda Pele Merino Warm -->
+                    <article class="product-card" data-produto-id="8">
+                        <div class="product-img-wrapper">
+                            <span class="badge badge-white">Novo</span>
+                            <a href="produto.html?produto=8" class="img-link">
+                                <div class="img-placeholder"
+                                    style="background-image: url('./assets/img/feminino/segunda-pele-merino.jpg')"></div>
+                            </a>
+                            <button class="btn-quick-add" onclick="toggleSizeSelector(this)">Adição Rápida</button>
+                            <div class="size-selector-overlay hidden">
+                                <button class="btn-size" onclick="addToBag('PP', this)">PP</button>
+                                <button class="btn-size" onclick="addToBag('P', this)">P</button>
+                                <button class="btn-size" onclick="addToBag('M', this)">M</button>
+                                <button class="btn-size" onclick="addToBag('G', this)">G</button>
+                                <button class="btn-close-sizes" onclick="toggleSizeSelector(this)">&times;</button>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <div class="color-swatches">
+                                <span class="swatch checked" title="Preto" style="background: #111111; cursor: pointer;"
+                                    onclick="selecionarCor(8, 'Preto', this)"></span>
+                                <span class="swatch" title="Cinza" style="background: #808080; cursor: pointer;"
+                                    onclick="selecionarCor(8, 'Cinza', this)"></span>
+                                <span class="swatch" title="Azul Marinho" style="background: #1b2a41; cursor: pointer;"
+                                    onclick="selecionarCor(8, 'Azul Marinho', this)"></span>
+                            </div>
+                            <h3 class="product-title"><a href="produto.html?produto=8">Top Segunda Pele Merino Warm</a>
+                            </h3>
+                            <p class="product-price">R$ 390,00</p>
+                            <div class="product-tags">
+                                <span class="tag">lã merino</span>
+                                <span class="tag">segunda pele</span>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </section>
+        </div>
+
+        <!-- NOTIFICAÇÃO DE CARRINHO -->
+        <div id="cart-toast" class="cart-toast hidden">
+            <div class="toast-header">
+                <h3>Adicionado ao Carrinho <span class="check-icon">✓</span></h3>
+                <button class="btn-close-toast" onclick="closeToast()">&times;</button>
+            </div>
+            <div class="toast-body">
+                <div class="toast-img" id="toast-img"
+                    style="background-image: url('./assets/img/feminino/calca-ascent.jpg');">
+                </div>
+                <div class="toast-details">
+                    <p class="toast-title" id="toast-title">1x Produto</p>
+                    <p class="toast-price" id="toast-price">R$ 0,00</p>
+                    <p class="toast-attr">Cor: <span id="toast-color"></span></p>
+                    <p class="toast-attr">Tamanho: <span id="toast-size">M</span></p>
+                </div>
+            </div>
+            <div class="toast-actions">
+                <a href="carrinho.html" class="btn-black-full">Checkout</a>
+                <button class="btn-outline-full" onclick="closeToast()">Continue Comprando</button>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="./js/components/notification.js"></script>
+    <script src="./js/components/loading.js"></script>
+    <script src="./js/components/layout.js"></script>
+    <script src="./js/components/usuario-session.js"></script>
+    <script src="./js/pages/catalog.js"></script>
+    <script src="./js/components/chatbot.js"></script>
+</body>
+
+</html>

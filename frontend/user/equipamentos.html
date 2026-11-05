@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equipamentos Técnicos Outdoor | Glaciar</title>
+    <link rel="stylesheet" href="./css/global.css">
+    <link rel="stylesheet" href="./css/pages/catalogo.css">
+    <link rel="stylesheet" href="./css/components/notification.css">
+    <link rel="stylesheet" href="./css/components/chatbot.css">
+</head>
+
+<body>
+    <div id="navbar-placeholder"></div>
+
+    <main class="catalog-page" data-categoria="Equipamentos">
+        <header class="catalog-header">
+            <nav class="breadcrumb" aria-label="Breadcrumb">
+                <a href="index.html">Home</a>
+                <span class="separator">&gt;</span>
+                <span class="current">Equipamentos</span>
+            </nav>
+            <h1>Equipamentos</h1>
+        </header>
+
+        <div class="catalog-layout">
+            <!-- Barra Lateral -->
+            <aside class="filters-sidebar">
+                <div class="filter-group">
+                    <h4>Categoria <span class="arrow">v</span></h4>
+                </div>
+                <div class="filter-group">
+                    <h4>Preço <span class="arrow">v</span></h4>
+                </div>
+                <div class="filter-group">
+                    <h4>Capacidade / Tamanho <span class="arrow">v</span></h4>
+                </div>
+                <div class="filter-group">
+                    <h4>Cor <span class="arrow">v</span></h4>
+                </div>
+            </aside>
+
+            <section class="products-grid-container">
+                <div class="grid-controls">
+                    <span class="items-count" id="items-count">3 Itens</span>
+                    <div class="sort-by">Ordenar Por <strong>Mais Relevantes</strong> <span class="arrow">v</span></div>
+                </div>
+
+                <div class="products-grid" id="products-grid">
+                    <!-- Produto 1: Mochila de Ataque Covert Alpine 45L -->
+                    <article class="product-card" data-produto-id="11">
+                        <div class="product-img-wrapper">
+                            <span class="badge badge-white">Destaque</span>
+                            <a href="produto.html?produto=11" class="img-link">
+                                <div class="img-placeholder"
+                                    style="background-image: url('./assets/img/equipamentos/mochila-covert.jpg')"></div>
+                            </a>
+                            <button class="btn-quick-add" onclick="toggleSizeSelector(this)">Adição Rápida</button>
+                            <div class="size-selector-overlay overlay-equipamentos hidden">
+                                <button class="btn-size" onclick="addToBag('35L', this)">35L</button>
+                                <button class="btn-size" onclick="addToBag('45L', this)">45L</button>
+                                <button class="btn-size" onclick="addToBag('65L', this)">65L</button>
+                                <button class="btn-close-sizes" onclick="toggleSizeSelector(this)">&times;</button>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <div class="color-swatches">
+                                <span class="swatch checked" title="Preto" style="background: #111111; cursor: pointer;"
+                                    onclick="selecionarCor(11, 'Preto', this)"></span>
+                                <span class="swatch" title="Laranja" style="background: #d9772b; cursor: pointer;"
+                                    onclick="selecionarCor(11, 'Laranja', this)"></span>
+                                <span class="swatch" title="Azul" style="background: #2c3e50; cursor: pointer;"
+                                    onclick="selecionarCor(11, 'Azul', this)"></span>
+                            </div>
+                            <h3 class="product-title"><a href="produto.html?produto=11">Mochila de Ataque Covert Alpine
+                                    45L</a></h3>
+                            <p class="product-price">R$ 980,00</p>
+                            <div class="product-tags">
+                                <span class="tag">nylon cordura</span>
+                                <span class="tag">45 litros</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Produto 2: Barraca Expedição K2 4 Estações -->
+                    <article class="product-card" data-produto-id="12">
+                        <div class="product-img-wrapper">
+                            <span class="badge badge-white">Novo</span>
+                            <a href="produto.html?produto=12" class="img-link">
+                                <div class="img-placeholder"
+                                    style="background-image: url('./assets/img/equipamentos/barraca-k2.jpg')"></div>
+                            </a>
+                            <button class="btn-quick-add" onclick="toggleSizeSelector(this)">Adição Rápida</button>
+                            <div class="size-selector-overlay overlay-equipamentos hidden">
+                                <button class="btn-size" onclick="addToBag('2P', this)">2P</button>
+                                <button class="btn-size" onclick="addToBag('3P', this)">3P</button>
+                                <button class="btn-close-sizes" onclick="toggleSizeSelector(this)">&times;</button>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <div class="color-swatches">
+                                <span class="swatch checked" title="Laranja"
+                                    style="background: #d9772b; cursor: pointer;"
+                                    onclick="selecionarCor(12, 'Laranja', this)"></span>
+                                <span class="swatch" title="Amarelo" style="background: #e0b43a; cursor: pointer;"
+                                    onclick="selecionarCor(12, 'Amarelo', this)"></span>
+                            </div>
+                            <h3 class="product-title"><a href="produto.html?produto=12">Barraca Expedição K2 4
+                                    Estações</a></h3>
+                            <p class="product-price">R$ 2.450,00</p>
+                            <div class="product-tags">
+                                <span class="tag">4 estações</span>
+                                <span class="tag">coluna 5000mm</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Produto 3: Saco de Dormir SubZero -15°C Pro -->
+                    <article class="product-card" data-produto-id="13">
+                        <div class="product-img-wrapper">
+                            <span class="badge badge-white">Novo</span>
+                            <a href="produto.html?produto=13" class="img-link">
+                                <div class="img-placeholder"
+                                    style="background-image: url('./assets/img/equipamentos/saco-subzero.jpg')"></div>
+                            </a>
+                            <button class="btn-quick-add" onclick="toggleSizeSelector(this)">Adição Rápida</button>
+                            <div class="size-selector-overlay overlay-equipamentos hidden">
+                                <button class="btn-size" onclick="addToBag('Regular', this)">Regular</button>
+                                <button class="btn-size" onclick="addToBag('Longo', this)">Longo</button>
+                                <button class="btn-close-sizes" onclick="toggleSizeSelector(this)">&times;</button>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <div class="color-swatches">
+                                <span class="swatch checked" title="Azul Marinho"
+                                    style="background: #1b2a41; cursor: pointer;"
+                                    onclick="selecionarCor(13, 'Azul Marinho', this)"></span>
+                                <span class="swatch" title="Cinza" style="background: #808080; cursor: pointer;"
+                                    onclick="selecionarCor(13, 'Cinza', this)"></span>
+                            </div>
+                            <h3 class="product-title"><a href="produto.html?produto=13">Saco de Dormir SubZero -15°C
+                                    Pro</a></h3>
+                            <p class="product-price">R$ 1.320,00</p>
+                            <div class="product-tags">
+                                <span class="tag">conforto -15°C</span>
+                                <span class="tag">sarcófago</span>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </section>
+        </div>
+
+        <!-- NOTIFICAÇÃO DE CARRINHO -->
+        <div id="cart-toast" class="cart-toast hidden">
+            <div class="toast-header">
+                <h3>Adicionado ao Carrinho <span class="check-icon">✓</span></h3>
+                <button class="btn-close-toast" onclick="closeToast()">&times;</button>
+            </div>
+            <div class="toast-body">
+                <div class="toast-img" id="toast-img"
+                    style="background-image: url('./assets/img/equipamentos/mochila-covert.jpg');">
+                </div>
+                <div class="toast-details">
+                    <p class="toast-title" id="toast-title">1x Produto</p>
+                    <p class="toast-price" id="toast-price">R$ 0,00</p>
+                    <p class="toast-attr">Cor: <span id="toast-color"></span></p>
+                    <p class="toast-attr">Tamanho: <span id="toast-size">45L</span></p>
+                </div>
+            </div>
+            <div class="toast-actions">
+                <a href="carrinho.html" class="btn-black-full">Checkout</a>
+                <button class="btn-outline-full" onclick="closeToast()">Continue Comprando</button>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="./js/components/notification.js"></script>
+    <script src="./js/components/loading.js"></script>
+    <script src="./js/components/layout.js"></script>
+    <script src="./js/components/usuario-session.js"></script>
+    <script src="./js/pages/catalog.js"></script>
+    <script src="./js/components/chatbot.js"></script>
+</body>
+
+</html>

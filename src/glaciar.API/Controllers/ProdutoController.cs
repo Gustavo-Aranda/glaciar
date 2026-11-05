@@ -29,6 +29,7 @@ namespace glaciar.API.Controllers
                     Nome = p.Nome,
                     Descricao = p.Descricao,
                     Tipo = p.Tipo.ToString(),
+                    Categoria = p.CategoriasDoProduto.Select(cp => cp.Categoria.Nome).FirstOrDefault() ?? p.Tipo.ToString(),
                     Preco = p.Preco,
                     Estoques = p.Estoques
                         .OrderBy(e => e.Id)
@@ -61,6 +62,7 @@ namespace glaciar.API.Controllers
                     Nome = produto.Nome,
                     Descricao = produto.Descricao,
                     Tipo = produto.Tipo.ToString(),
+                    Categoria = produto.CategoriasDoProduto.Select(cp => cp.Categoria.Nome).FirstOrDefault() ?? produto.Tipo.ToString(),
                     Preco = produto.Preco,
                     Estoques = produto.Estoques
                         .OrderBy(e => e.Id)

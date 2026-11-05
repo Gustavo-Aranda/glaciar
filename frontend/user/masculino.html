@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,10 +10,11 @@
     <link rel="stylesheet" href="./css/components/notification.css">
     <link rel="stylesheet" href="./css/components/chatbot.css">
 </head>
+
 <body>
     <div id="navbar-placeholder"></div>
 
-    <main class="catalog-page">
+    <main class="catalog-page" data-categoria="Masculino">
         <header class="catalog-header">
             <nav class="breadcrumb" aria-label="Breadcrumb">
                 <a href="index.html">Home</a>
@@ -23,35 +25,182 @@
         </header>
 
         <div class="catalog-layout">
-            <!-- Barra Lateral (Empurrada mais para a esquerda pelo CSS) -->
+            <!-- Barra Lateral -->
             <aside class="filters-sidebar">
-                <div class="filter-group"><h4>Categoria <span class="arrow">v</span></h4></div>
-                <div class="filter-group"><h4>Preço <span class="arrow">v</span></h4></div>
-                <div class="filter-group"><h4>Tamanho <span class="arrow">v</span></h4></div>
-                <div class="filter-group"><h4>Cor <span class="arrow">v</span></h4></div>
+                <div class="filter-group">
+                    <h4>Categoria <span class="arrow">v</span></h4>
+                </div>
+                <div class="filter-group">
+                    <h4>Preço <span class="arrow">v</span></h4>
+                </div>
+                <div class="filter-group">
+                    <h4>Tamanho <span class="arrow">v</span></h4>
+                </div>
+                <div class="filter-group">
+                    <h4>Cor <span class="arrow">v</span></h4>
+                </div>
             </aside>
 
             <section class="products-grid-container">
                 <div class="grid-controls">
-                    <span class="items-count" id="items-count">0 Itens</span>
-                    <div class="sort-by">Ordenar Por <strong>Mais Relevantes</strong> <span class="arrow">v</span></div>
+                    <span class="items-count" id="items-count">4 Itens</span>
+                    <div class="sort-by">Ordenar Por <strong>Mais Relevantes</strong> <span class="arrow">v</span>
+                    </div>
                 </div>
 
                 <div class="products-grid" id="products-grid">
-                    <!-- Cards renderizados dinamicamente por js/pages/catalog.js (GET /api/produtos?categoria=Masculino) -->
+                    <!-- Produto 1: Jaqueta Térmica Glaciar Apex -->
+                    <article class="product-card" data-produto-id="1">
+                        <div class="product-img-wrapper">
+                            <span class="badge badge-white">Novo</span>
+                            <a href="produto.html?produto=1" class="img-link">
+                                <div class="img-placeholder"
+                                    style="background-image: url('./assets/img/masculino/termica-apex.jpg')"></div>
+                            </a>
+                            <button class="btn-quick-add" onclick="toggleSizeSelector(this)">Adição Rápida</button>
+                            <div class="size-selector-overlay hidden">
+                                <button class="btn-size" onclick="addToBag('M', this)">M</button>
+                                <button class="btn-close-sizes" onclick="toggleSizeSelector(this)">&times;</button>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <div class="color-swatches">
+                                <span class="swatch checked" title="Preto" style="background: #111111; cursor: pointer;"
+                                    onclick="selecionarCor(1, 'Preto', this)"></span>
+                            </div>
+                            <h3 class="product-title"><a href="produto.html?produto=1">Jaqueta Térmica Glaciar Apex</a>
+                            </h3>
+                            <p class="product-price">R$ 349,90</p>
+                            <div class="product-tags">
+                                <span class="tag">impermeável</span>
+                                <span class="tag">isolamento térmico</span>
+                            </div>
+                        </div>
+                    </article>
 
+                    <!-- Produto 2: Jaqueta Alpine Pro -->
+                    <article class="product-card" data-produto-id="2">
+                        <div class="product-img-wrapper">
+                            <span class="badge badge-white">Destaque</span>
+                            <a href="produto.html?produto=2" class="img-link">
+                                <div class="img-placeholder"
+                                    style="background-image: url('./assets/img/masculino/alpine-pro.jpg')"></div>
+                            </a>
+                            <button class="btn-quick-add" onclick="toggleSizeSelector(this)">Adição Rápida</button>
+                            <div class="size-selector-overlay hidden">
+                                <button class="btn-size" onclick="addToBag('P', this)">P</button>
+                                <button class="btn-size" onclick="addToBag('M', this)">M</button>
+                                <button class="btn-size" onclick="addToBag('G', this)">G</button>
+                                <button class="btn-size" onclick="addToBag('GG', this)">GG</button>
+                                <button class="btn-close-sizes" onclick="toggleSizeSelector(this)">&times;</button>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <div class="color-swatches">
+                                <span class="swatch checked" title="Azul Marinho"
+                                    style="background: #1b2a41; cursor: pointer;"
+                                    onclick="selecionarCor(2, 'Azul Marinho', this)"></span>
+                                <span class="swatch" title="Preto" style="background: #111111; cursor: pointer;"
+                                    onclick="selecionarCor(2, 'Preto', this)"></span>
+                                <span class="swatch" title="Verde" style="background: #2e5e3e; cursor: pointer;"
+                                    onclick="selecionarCor(2, 'Verde', this)"></span>
+                            </div>
+                            <h3 class="product-title"><a href="produto.html?produto=2">Jaqueta Alpine Pro</a>
+                            </h3>
+                            <p class="product-price">R$ 890,00</p>
+                            <div class="product-tags">
+                                <span class="tag">isolamento térmico</span>
+                                <span class="tag">fleece</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Produto 3 (Novo): Jaqueta Impermeável StormBreaker GTX -->
+                    <article class="product-card" data-produto-id="4">
+                        <div class="product-img-wrapper">
+                            <span class="badge badge-white">Novo</span>
+                            <a href="produto.html?produto=4" class="img-link">
+                                <div class="img-placeholder"
+                                    style="background-image: url('./assets/img/masculino/stormbreaker.jpg')"></div>
+                            </a>
+                            <button class="btn-quick-add" onclick="toggleSizeSelector(this)">Adição Rápida</button>
+                            <div class="size-selector-overlay hidden">
+                                <button class="btn-size" onclick="addToBag('P', this)">P</button>
+                                <button class="btn-size" onclick="addToBag('M', this)">M</button>
+                                <button class="btn-size" onclick="addToBag('G', this)">G</button>
+                                <button class="btn-size" onclick="addToBag('GG', this)">GG</button>
+                                <button class="btn-close-sizes" onclick="toggleSizeSelector(this)">&times;</button>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <div class="color-swatches">
+                                <span class="swatch checked" title="Laranja"
+                                    style="background: #d9772b; cursor: pointer;"
+                                    onclick="selecionarCor(4, 'Laranja', this)"></span>
+                                <span class="swatch" title="Preto" style="background: #111111; cursor: pointer;"
+                                    onclick="selecionarCor(4, 'Preto', this)"></span>
+                                <span class="swatch" title="Cinza" style="background: #808080; cursor: pointer;"
+                                    onclick="selecionarCor(4, 'Cinza', this)"></span>
+                            </div>
+                            <h3 class="product-title"><a href="produto.html?produto=4">Jaqueta Impermeável
+                                    StormBreaker GTX</a></h3>
+                            <p class="product-price">R$ 1.490,00</p>
+                            <div class="product-tags">
+                                <span class="tag">impermeável</span>
+                                <span class="tag">cortavento</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Produto 4 (Novo): Calça Técnica Ridge Cargo Ripstop -->
+                    <article class="product-card" data-produto-id="5">
+                        <div class="product-img-wrapper">
+                            <span class="badge badge-white">Novo</span>
+                            <a href="produto.html?produto=5" class="img-link">
+                                <div class="img-placeholder"
+                                    style="background-image: url('./assets/img/masculino/ridge-cargo.jpg')"></div>
+                            </a>
+                            <button class="btn-quick-add" onclick="toggleSizeSelector(this)">Adição Rápida</button>
+                            <div class="size-selector-overlay hidden">
+                                <button class="btn-size" onclick="addToBag('P', this)">P</button>
+                                <button class="btn-size" onclick="addToBag('M', this)">M</button>
+                                <button class="btn-size" onclick="addToBag('G', this)">G</button>
+                                <button class="btn-size" onclick="addToBag('GG', this)">GG</button>
+                                <button class="btn-close-sizes" onclick="toggleSizeSelector(this)">&times;</button>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <div class="color-swatches">
+                                <span class="swatch checked" title="Verde" style="background: #2e5e3e; cursor: pointer;"
+                                    onclick="selecionarCor(5, 'Verde', this)"></span>
+                                <span class="swatch" title="Bege" style="background: #d9c7a3; cursor: pointer;"
+                                    onclick="selecionarCor(5, 'Bege', this)"></span>
+                                <span class="swatch" title="Preto" style="background: #111111; cursor: pointer;"
+                                    onclick="selecionarCor(5, 'Preto', this)"></span>
+                            </div>
+                            <h3 class="product-title"><a href="produto.html?produto=5">Calça Técnica Ridge Cargo
+                                    Ripstop</a></h3>
+                            <p class="product-price">R$ 650,00</p>
+                            <div class="product-tags">
+                                <span class="tag">ripstop</span>
+                                <span class="tag">repelente à água</span>
+                            </div>
+                        </div>
+                    </article>
                 </div>
             </section>
         </div>
 
-        <!-- NOTIFICAÇÃO DE CARRINHO (Inspirado na Imagem 2) -->
+        <!-- NOTIFICAÇÃO DE CARRINHO -->
         <div id="cart-toast" class="cart-toast hidden">
             <div class="toast-header">
                 <h3>Adicionado ao Carrinho <span class="check-icon">✓</span></h3>
                 <button class="btn-close-toast" onclick="closeToast()">&times;</button>
             </div>
             <div class="toast-body">
-                <div class="toast-img" id="toast-img" style="background-image: url('./assets/img/destaque-1.jpg');"></div>
+                <div class="toast-img" id="toast-img"
+                    style="background-image: url('./assets/img/masculino/alpine-pro.jpg');">
+                </div>
                 <div class="toast-details">
                     <p class="toast-title" id="toast-title">1x Produto</p>
                     <p class="toast-price" id="toast-price">R$ 0,00</p>
@@ -74,4 +223,5 @@
     <script src="./js/pages/catalog.js"></script>
     <script src="./js/components/chatbot.js"></script>
 </body>
+
 </html>

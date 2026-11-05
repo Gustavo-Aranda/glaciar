@@ -19,6 +19,8 @@ namespace glaciar.Infrastructure.Repositories
             var query = _context.Produtos
                 .AsNoTracking()
                 .Include(p => p.Estoques)
+                .Include(p => p.CategoriasDoProduto)
+                    .ThenInclude(cp => cp.Categoria)
                 .Where(p => p.Visivel);
 
             if (!string.IsNullOrWhiteSpace(categoria))
@@ -35,6 +37,8 @@ namespace glaciar.Infrastructure.Repositories
             return await _context.Produtos
                 .AsNoTracking()
                 .Include(p => p.Estoques)
+                .Include(p => p.CategoriasDoProduto)
+                    .ThenInclude(cp => cp.Categoria)
                 .FirstOrDefaultAsync(p => p.Id == id && p.Visivel);
         }
     }
