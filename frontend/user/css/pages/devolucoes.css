@@ -74,11 +74,12 @@
 .product-img {
     width: 80px;
     height: 80px;
-    background-size: cover;
-    background-position: center;
-    border-radius: 4px;
+    object-fit: cover;
+    border-radius: 6px;
     background-color: var(--fundo-app);
     border: 1px solid var(--borda-cinza);
+    flex-shrink: 0;
+    display: block;
 }
 
 .product-details {
