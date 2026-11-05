@@ -148,6 +148,18 @@ namespace glaciar.Infrastructure.Repositories
             return await query.FirstOrDefaultAsync();
         }
 
+        public async Task<int?> GetPedidoIdDoItemAsync(int pedidoProdutoId, int usuarioId)
+        {
+            return await _context.PedidosProdutos
+                .AsNoTracking()
+                .Where(pp =>
+                    pp.Id == pedidoProdutoId &&
+                    pp.Pedido.UsuarioId == usuarioId &&
+                    pp.Pedido.Status != StatusPedido.EmAberto)
+                .Select(pp => (int?)pp.PedidoId)
+                .FirstOrDefaultAsync();
+        }
+
         public async Task<IReadOnlyList<Pedido>> GetCarrinhosVencidosAsync(DateTime agora)
         {
             return await _context.Pedidos

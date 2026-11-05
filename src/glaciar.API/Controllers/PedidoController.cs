@@ -120,11 +120,28 @@ namespace glaciar.API.Controllers
         }
 
         /// <summary>
-        /// Solicita a troca de unidades/itens do pedido ou do pedido completo (quando a lista for omitida/vazia).
-        /// Requer que o pedido esteja no status ENTREGUE.
+        /// Solicita a troca de itens específicos (PedidoProdutoId + quantidade) de um pedido ENTREGUE.
+        /// A troca do pedido completo só ocorre com "trocarPedidoInteiro": true (opt-in explícito);
+        /// lista de itens vazia/ausente é rejeitada com 400.
         /// </summary>
         [HttpPost("{id}/troca")]
-        public async Task<IActionResult> SolicitarTroca(int id, [FromBody] SolicitarTrocaDTO dto)
+        public Task<IActionResult> SolicitarTroca(int id, [FromBody] SolicitarTrocaDTO dto) =>
+            ExecutarSolicitacaoTrocaAsync(usuarioId => _pedidoStatusService.SolicitarTrocaAsync(id, usuarioId, dto));
+
+        /// <summary>
+        /// Abre a troca/devolução de UM ÚNICO item do pedido, identificado por PedidoProdutoId.
+        /// O pedido é deduzido do item e validado contra o cliente logado (X-Usuario-Id).
+        /// Body: { "pedidoProdutoId": 10, "quantidade": 1, "motivo": "..." }
+        /// </summary>
+        [HttpPost("itens/troca")]
+        public Task<IActionResult> SolicitarTrocaDeItem([FromBody] SolicitarDevolucaoItemDTO dto) =>
+            ExecutarSolicitacaoTrocaAsync(usuarioId => _pedidoStatusService.SolicitarDevolucaoDeItemAsync(usuarioId, dto));
+
+        /// <summary>
+        /// Pipeline comum (DRY) às solicitações de troca: validação do ModelState, identificação do cliente
+        /// e tradução das exceções de domínio para os códigos HTTP correspondentes.
+        /// </summary>
+        private async Task<IActionResult> ExecutarSolicitacaoTrocaAsync(Func<int, Task<PedidoStatusAlteradoDTO>> solicitar)
         {
             if (!ModelState.IsValid)
             {
@@ -134,7 +151,7 @@ namespace glaciar.API.Controllers
             try
             {
                 var usuarioId = GetUsuarioId();
-                var resultado = await _pedidoStatusService.SolicitarTrocaAsync(id, usuarioId, dto);
+                var resultado = await solicitar(usuarioId);
 
                 return Ok(new
                 {

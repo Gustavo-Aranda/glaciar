@@ -175,9 +175,16 @@ function renderizarDevolucoes(container, devolucoes) {
             tipoMensagem: 'info-text'
         };
 
-        const itens = pedido.itens || [];
-        const itensHtml = itens.map(item => {
+        // Exibe SOMENTE os itens (PedidoProduto) incluídos na troca. O fallback para pedido.itens
+        // existe apenas para respostas legadas que ainda não trazem "itensEmTroca".
+        const itensEmTroca = Array.isArray(pedido.itensEmTroca) && pedido.itensEmTroca.length > 0
+            ? pedido.itensEmTroca
+            : (pedido.itens || []);
+        const itensHtml = itensEmTroca.map(item => {
             const imgUrl = resolverImagemProduto(item);
+            const creditoHtml = item.valor > 0
+                ? ` &bull; Crédito previsto: ${formatarMoeda(item.valor)}`
+                : '';
             return `
             <div class="return-body">
                 <img class="product-img" 
@@ -188,7 +195,7 @@ function renderizarDevolucoes(container, devolucoes) {
                      onerror="this.onerror=null; this.src='./assets/img/masculino/alpine-pro.jpg';">
                 <div class="product-details">
                     <p class="product-title">${item.quantidade}x ${escaparHtml(item.nomeProduto)}</p>
-                    <p class="product-reason">Preço: ${formatarMoeda(item.precoUnitario)}</p>
+                    <p class="product-reason">Preço: ${formatarMoeda(item.precoUnitario)}${creditoHtml}</p>
                     <p class="${info.tipoMensagem}">
                         ${info.mensagem}
                         ${pedido.status === 'TrocaAceita' ? `<br>Código Reverso dos Correios: <strong>REV-${escaparHtml(pedido.codigo || pedido.id)}</strong>` : ''}

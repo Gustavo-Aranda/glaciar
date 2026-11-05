@@ -178,6 +178,13 @@ function configurarEventosGlobais() {
             return;
         }
 
+        const btnTrocaItem = event.target.closest('[data-acao="solicitar-troca-item"]');
+        if (btnTrocaItem) {
+            // Troca granular: o identificador enviado é o do PedidoProduto (linha do pedido)
+            abrirModalTroca(Number(btnTrocaItem.dataset.pedidoId), Number(btnTrocaItem.dataset.pedidoProdutoId));
+            return;
+        }
+
         const btnTroca = event.target.closest('[data-acao="solicitar-troca"]');
         if (btnTroca) {
             const pedidoId = Number(btnTroca.dataset.pedidoId);
@@ -327,6 +334,11 @@ function gerarHtmlCardPedido(pedido) {
                 <p class="product-price">
                     ${formatarMoeda(item.precoUnitario)} cada (Subtotal: ${formatarMoeda(item.subtotal)})
                 </p>
+                ${pedido.status === 'Entregue' ? `
+                <button type="button" class="btn btn-secondary btn-troca-item"
+                        data-acao="solicitar-troca-item"
+                        data-pedido-id="${pedido.id}"
+                        data-pedido-produto-id="${item.id}">Trocar este item</button>` : ''}
             </div>
         </div>
         `;
@@ -510,39 +522,66 @@ function configurarModalTroca() {
     document.getElementById('form-solicitar-troca')?.addEventListener('submit', submeterSolicitacaoTroca);
 }
 
-function abrirModalTroca(pedidoId) {
+/**
+ * Abre o modal de troca.
+ * - Modo "item" (pedidoProdutoId informado): exibe SOMENTE a linha escolhida e envia para POST /pedidos/itens/troca.
+ * - Modo "pedido": lista as linhas SEM pré-seleção; o cliente marca explicitamente o(s) item(ns) desejado(s).
+ */
+function abrirModalTroca(pedidoId, pedidoProdutoId = null) {
     const pedido = _pedidosCarregados.find(p => p.id === pedidoId);
     if (!pedido) {
         exibirErro('Erro', 'Pedido não encontrado.');
         return;
     }
 
+    const modoItem = Number.isInteger(pedidoProdutoId) && pedidoProdutoId > 0;
+    const itensDoModal = modoItem
+        ? (pedido.itens || []).filter(i => i.id === pedidoProdutoId)
+        : (pedido.itens || []);
+
+    if (modoItem && itensDoModal.length === 0) {
+        exibirErro('Erro', 'Item do pedido não encontrado.');
+        return;
+    }
+
     const modal = document.getElementById('modal-troca');
+    const form = document.getElementById('form-solicitar-troca');
     const inputPedidoId = document.getElementById('troca-pedido-id');
     const listaItens = document.getElementById('troca-itens-lista');
     const textareaMotivo = document.getElementById('troca-motivo');
     const radioParcial = document.getElementById('radio-troca-parcial');
     const containerItens = document.getElementById('container-selecao-itens');
+    const containerTipo = document.querySelector('#modal-troca .troca-tipo-container');
 
+    if (form) {
+        form.dataset.modo = modoItem ? 'item' : 'pedido';
+        form.dataset.pedidoProdutoId = modoItem ? String(pedidoProdutoId) : '';
+    }
     if (inputPedidoId) inputPedidoId.value = pedido.id;
     if (textareaMotivo) textareaMotivo.value = '';
     if (radioParcial) radioParcial.checked = true;
     if (containerItens) containerItens.style.display = 'block';
+    // No modo item não faz sentido oferecer "trocar o pedido inteiro"
+    if (containerTipo) containerTipo.style.display = modoItem ? 'none' : '';
 
     const titulo = document.getElementById('modal-troca-titulo');
-    if (titulo) titulo.textContent = `Solicitar Troca do Pedido #${pedido.codigo || pedido.id}`;
+    if (titulo) {
+        titulo.textContent = modoItem
+            ? `Solicitar Troca de Item — Pedido #${pedido.codigo || pedido.id}`
+            : `Solicitar Troca do Pedido #${pedido.codigo || pedido.id}`;
+    }
 
     if (listaItens) {
         listaItens.innerHTML = '';
-        const itens = pedido.itens || [];
 
-        itens.forEach(item => {
+        itensDoModal.forEach(item => {
             const imgUrl = resolverImagemProduto(item);
             const linha = document.createElement('div');
             linha.className = 'troca-item-linha';
             linha.innerHTML = `
                 <div class="troca-item-info">
-                    <input type="checkbox" class="troca-item-checkbox" data-item-id="${item.id}" id="chk-item-${item.id}" checked>
+                    <input type="checkbox" class="troca-item-checkbox" data-item-id="${item.id}" id="chk-item-${item.id}"
+                           ${modoItem ? 'checked disabled' : ''}>
                     <img class="troca-item-thumb" 
                          src="${imgUrl}" 
                          alt="${escaparHtml(item.nomeProduto || 'Produto')}" 
@@ -562,9 +601,16 @@ function abrirModalTroca(pedidoId) {
                            data-item-id="${item.id}" 
                            min="1" 
                            max="${item.quantidade}" 
-                           value="${item.quantidade}">
+                           value="1">
                 </div>
             `;
+
+            // Alterar a quantidade de uma linha implica selecioná-la (intenção explícita do cliente)
+            const chk = linha.querySelector('.troca-item-checkbox');
+            linha.querySelector('.troca-item-qtd-input')?.addEventListener('input', () => {
+                if (chk && !chk.disabled) chk.checked = true;
+            });
+
             listaItens.appendChild(linha);
         });
     }
@@ -580,18 +626,33 @@ function fecharModalTroca() {
 async function submeterSolicitacaoTroca(event) {
     event.preventDefault();
 
+    const form = event.currentTarget || document.getElementById('form-solicitar-troca');
     const pedidoId = Number(document.getElementById('troca-pedido-id')?.value);
     const motivo = document.getElementById('troca-motivo')?.value?.trim();
-    const trocaTotal = document.getElementById('radio-troca-total')?.checked;
 
     if (!motivo) {
         exibirErro('Atenção', 'Informe o motivo da troca.');
         return;
     }
 
+    // Modo item: endpoint granular, identificado exclusivamente pelo PedidoProdutoId
+    if (form?.dataset.modo === 'item') {
+        const pedidoProdutoId = Number(form.dataset.pedidoProdutoId);
+        const inputQtd = document.querySelector(`.troca-item-qtd-input[data-item-id="${pedidoProdutoId}"]`);
+        const quantidade = inputQtd ? Number(inputQtd.value) : 1;
+
+        await enviarSolicitacaoTroca(`${API_BASE_URL}/pedidos/itens/troca`, {
+            pedidoProdutoId,
+            quantidade,
+            motivo
+        });
+        return;
+    }
+
+    const trocaTotal = !!document.getElementById('radio-troca-total')?.checked;
     const payload = {
         motivo: motivo,
-        trocarPedidoInteiro: !!trocaTotal,
+        trocarPedidoInteiro: trocaTotal, // opt-in explícito: o backend não infere mais "pedido inteiro"
         itens: []
     };
 
@@ -614,10 +675,17 @@ async function submeterSolicitacaoTroca(event) {
         });
     }
 
+    await enviarSolicitacaoTroca(`${API_BASE_URL}/pedidos/${pedidoId}/troca`, payload);
+}
+
+/**
+ * POST comum às solicitações de troca (item único ou lote).
+ */
+async function enviarSolicitacaoTroca(url, payload) {
     if (window.LoadingService) window.LoadingService.show('Enviando solicitação de troca...');
 
     try {
-        const response = await fetch(`${API_BASE_URL}/pedidos/${pedidoId}/troca`, {
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

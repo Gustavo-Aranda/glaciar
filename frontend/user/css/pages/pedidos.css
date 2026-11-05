@@ -578,3 +578,11 @@
 .address-save-button:hover {
     opacity: 0.9;
 }
+
+
+/* Botão de troca granular por item (PedidoProduto) */
+.btn-troca-item {
+    margin-top: 0.5rem;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.8rem;
+}

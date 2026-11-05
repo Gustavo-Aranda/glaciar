@@ -33,6 +33,12 @@ namespace glaciar.Application.DTOs.Vendas
         /// <summary>Motivo informado pelo cliente ao registrar a solicitação de troca.</summary>
         public string? MotivoTroca { get; set; }
 
+        /// <summary>
+        /// Itens (PedidoProduto) e quantidades EFETIVAMENTE incluídos na troca — fonte de verdade para o painel
+        /// de devoluções do cliente (equivalente ao ItensTroca do painel Admin).
+        /// </summary>
+        public List<DevolucaoItemResponseDTO> ItensEmTroca { get; set; } = new();
+
         /// <summary>Ações que o CLIENTE pode executar agora (ex.: Entregue, TrocaSolicitada, ItemEnviado).</summary>
         public List<StatusPedido> ProximosStatus { get; set; } = new();
     }

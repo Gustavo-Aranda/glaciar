@@ -37,6 +37,12 @@ namespace glaciar.Domain.Interfaces.Repositories
         Task<Pedido?> GetParaAlteracaoStatusAsync(int pedidoId, int? usuarioId = null);
 
         /// <summary>
+        /// Resolve o Id do pedido (não carrinho) ao qual a linha PedidoProduto pertence, SOMENTE se o pedido
+        /// for do usuário informado. Retorna null caso o item não exista ou seja de outro cliente.
+        /// </summary>
+        Task<int?> GetPedidoIdDoItemAsync(int pedidoProdutoId, int usuarioId);
+
+        /// <summary>
         /// Retorna os carrinhos (pedidos EmAberto) cujo tempo limite de reserva já expirou.
         /// </summary>
         Task<IReadOnlyList<Pedido>> GetCarrinhosVencidosAsync(DateTime agora);

@@ -134,8 +134,44 @@ namespace glaciar.Application.Mappings
                     .ToList(),
                 CupomTrocaGerado = cupomTrocaGerado == null ? null : ParaCupom(cupomTrocaGerado),
                 MotivoTroca = pedido.Devolucoes?.OrderByDescending(d => d.DataDevolucao).FirstOrDefault()?.Motivo,
+                ItensEmTroca = ParaItensEmTroca(pedido),
                 ProximosStatus = PedidoMaquinaEstados.ProximosStatus(pedido.Status, AtorTransicao.Cliente).ToList()
             };
+        }
+
+        /// <summary>
+        /// Projeta cada Devolucao a partir da SUA linha de pedido (PedidoProdutoId), e não da lista
+        /// completa de itens do pedido. Reaproveita os itens já carregados no agregado (sem consulta extra).
+        /// </summary>
+        private static List<DevolucaoItemResponseDTO> ParaItensEmTroca(Pedido pedido)
+        {
+            if (pedido.Devolucoes == null || pedido.Devolucoes.Count == 0)
+                return new List<DevolucaoItemResponseDTO>();
+
+            var itensPorId = pedido.ProdutosDoPedido.ToDictionary(i => i.Id);
+
+            return pedido.Devolucoes
+                .OrderBy(d => d.Id)
+                .Select(d =>
+                {
+                    var item = itensPorId.GetValueOrDefault(d.PedidoProdutoId) ?? d.PedidoProduto;
+                    return new DevolucaoItemResponseDTO
+                    {
+                        Id = d.Id,
+                        PedidoProdutoId = d.PedidoProdutoId,
+                        ProdutoId = item?.Estoque?.ProdutoId ?? 0,
+                        NomeProduto = item?.Estoque?.Produto?.Nome ?? string.Empty,
+                        Tamanho = item?.Estoque?.Tamanho ?? string.Empty,
+                        Cor = item?.Estoque?.Cor ?? string.Empty,
+                        PrecoUnitario = item?.Preco ?? 0m,
+                        Quantidade = d.Quantidade,
+                        Valor = d.Valor,
+                        Motivo = d.Motivo,
+                        Status = d.Status,
+                        DataDevolucao = d.DataDevolucao
+                    };
+                })
+                .ToList();
         }
 
         public static PedidoAdminResumoDTO ParaPedidoAdminResumo(Pedido pedido)

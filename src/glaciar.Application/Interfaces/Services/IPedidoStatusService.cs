@@ -28,5 +28,13 @@ namespace glaciar.Application.Interfaces.Services
             int pedidoId,
             int usuarioId,
             SolicitarTrocaDTO dto);
+
+        /// <summary>
+        /// Abertura de troca/devolução GRANULAR de um único item (PedidoProduto).
+        /// O pedido é resolvido a partir do item e restrito ao cliente logado (proteção contra IDOR).
+        /// </summary>
+        Task<PedidoStatusAlteradoDTO> SolicitarDevolucaoDeItemAsync(
+            int usuarioId,
+            SolicitarDevolucaoItemDTO dto);
     }
 }

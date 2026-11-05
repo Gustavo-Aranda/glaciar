@@ -113,22 +113,36 @@ namespace glaciar.Domain.Entities.Vendas
         // MÁQUINA DE ESTADOS — ÚNICA PORTA DE ENTRADA PARA MUDAR O STATUS
         // =====================================================================
 
+        // =====================================================================
+        // TROCA / DEVOLUÇÃO — SEMPRE GRANULAR POR PedidoProduto
+        // =====================================================================
+
         /// <summary>
-        /// Avança o pedido para <paramref name="novoStatus"/> em nome de <paramref name="ator"/>.
-        /// 1) Valida a transição (status anterior correto + ator autorizado) — lança DomainValidationException se inválida;
-        /// 2) Valida as pré-condições específicas do destino;
-        /// 3) Só então aplica os efeitos colaterais internos ao agregado (Pagamentos, Entrega) e grava o novo status.
-        /// Efeitos que exigem I/O (estoque, novo cupom) são devolvidos em <see cref="ResultadoTransicaoPedido"/>.
+        /// Solicita a troca de um ÚNICO item (linha PedidoProduto) do pedido.
+        /// Atalho semântico para o caso de uso mais comum do cliente; delega à regra única de <see cref="SolicitarTroca"/>.
         /// </summary>
-        /// <remarks>
-        /// Requer as coleções ProdutosDoPedido, Pagamentos, Entregas e CuponsAplicados(.Cupom) carregadas.
-        /// </remarks>
+        public ResultadoTransicaoPedido SolicitarTrocaDeItem(int pedidoProdutoId, int quantidade, string motivo) =>
+            SolicitarTroca(new[] { new ItemTroca(pedidoProdutoId, quantidade) }, motivo);
+
         /// <summary>
-        /// Solicita a troca de unidades/itens específicos ou do pedido inteiro (se itens for nulo ou vazio).
-        /// Valida se o pedido está ENTREGUE, gera os registros de Devolucao com o crédito rateado
-        /// e avança o status para TrocaSolicitada.
+        /// Solicita a troca de TODAS as unidades de TODOS os itens. Precisa ser uma decisão EXPLÍCITA do cliente:
+        /// a seleção é materializada aqui, item a item, e passa pela mesma regra granular de <see cref="SolicitarTroca"/>.
         /// </summary>
-        public ResultadoTransicaoPedido SolicitarTroca(IEnumerable<ItemTroca>? itens, string motivo)
+        public ResultadoTransicaoPedido SolicitarTrocaDoPedidoInteiro(string motivo)
+        {
+            GarantirItensCarregados();
+            return SolicitarTroca(
+                ProdutosDoPedido.Select(i => new ItemTroca(i.Id, i.Quantidade)).ToList(),
+                motivo);
+        }
+
+        /// <summary>
+        /// Regra ÚNICA de abertura de troca. Recebe obrigatoriamente os itens (PedidoProduto) e as quantidades
+        /// selecionadas — NÃO existe mais o fallback implícito "lista vazia = pedido inteiro".
+        /// Valida se o pedido está ENTREGUE, se cada item pertence a este pedido, gera um registro de Devolucao
+        /// por item selecionado (com o crédito rateado) e avança o status para TrocaSolicitada.
+        /// </summary>
+        public ResultadoTransicaoPedido SolicitarTroca(IReadOnlyCollection<ItemTroca> itens, string motivo)
         {
             if (Status != StatusPedido.Entregue)
             {
@@ -141,32 +155,19 @@ namespace glaciar.Domain.Entities.Vendas
                 throw new DomainValidationException("Informe o motivo da troca.");
             }
 
-            if (!ProdutosDoPedido.Any())
+            if (itens == null || itens.Count == 0)
             {
-                throw new DomainValidationException("Os itens do pedido não foram carregados.");
+                throw new DomainValidationException("Selecione ao menos um item do pedido para trocar.");
             }
 
-            var itensInformados = itens?.ToList() ?? new List<ItemTroca>();
-            var selecao = itensInformados.Count == 0
-                ? ProdutosDoPedido.Select(i => (Item: i, Qtd: i.Quantidade)).ToList()
-                : itensInformados.Select(t =>
-                {
-                    var item = ProdutosDoPedido.FirstOrDefault(i => i.Id == t.PedidoProdutoId)
-                        ?? throw new DomainValidationException("Item informado não pertence a este pedido.");
+            GarantirItensCarregados();
 
-                    if (t.Quantidade < 1 || t.Quantidade > item.Quantidade)
-                    {
-                        throw new DomainValidationException(
-                            $"Quantidade inválida para troca no item '{item.Estoque?.Produto?.Nome ?? "Produto"}'. Comprado: {item.Quantidade}, Solicitado: {t.Quantidade}.");
-                    }
-
-                    return (Item: item, Qtd: t.Quantidade);
-                }).ToList();
-
-            if (selecao.GroupBy(s => s.Item.Id).Any(g => g.Count() > 1))
+            if (itens.GroupBy(t => t.PedidoProdutoId).Any(g => g.Count() > 1))
             {
                 throw new DomainValidationException("O mesmo item foi informado mais de uma vez para troca.");
             }
+
+            var selecao = itens.Select(ResolverItemParaTroca).ToList();
 
             var agora = DateTime.UtcNow;
             var totalCredito = CalcularCreditoTroca(selecao);
@@ -187,6 +188,42 @@ namespace glaciar.Domain.Entities.Vendas
             return AlterarStatus(StatusPedido.TrocaSolicitada, AtorTransicao.Cliente);
         }
 
+        /// <summary>
+        /// Resolve a seleção do cliente contra as linhas DESTE pedido: garante que o PedidoProduto
+        /// pertence ao agregado (proteção contra IDs de itens de outros pedidos) e que a quantidade é válida.
+        /// </summary>
+        private (PedidoProduto Item, int Qtd) ResolverItemParaTroca(ItemTroca selecao)
+        {
+            var item = ProdutosDoPedido.FirstOrDefault(i => i.Id == selecao.PedidoProdutoId)
+                ?? throw new DomainValidationException("Item informado não pertence a este pedido.");
+
+            if (selecao.Quantidade < 1 || selecao.Quantidade > item.Quantidade)
+            {
+                throw new DomainValidationException(
+                    $"Quantidade inválida para troca no item '{item.Estoque?.Produto?.Nome ?? "Produto"}'. Comprado: {item.Quantidade}, Solicitado: {selecao.Quantidade}.");
+            }
+
+            return (item, selecao.Quantidade);
+        }
+
+        private void GarantirItensCarregados()
+        {
+            if (!ProdutosDoPedido.Any())
+            {
+                throw new DomainValidationException("Os itens do pedido não foram carregados.");
+            }
+        }
+
+        /// <summary>
+        /// Avança o pedido para <paramref name="novoStatus"/> em nome de <paramref name="ator"/>.
+        /// 1) Valida a transição (status anterior correto + ator autorizado) — lança DomainValidationException se inválida;
+        /// 2) Valida as pré-condições específicas do destino;
+        /// 3) Só então aplica os efeitos colaterais internos ao agregado (Pagamentos, Entrega) e grava o novo status.
+        /// Efeitos que exigem I/O (estoque, novo cupom) são devolvidos em <see cref="ResultadoTransicaoPedido"/>.
+        /// </summary>
+        /// <remarks>
+        /// Requer as coleções ProdutosDoPedido, Pagamentos, Entregas e CuponsAplicados(.Cupom) carregadas.
+        /// </remarks>
         public ResultadoTransicaoPedido AlterarStatus(StatusPedido novoStatus, AtorTransicao ator)
         {
             PedidoMaquinaEstados.ValidarTransicao(Status, novoStatus, ator);
@@ -289,11 +326,7 @@ namespace glaciar.Domain.Entities.Vendas
 
         public decimal CalcularValorCreditoTroca()
         {
-            if (!ProdutosDoPedido.Any())
-            {
-                throw new DomainValidationException("Os itens do pedido não foram carregados para o cálculo do crédito de troca.");
-            }
-
+            GarantirItensCarregados();
             return CalcularCreditoTroca(ProdutosDoPedido.Select(i => (i, i.Quantidade)).ToList());
         }
 

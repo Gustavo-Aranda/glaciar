@@ -57,18 +57,45 @@ namespace glaciar.Application.Services.Vendas
             int usuarioId,
             SolicitarTrocaDTO dto)
         {
-            if (usuarioId <= 0)
-                throw new DomainValidationException("Usuário não autenticado.");
+            GarantirClienteAutenticado(usuarioId);
 
-            var itensDominio = dto.Itens?
-                .Select(i => new ItemTroca(i.PedidoProdutoId, i.Quantidade))
-                .ToList();
+            // Sem fallback implícito: ou o cliente marcou EXPLICITAMENTE o pedido inteiro,
+            // ou a troca é restrita aos PedidoProdutoId informados.
+            Func<Pedido, ResultadoTransicaoPedido> acao = dto.TrocarPedidoInteiro
+                ? pedido => pedido.SolicitarTrocaDoPedidoInteiro(dto.Motivo)
+                : pedido => pedido.SolicitarTroca(ParaItensDominio(dto.Itens), dto.Motivo);
 
-            return ExecutarTransicaoAsync(
+            return ExecutarTransicaoAsync(pedidoId, usuarioId, AtorTransicao.Cliente, acao);
+        }
+
+        public async Task<PedidoStatusAlteradoDTO> SolicitarDevolucaoDeItemAsync(
+            int usuarioId,
+            SolicitarDevolucaoItemDTO dto)
+        {
+            GarantirClienteAutenticado(usuarioId);
+
+            // 1ª barreira (posse): o item só é encontrado se o pedido dele pertencer ao cliente logado.
+            //    404 em vez de 403, sem vazar a existência de itens de outros clientes.
+            var pedidoId = await _pedidoRepository.GetPedidoIdDoItemAsync(dto.PedidoProdutoId, usuarioId)
+                ?? throw new EntidadeNaoEncontradaException("Item do pedido não encontrado.");
+
+            // 2ª barreira (agregado): o Domain revalida que o PedidoProduto pertence ao pedido carregado
+            //    e gera UMA única Devolucao para esse item/quantidade.
+            return await ExecutarTransicaoAsync(
                 pedidoId,
                 usuarioId,
                 AtorTransicao.Cliente,
-                pedido => pedido.SolicitarTroca(itensDominio, dto.Motivo));
+                pedido => pedido.SolicitarTrocaDeItem(dto.PedidoProdutoId, dto.Quantidade, dto.Motivo));
+        }
+
+        private static IReadOnlyCollection<ItemTroca> ParaItensDominio(IEnumerable<ItemTrocaDTO>? itens) =>
+            itens?.Select(i => new ItemTroca(i.PedidoProdutoId, i.Quantidade)).ToList()
+            ?? new List<ItemTroca>();
+
+        private static void GarantirClienteAutenticado(int usuarioId)
+        {
+            if (usuarioId <= 0)
+                throw new DomainValidationException("Usuário não autenticado.");
         }
 
         private async Task<PedidoStatusAlteradoDTO> ExecutarTransicaoAsync(
