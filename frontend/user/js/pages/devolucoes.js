@@ -52,7 +52,7 @@ const STATUS_TROCA_MAP = {
     'Trocado': {
         label: 'Troca Concluída',
         classeCss: 'status-sucesso',
-        mensagem: 'Troca finalizada! Mercadoria reintegrada ao estoque e Cupom de Troca emitido na sua conta.',
+        mensagem: 'Troca finalizada! Cupom de Troca emitido na sua conta.',
         tipoMensagem: 'success-text'
     }
 };
