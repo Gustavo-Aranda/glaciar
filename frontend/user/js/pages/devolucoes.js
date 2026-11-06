@@ -217,7 +217,7 @@ function renderizarDevolucoes(container, devolucoes) {
         } else if (pedido.status === 'Trocado') {
             acoesHtml = `
                 <div class="return-actions">
-                    <a href="conta.html" class="btn btn-info" style="text-decoration: none;">Ver Saldo em Minha Conta</a>
+                    <a href="pagamentos.html" class="btn btn-info" style="text-decoration: none;">Ver Saldo em Minha Conta</a>
                 </div>
             `;
         }

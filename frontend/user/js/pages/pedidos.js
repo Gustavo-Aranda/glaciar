@@ -334,11 +334,6 @@ function gerarHtmlCardPedido(pedido) {
                 <p class="product-price">
                     ${formatarMoeda(item.precoUnitario)} cada (Subtotal: ${formatarMoeda(item.subtotal)})
                 </p>
-                ${pedido.status === 'Entregue' ? `
-                <button type="button" class="btn btn-secondary btn-troca-item"
-                        data-acao="solicitar-troca-item"
-                        data-pedido-id="${pedido.id}"
-                        data-pedido-produto-id="${item.id}">Trocar este item</button>` : ''}
             </div>
         </div>
         `;
