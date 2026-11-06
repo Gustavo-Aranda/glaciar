@@ -221,6 +221,9 @@ function validarParametrosFiltro(dataInicioStr, dataFimStr, categoriaIds) {
 async function consultarEPlotarGrafico() {
     const inputInicio = document.getElementById('data-inicio');
     const inputFim = document.getElementById('data-fim');
+    if (inputFim) {
+        inputFim.value = new Date().toISOString().split('T')[0];
+    }
     const btnGerar = document.getElementById('btn-gerar-grafico');
 
     const dataInicio = inputInicio?.value || '';
@@ -295,7 +298,7 @@ function atualizarIndicadoresResumo(dados) {
 }
 
 /**
- * Configura e renderiza o Gráfico de Linhas no Chart.js (RNF0043, RNF0044, RNF0045, RNF0046).
+ * Configura e renderiza o Gráfico de Linhas no Chart.js.
  */
 function renderizarGraficoLinhas(dados) {
     const canvas = document.getElementById('financeChart');
@@ -345,7 +348,6 @@ function renderizarGraficoLinhas(dados) {
                 intersect: false
             },
             plugins: {
-                // RNF0045: Legenda descritiva na parte inferior identificando categoria e cor
                 legend: {
                     display: true,
                     position: 'bottom',
@@ -360,7 +362,6 @@ function renderizarGraficoLinhas(dados) {
                         color: '#2C3E50'
                     }
                 },
-                // RNF0046: Tooltip interativo exibindo valor exato em moeda brasileira (R$ 0.000,00)
                 tooltip: {
                     backgroundColor: 'rgba(44, 62, 80, 0.95)',
                     titleFont: { size: 13, weight: 'bold' },
@@ -401,7 +402,6 @@ function renderizarGraficoLinhas(dados) {
                         }
                     }
                 },
-                // RNF0044: Eixo vertical (Y) formatado em moeda brasileira (R$ 0.000,00) com escala automática
                 y: {
                     beginAtZero: true,
                     title: {
