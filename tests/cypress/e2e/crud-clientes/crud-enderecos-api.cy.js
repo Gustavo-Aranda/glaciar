@@ -23,7 +23,9 @@ describe('CRUD de Endereços (C/A) - API', () => {
   before(() => {
     cy.request('GET', `${apiUrl}/conta`).then(resposta => {
       expect(resposta.status).to.eq(200);
-      const usuarioAtivo = resposta.body.find(usuario => usuario.ativo === true);
+      const usuarioAtivo = resposta.body.find(
+        usuario => usuario.ativo === true && (usuario.tipoUsuario === 'CLI' || usuario.tipoUsuario === 0)
+      );
       expect(usuarioAtivo, 'cliente ativo para os testes de endereço').to.exist;
       usuarioId = usuarioAtivo.id;
     });

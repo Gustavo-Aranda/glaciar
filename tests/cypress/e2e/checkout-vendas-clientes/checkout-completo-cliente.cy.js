@@ -1,67 +1,50 @@
 /**
  * ===============================================================================
- * Teste E2E: Checkout Completo com Novos Dados - Cliente
- * Arquivo: tests/cypress/e2e/checkout-completo-cliente.cy.js
- * ===============================================================================
- * Escopo:
- * - Validação preventiva de formulário em branco (Unhappy Path)
- * - Cadastro de novo endereço com opção de salvar no perfil
- * - Cadastro de novo cartão de crédito com opção de salvar no perfil
- * - Finalização com sucesso e confirmação do payload e status EmProcessamento
+ * Teste E2E: Checkout Completo com Novos Dados - Cliente (100% Backend Real)
+ * Arquivo: tests/cypress/e2e/checkout-vendas-clientes/checkout-completo-cliente.cy.js
  * ===============================================================================
  */
 
 const apiUrl = Cypress.expose('apiUrl') || 'http://localhost:5205/api';
+const formatarBRL = (valor) =>
+  new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(valor);
 
-describe('Checkout completo com novos dados cadastrais - Cliente', () => {
-  const cliente = {
-    id: 42,
-    nome: 'Maria Silva',
-    email: 'maria.silva@example.com'
-  };
+describe('Checkout completo com novos dados cadastrais - Cliente (API Real)', () => {
+  let clienteTeste;
+  let skuReal;
 
-  const contextoSemDados = {
-    carrinho: {
-      id: 1,
-      quantidadeItens: 1,
-      subtotal: 150.0,
-      itens: [
-        {
-          id: 101,
-          nomeProduto: 'Casaco Polar Térmico',
-          tamanho: 'G',
-          cor: 'Preto',
-          sku: 'CAS-POL-G-PRT',
-          precoUnitario: 150.0,
-          quantidade: 1,
-          estoqueDisponivel: 5,
-          disponivel: true
-        }
-      ]
-    },
-    enderecoPrincipal: null,
-    cartoes: [],
-    valorFrete: 20.0,
-    valorTotal: 170.0
-  };
+  before(() => {
+    cy.obterSkuComEstoqueReal({ minEstoque: 5 }).then((res) => {
+      skuReal = res;
+    });
+  });
 
   beforeEach(() => {
-    cy.intercept('GET', `${apiUrl}/checkout/contexto`, {
-      statusCode: 200,
-      body: contextoSemDados
-    }).as('carregarContexto');
+    // Cria um cliente real sem endereço e sem cartões salvos para acionar os formulários de novos dados
+    cy.criarClienteTesteReal({ nome: 'Maria', sobrenome: 'CheckoutCompleto' }).then((cli) => {
+      clienteTeste = cli;
+      return cy.adicionarItemCarrinhoReal(cli.id, skuReal.estoque.id, 1);
+    }).then(() => {
+      cy.intercept('GET', `${apiUrl}/checkout/contexto`).as('carregarContexto');
 
-    cy.visit('checkout.html?id=42', {
-      onBeforeLoad(win) {
-        win.sessionStorage.setItem('usuarioLogado', JSON.stringify(cliente));
-      }
+      cy.visit(`checkout.html?id=${clienteTeste.id}`, {
+        onBeforeLoad(win) {
+          win.sessionStorage.setItem('usuarioLogado', JSON.stringify(clienteTeste));
+        }
+      });
+
+      cy.wait('@carregarContexto').its('response.statusCode').should('eq', 200);
     });
+  });
 
-    cy.wait('@carregarContexto');
+  afterEach(() => {
+    if (clienteTeste?.id) {
+      cy.limparUsuarioTesteReal(clienteTeste.id);
+      clienteTeste = null;
+    }
   });
 
   it('valida campos obrigatórios ao tentar submeter endereço incompleto (Unhappy Path)', () => {
-    // Tenta finalizar compra com campos em branco
     cy.get('.btn-submit').click();
 
     cy.get('.toast-error')
@@ -69,72 +52,77 @@ describe('Checkout completo com novos dados cadastrais - Cliente', () => {
       .and('contain', 'Preencha todos os campos obrigatórios do novo endereço.');
   });
 
-  it('cadastra novo endereço e novo cartão marcando para salvar no perfil (Happy Path)', () => {
-    cy.intercept('POST', `${apiUrl}/checkout/finalizar`, (req) => {
-      // Validação de salvamento do endereço no perfil
-      expect(req.body.novoEndereco).to.not.be.null;
-      expect(req.body.novoEndereco.logradouro).to.eq('Av. Paulista');
-      expect(req.body.novoEndereco.numero).to.eq('1000');
-      expect(req.body.novoEndereco.bairro).to.eq('Bela Vista');
-      expect(req.body.novoEndereco.cidade).to.eq('São Paulo');
-      expect(req.body.novoEndereco.estado).to.eq('SP');
-      expect(req.body.novoEndereco.cep).to.eq('01310100');
-      expect(req.body.novoEndereco.salvarNoPerfil).to.be.true;
-      expect(req.body.novoEndereco.apelido).to.eq('Escritório');
+  it('cadastra novo endereço e novo cartão marcando para salvar no perfil e persiste no banco (Happy Path)', () => {
+    cy.intercept('GET', `${apiUrl}/carrinho/frete/SP`).as('freteSP');
+    cy.intercept('POST', `${apiUrl}/checkout/finalizar`).as('finalizarComNovosDados');
 
-      // Validação de salvamento do cartão no perfil
-      expect(req.body.cartoes).to.have.length(1);
-      const cartao = req.body.cartoes[0];
-      expect(cartao.novoCartao.bandeira).to.eq('Visa');
-      expect(cartao.novoCartao.numero).to.eq('4916511493269188');
-      expect(cartao.novoCartao.mesValidade).to.eq(11);
-      expect(cartao.novoCartao.anoValidade).to.eq(2028);
-      expect(cartao.novoCartao.cvv).to.eq('123');
-      expect(cartao.novoCartao.salvarNoPerfil).to.be.true;
-      expect(cartao.valor).to.eq(170.0);
-
-      req.reply({
-        statusCode: 200,
-        body: {
-          id: 601,
-          codigo: 'PED-601-NOVODADOS',
-          status: 'EmProcessamento',
-          subtotal: 150.0,
-          valorFrete: 20.0,
-          valorTotal: 170.0
-        }
-      });
-    }).as('finalizarComNovosDados');
-
-    // Preenche Novo Endereço
     cy.get('#novo-endereco-form').should('have.class', 'active');
     cy.get('#logradouro').type('Av. Paulista');
     cy.get('#numero').type('1000');
     cy.get('#bairro').type('Bela Vista');
     cy.get('#cidade').type('São Paulo');
     cy.get('#estado').select('SP');
+    cy.wait('@freteSP').its('response.statusCode').should('eq', 200);
+
     cy.get('#cep').type('01310100');
     cy.get('#salvar-perfil').check();
     cy.get('#apelido').type('Escritório');
 
-    // Preenche Novo Cartão
+    // Captura o valor total exato calculado pelo backend (subtotal do produto real + R$ 15,00 frete SP)
+    const totalEsperado = Number(skuReal.produto.preco) + 15.0;
+
     cy.get('#novo-cartao-form').should('have.class', 'active');
     cy.get('#cartao-nome').type('Maria Silva');
     cy.get('#cartao-bandeira').select('Visa');
     cy.get('#cartao-numero').type('4916 5114 9326 9188');
     cy.get('#cartao-mes').type('11');
     cy.get('#cartao-ano').type('2028');
-    cy.get('#cartao-cvv').type('123');
-    cy.get('#novo-cartao-valor').clear().type('170.00');
+    cy.get('#cartao-cvv').type('690');
+    cy.get('#novo-cartao-valor').clear().type(totalEsperado.toFixed(2));
     cy.get('#save-card').check();
 
     cy.get('.btn-submit').click();
 
-    cy.wait('@finalizarComNovosDados').its('response.body.status').should('eq', 'EmProcessamento');
+    cy.wait('@finalizarComNovosDados').then((interception) => {
+      expect(interception.request.body.novoEndereco).to.include({
+        logradouro: 'Av. Paulista',
+        numero: '1000',
+        bairro: 'Bela Vista',
+        cidade: 'São Paulo',
+        estado: 'SP',
+        cep: '01310100',
+        salvarNoPerfil: true,
+        apelido: 'Escritório'
+      });
 
-    cy.get('.checkout-main')
-      .should('contain', 'Compra finalizada com sucesso! 🎉')
-      .and('contain', 'PED-601-NOVODADOS')
-      .and('contain', '170,00');
+      expect(interception.request.body.cartoes).to.have.length(1);
+      const cartaoReq = interception.request.body.cartoes[0];
+      expect(cartaoReq.novoCartao).to.include({
+        bandeira: 'Visa',
+        numero: '4916511493269188',
+        mesValidade: 11,
+        anoValidade: 2028,
+        cvv: '690',
+        salvarNoPerfil: true
+      });
+      expect(cartaoReq.valor).to.eq(totalEsperado);
+
+      expect(interception.response.statusCode).to.eq(200);
+      const pedido = interception.response.body;
+      expect(pedido.status).to.eq('EmProcessamento');
+
+      cy.get('.checkout-main')
+        .should('contain', 'Compra finalizada com sucesso!')
+        .and('contain', pedido.codigo)
+        .and('contain', formatarBRL(totalEsperado));
+
+      // Comprova que endereço e cartão foram realmente salvos no perfil do cliente no PostgreSQL
+      cy.request('GET', `${apiUrl}/enderecos/cliente/${clienteTeste.id}`).then((resEnd) => {
+        expect(resEnd.body.some((e) => (e.apelido || e.Apelido) === 'Escritório')).to.be.true;
+      });
+      cy.request('GET', `${apiUrl}/cartoes/cliente/${clienteTeste.id}`).then((resCart) => {
+        expect(resCart.body.some((c) => c.ultimosDigitos === '9188')).to.be.true;
+      });
+    });
   });
 });

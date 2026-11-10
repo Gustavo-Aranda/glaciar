@@ -25,6 +25,11 @@ let categoriasDisponiveis = [];
 document.addEventListener('DOMContentLoaded', async () => {
     if (!validarAcessoAdminTela()) return;
 
+    const inputFim = document.getElementById('data-fim');
+    if (inputFim && !inputFim.value) {
+        inputFim.value = new Date().toISOString().split('T')[0];
+    }
+
     configurarEventosFiltro();
     await carregarCategoriasDisponiveis();
     await consultarEPlotarGrafico();
@@ -221,7 +226,7 @@ function validarParametrosFiltro(dataInicioStr, dataFimStr, categoriaIds) {
 async function consultarEPlotarGrafico() {
     const inputInicio = document.getElementById('data-inicio');
     const inputFim = document.getElementById('data-fim');
-    if (inputFim) {
+    if (inputFim && !inputFim.value) {
         inputFim.value = new Date().toISOString().split('T')[0];
     }
     const btnGerar = document.getElementById('btn-gerar-grafico');
@@ -426,6 +431,8 @@ function renderizarGraficoLinhas(dados) {
             }
         }
     });
+
+    window.instanciaGrafico = instanciaGrafico;
 }
 
 function encontrarIndiceCorCategoria(categoriaId, fallbackIdx) {

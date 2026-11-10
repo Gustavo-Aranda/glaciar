@@ -1,249 +1,253 @@
 /**
  * ===============================================================================
- * Teste E2E: Painel de Pedidos Admin - Ciclo Logístico, Estoque e Trocas
+ * Teste E2E: Painel de Pedidos Admin - Ciclo Logístico, Estoque e Trocas (100% Real)
  * Arquivo: tests/cypress/e2e/troca-estados/painel-pedidos-admin-e2e.cy.js
  * ===============================================================================
- * Regras do DRS e Entregas do Professor:
- * - Ciclo Logístico: EmProcessamento ➔ PagamentoRealizado ➔ EmTransporte ➔ Entregue.
- * - RN0028 & RF0053: Compra APROVADA consolida baixa física definitiva no estoque.
- * - RN0028: Compra REPROVADA desbloqueia itens e devolve ao estoque sem baixa física.
- * - RF0042 a RF0045 & RF0054: Autorização de troca pelo admin, recebimento de itens
- *   com reentrada em estoque e emissão de cupom de troca correspondente.
+ * Comprovações Reais no PostgreSQL:
+ * - Listagem real em GET /api/admin/pedidos?tipo=venda e ?tipo=troca
+ * - Compra APROVADA (PagamentoRealizado): mantém baixa definitiva de estoque físico
+ * - Compra REPROVADA (PagamentoReprovado): devolve imediatamente o saldo ao estoque físico
+ * - Despacho e Entrega (EmTransporte -> Entregue)
+ * - Ciclo de Troca Admin (TrocaSolicitada -> TrocaAceita e ItemRecebido -> Trocado):
+ *   comprova reentrada física do item no estoque E emissão real do cupom de troca no banco!
  * ===============================================================================
  */
 
 const apiUrl = Cypress.expose('apiUrl') || 'http://localhost:5205/api';
 
-describe('Painel Administrativo - Ciclo Logístico, Estoque e Trocas', () => {
-  const pedidosVendaMock = [
-    {
-      id: 101,
-      codigo: '101',
-      cliente: 'Carlos Eduardo',
-      status: 'EmProcessamento',
-      valorTotal: 349.90,
-      data: new Date().toISOString(),
-      proximosStatus: ['PagamentoRealizado', 'PagamentoReprovado', 'Cancelado'],
-      itens: [{ id: 1, nomeProduto: 'Bota Trilha Pro', quantidade: 1, precoUnitario: 349.90 }]
-    },
-    {
-      id: 102,
-      codigo: '102',
-      cliente: 'Mariana Souza',
-      status: 'PagamentoRealizado',
-      valorTotal: 180.00,
-      data: new Date().toISOString(),
-      proximosStatus: ['EmTransporte', 'Cancelado'],
-      itens: [{ id: 2, nomeProduto: 'Mochila Impermeável 40L', quantidade: 1, precoUnitario: 180.00 }]
+describe('Painel Administrativo - Ciclo Logístico, Estoque Real e Trocas', () => {
+  let clienteTeste;
+  let enderecoReal;
+  let cartaoReal;
+  let skuReal;
+
+  const consultarQuantidadeEstoqueReal = () =>
+    cy.request('GET', `${apiUrl}/produtos/${skuReal.produto.id}`).then((res) => {
+      const sku = res.body.estoques.find((e) => (e.estoqueId ?? e.id) === skuReal.estoque.id);
+      return sku.quantidade;
+    });
+
+  before(() => {
+    cy.obterSkuComEstoqueReal({ minEstoque: 8 }).then((res) => {
+      skuReal = res;
+    });
+
+    cy.criarClienteTesteReal({ nome: 'Carlos', sobrenome: 'LogisticaAdmin' }).then((cli) => {
+      clienteTeste = cli;
+      return cy
+        .criarEnderecoReal(cli.id, { estado: 'SP', padrao: true })
+        .then((end) => {
+          enderecoReal = end;
+          return cy.criarCartaoReal(cli.id, { padrao: true });
+        })
+        .then((cartao) => {
+          cartaoReal = cartao;
+        });
+    });
+  });
+
+  after(() => {
+    if (clienteTeste?.id) {
+      cy.limparUsuarioTesteReal(clienteTeste.id);
     }
-  ];
-
-  it('lista os pedidos de venda com seus respectivos status, valores e próximos passos permitidos', () => {
-    cy.intercept('GET', `${apiUrl}/admin/pedidos?tipo=venda`, {
-      statusCode: 200,
-      body: pedidosVendaMock
-    }).as('carregarPedidosVenda');
-
-    cy.visit('http://127.0.0.1:5500/frontend/admin/pedidos.html');
-    cy.wait('@carregarPedidosVenda');
-
-    cy.get('#pedidos-container').should('be.visible');
-    cy.contains('Pedido #101').should('be.visible');
-    cy.contains('Carlos Eduardo').should('be.visible');
-    cy.contains('Em Processamento').should('be.visible');
-    cy.contains('Pedido #102').should('be.visible');
-    cy.contains('.status', 'Pagamento Realizado').should('be.visible');
   });
 
-  it('permite ao Admin APROVAR pagamento consolidando a baixa definitiva de estoque (RF0053, RN0028)', () => {
-    cy.intercept('GET', `${apiUrl}/admin/pedidos?tipo=venda`, {
-      statusCode: 200,
-      body: pedidosVendaMock
-    }).as('carregarPedidosVenda');
+  it('lista pedidos reais de venda, APROVA pagamento mantendo a baixa de estoque e avança até EmTransporte e Entregue', () => {
+    let estoqueAntesDaCompra;
+    let pedidoVenda;
 
-    cy.intercept('PATCH', `${apiUrl}/admin/pedidos/101/status`, (req) => {
-      expect(req.body.status).to.eq('PagamentoRealizado');
-      req.reply({
-        statusCode: 200,
-        body: {
-          message: 'Status atualizado com sucesso.',
-          dados: {
-            pedidoId: 101,
-            statusAnterior: 'EmProcessamento',
-            statusAtual: 'PagamentoRealizado',
-            proximosStatus: ['EmTransporte', 'Cancelado']
-          }
-        }
+    consultarQuantidadeEstoqueReal()
+      .then((qtdInicial) => {
+        estoqueAntesDaCompra = qtdInicial;
+        return cy.criarPedidoReal({
+          usuarioId: clienteTeste.id,
+          usuarioEnderecoId: enderecoReal.usuarioEnderecoId,
+          usuarioCartaoId: cartaoReal.id,
+          estoqueId: skuReal.estoque.id,
+          quantidade: 1,
+          statusAlvo: 'EmProcessamento'
+        });
+      })
+      .then((pedido) => {
+        pedidoVenda = pedido;
+
+        cy.intercept('GET', `${apiUrl}/admin/pedidos?tipo=venda`).as('carregarPedidosVenda');
+        cy.intercept('PATCH', `${apiUrl}/admin/pedidos/${pedidoVenda.id}/status`).as('patchStatusVenda');
+
+        cy.visit('http://127.0.0.1:5500/frontend/admin/pedidos.html');
+        cy.wait('@carregarPedidosVenda').its('response.statusCode').should('eq', 200);
+
+        cy.get('#pedidos-container').should('be.visible');
+        cy.contains(`Pedido #${pedidoVenda.codigo}`).should('be.visible');
+
+        // 1. Admin APROVA pagamento (EmProcessamento -> PagamentoRealizado)
+        cy.get(`#status-select-${pedidoVenda.id}`).select('PagamentoRealizado');
+        cy.get(`#status-select-${pedidoVenda.id}`).siblings('button').click();
+
+        cy.wait('@patchStatusVenda').then((interception) => {
+          expect(interception.request.body.status).to.eq('PagamentoRealizado');
+          expect(interception.response.statusCode).to.eq(200);
+        });
+        cy.get('#notificacoes-container').should('contain', 'Status atualizado com sucesso');
+        cy.wait('@carregarPedidosVenda');
+
+        // Comprova baixa definitiva mantida no estoque físico após aprovação (estoqueInicial - 1)
+        consultarQuantidadeEstoqueReal().should('eq', estoqueAntesDaCompra - 1);
+
+        // 2. Admin DESPACHA pedido (PagamentoRealizado -> EmTransporte)
+        cy.get(`#status-select-${pedidoVenda.id}`).select('EmTransporte');
+        cy.get(`#status-select-${pedidoVenda.id}`).siblings('button').click();
+        cy.wait('@patchStatusVenda').its('response.body.dados.statusAtual').should('eq', 'EmTransporte');
+        cy.wait('@carregarPedidosVenda');
+
+        // 3. Admin confirma ENTREGA (EmTransporte -> Entregue)
+        cy.get(`#status-select-${pedidoVenda.id}`).select('Entregue');
+        cy.get(`#status-select-${pedidoVenda.id}`).siblings('button').click();
+        cy.wait('@patchStatusVenda').its('response.body.dados.statusAtual').should('eq', 'Entregue');
       });
-    }).as('aprovarPagamento');
-
-    cy.visit('http://127.0.0.1:5500/frontend/admin/pedidos.html');
-    cy.wait('@carregarPedidosVenda');
-
-    cy.get('#status-select-101').select('PagamentoRealizado');
-    cy.get('#status-select-101').siblings('button').click();
-
-    cy.wait('@aprovarPagamento');
-    cy.get('#notificacoes-container')
-      .should('be.visible')
-      .and('contain', 'Status atualizado com sucesso');
   });
 
-  it('permite ao Admin REPROVAR pagamento liberando/desbloqueando itens sem baixa física (RN0028)', () => {
-    cy.intercept('GET', `${apiUrl}/admin/pedidos?tipo=venda`, {
-      statusCode: 200,
-      body: pedidosVendaMock
-    }).as('carregarPedidosVenda');
+  it('permite ao Admin REPROVAR pagamento devolvendo imediatamente o saldo ao estoque físico real (RN0028)', () => {
+    let estoqueAntesDaCompra;
+    let pedidoParaReprovar;
 
-    cy.intercept('PATCH', `${apiUrl}/admin/pedidos/101/status`, (req) => {
-      expect(req.body.status).to.eq('PagamentoReprovado');
-      req.reply({
-        statusCode: 200,
-        body: {
-          message: 'Pagamento reprovado. Itens desbloqueados e devolvidos ao estoque.',
-          dados: {
-            pedidoId: 101,
-            statusAnterior: 'EmProcessamento',
-            statusAtual: 'PagamentoReprovado',
-            proximosStatus: []
-          }
-        }
+    consultarQuantidadeEstoqueReal()
+      .then((qtdInicial) => {
+        estoqueAntesDaCompra = qtdInicial;
+        return cy.criarPedidoReal({
+          usuarioId: clienteTeste.id,
+          usuarioEnderecoId: enderecoReal.usuarioEnderecoId,
+          usuarioCartaoId: cartaoReal.id,
+          estoqueId: skuReal.estoque.id,
+          quantidade: 2,
+          statusAlvo: 'EmProcessamento'
+        });
+      })
+      .then((pedido) => {
+        pedidoParaReprovar = pedido;
+
+        // Durante EmProcessamento, as 2 unidades estão reservadas/deduzidas do estoque
+        consultarQuantidadeEstoqueReal().should('eq', estoqueAntesDaCompra - 2);
+
+        cy.intercept('GET', `${apiUrl}/admin/pedidos?tipo=venda`).as('carregarPedidosVenda');
+        cy.intercept('PATCH', `${apiUrl}/admin/pedidos/${pedidoParaReprovar.id}/status`).as(
+          'reprovarPagamento'
+        );
+
+        cy.visit('http://127.0.0.1:5500/frontend/admin/pedidos.html');
+        cy.wait('@carregarPedidosVenda').its('response.statusCode').should('eq', 200);
+
+        cy.get(`#status-select-${pedidoParaReprovar.id}`).select('PagamentoReprovado');
+        cy.get(`#status-select-${pedidoParaReprovar.id}`).siblings('button').click();
+
+        cy.wait('@reprovarPagamento').then((interception) => {
+          expect(interception.request.body.status).to.eq('PagamentoReprovado');
+          expect(interception.response.statusCode).to.eq(200);
+          expect(interception.response.body.dados.statusAtual).to.eq('PagamentoReprovado');
+        });
+
+        cy.get('#notificacoes-container')
+          .should('be.visible')
+          .and('contain', 'Status atualizado com sucesso');
+
+        // Comprova que as 2 unidades retornaram integralmente ao estoque físico no PostgreSQL!
+        consultarQuantidadeEstoqueReal().should('eq', estoqueAntesDaCompra);
       });
-    }).as('reprovarPagamento');
-
-    cy.visit('http://127.0.0.1:5500/frontend/admin/pedidos.html');
-    cy.wait('@carregarPedidosVenda');
-
-    cy.get('#status-select-101').select('PagamentoReprovado');
-    cy.get('#status-select-101').siblings('button').click();
-
-    cy.wait('@reprovarPagamento');
-    cy.get('#notificacoes-container')
-      .should('be.visible')
-      .and('contain', 'Pagamento reprovado');
   });
 
-  it('permite ao Admin despachar pedido aprovado para entrega alterando status para EmTransporte (RF0039)', () => {
-    cy.intercept('GET', `${apiUrl}/admin/pedidos?tipo=venda`, {
-      statusCode: 200,
-      body: pedidosVendaMock
-    }).as('carregarPedidosVenda');
+  it('gerencia o ciclo completo de troca no painel Admin: autorização, recebimento físico, reentrada em estoque e emissão real de cupom', () => {
+    const motivoTroca = 'Costura lateral descosturada na expedição alpina';
+    let pedidoTroca;
+    let estoqueAntesDeConcluirTroca;
 
-    cy.intercept('PATCH', `${apiUrl}/admin/pedidos/102/status`, (req) => {
-      expect(req.body.status).to.eq('EmTransporte');
-      req.reply({
-        statusCode: 200,
-        body: {
-          message: 'Status atualizado com sucesso.',
-          dados: {
-            pedidoId: 102,
-            statusAnterior: 'PagamentoRealizado',
-            statusAtual: 'EmTransporte',
-            proximosStatus: ['Entregue', 'Cancelado']
-          }
-        }
-      });
-    }).as('despacharPedido');
+    cy.criarPedidoReal({
+      usuarioId: clienteTeste.id,
+      usuarioEnderecoId: enderecoReal.usuarioEnderecoId,
+      usuarioCartaoId: cartaoReal.id,
+      estoqueId: skuReal.estoque.id,
+      quantidade: 1,
+      statusAlvo: 'Entregue'
+    })
+      .then((pedidoEntregue) =>
+        cy
+          .request({
+            method: 'POST',
+            url: `${apiUrl}/pedidos/${pedidoEntregue.id}/troca`,
+            headers: { 'X-Usuario-Id': String(clienteTeste.id) },
+            body: { trocarPedidoInteiro: true, motivo: motivoTroca }
+          })
+          .then(() => pedidoEntregue)
+      )
+      .then((pedido) => {
+        pedidoTroca = pedido;
 
-    cy.visit('http://127.0.0.1:5500/frontend/admin/pedidos.html');
-    cy.wait('@carregarPedidosVenda');
+        cy.intercept('GET', `${apiUrl}/admin/pedidos?tipo=troca`).as('carregarDevolucoesAdmin');
+        cy.intercept('PATCH', `${apiUrl}/admin/pedidos/${pedidoTroca.id}/status`).as(
+          'patchStatusTroca'
+        );
 
-    cy.get('#status-select-102').select('EmTransporte');
-    cy.get('#status-select-102').siblings('button').click();
+        cy.visit('http://127.0.0.1:5500/frontend/admin/devolucoes.html');
+        cy.wait('@carregarDevolucoesAdmin').its('response.statusCode').should('eq', 200);
 
-    cy.wait('@despacharPedido');
-    cy.get('#notificacoes-container')
-      .should('be.visible')
-      .and('contain', 'Status atualizado com sucesso');
-  });
+        cy.contains(motivoTroca).should('be.visible');
 
-  it('gerencia o ciclo de troca no painel de devoluções: autorização, reentrada em estoque e geração de cupom (RF0042 a RF0045, RF0054)', () => {
-    const devolucoesMock = [
-      {
-        id: 103,
-        codigo: '103',
-        cliente: 'Roberto Alencar',
-        status: 'TrocaSolicitada',
-        valorTotal: 250.00,
-        data: new Date().toISOString(),
-        motivoTroca: 'Costura lateral descosturada no trekking',
-        proximosStatus: ['TrocaAceita', 'TrocaNegada']
-      },
-      {
-        id: 104,
-        codigo: '104',
-        cliente: 'Fernanda Lima',
-        status: 'ItemRecebido',
-        valorTotal: 120.00,
-        data: new Date().toISOString(),
-        motivoTroca: 'Tamanho P ficou apertado',
-        proximosStatus: ['Trocado']
-      }
-    ];
+        // 1. Admin autoriza a troca (TrocaSolicitada -> TrocaAceita)
+        cy.get(`#status-select-${pedidoTroca.id}`).select('TrocaAceita');
+        cy.get(`#status-select-${pedidoTroca.id}`).siblings('button').click();
+        cy.wait('@patchStatusTroca').its('response.body.dados.statusAtual').should('eq', 'TrocaAceita');
+        cy.wait('@carregarDevolucoesAdmin');
 
-    cy.intercept('GET', `${apiUrl}/admin/pedidos?tipo=troca`, {
-      statusCode: 200,
-      body: devolucoesMock
-    }).as('carregarDevolucoesAdmin');
+        // 2. Cliente despacha o item nos Correios (TrocaAceita -> ItemEnviado)
+        cy.request({
+          method: 'PATCH',
+          url: `${apiUrl}/pedidos/${pedidoTroca.id}/status`,
+          headers: { 'X-Usuario-Id': String(clienteTeste.id) },
+          body: { status: 'ItemEnviado' }
+        }).its('status').should('eq', 200);
 
-    cy.visit('http://127.0.0.1:5500/frontend/admin/devolucoes.html');
-    cy.wait('@carregarDevolucoesAdmin');
+        cy.reload();
+        cy.wait('@carregarDevolucoesAdmin');
 
-    // Valida exibição dos pedidos de troca e do motivo informado pelo cliente (RF0043)
-    cy.contains('Roberto Alencar').should('be.visible');
-    cy.contains('Costura lateral descosturada no trekking').should('be.visible');
+        // 3. Admin confirma recebimento físico no CD (ItemEnviado -> ItemRecebido)
+        cy.get(`#status-select-${pedidoTroca.id}`).select('ItemRecebido');
+        cy.get(`#status-select-${pedidoTroca.id}`).siblings('button').click();
+        cy.wait('@patchStatusTroca').its('response.body.dados.statusAtual').should('eq', 'ItemRecebido');
+        cy.wait('@carregarDevolucoesAdmin');
 
-    // 1. Autorizar Troca (TrocaSolicitada -> TrocaAceita, RF0042)
-    cy.intercept('PATCH', `${apiUrl}/admin/pedidos/103/status`, (req) => {
-      expect(req.body.status).to.eq('TrocaAceita');
-      req.reply({
-        statusCode: 200,
-        body: {
-          message: 'Troca autorizada com sucesso! Notificação enviada ao cliente.',
-          dados: {
-            pedidoId: 103,
-            statusAnterior: 'TrocaSolicitada',
-            statusAtual: 'TrocaAceita',
-            proximosStatus: ['ItemEnviado']
-          }
-        }
-      });
-    }).as('autorizarTrocaAdmin');
+        return consultarQuantidadeEstoqueReal();
+      })
+      .then((qtdAntesConcluir) => {
+        estoqueAntesDeConcluirTroca = qtdAntesConcluir;
 
-    cy.get('#status-select-103').select('TrocaAceita');
-    cy.get('#status-select-103').siblings('button').click();
-    cy.wait('@autorizarTrocaAdmin');
+        // 4. Admin conclui conferência e gera cupom (ItemRecebido -> Trocado)
+        cy.get(`#status-select-${pedidoTroca.id}`).select('Trocado');
+        cy.get(`#status-select-${pedidoTroca.id}`).siblings('button').click();
 
-    // 2. Concluir Troca com recebimento físico, reentrada de estoque e geração de cupom (ItemRecebido -> Trocado, RF0044, RF0045, RF0054)
-    cy.intercept('PATCH', `${apiUrl}/admin/pedidos/104/status`, (req) => {
-      expect(req.body.status).to.eq('Trocado');
-      req.reply({
-        statusCode: 200,
-        body: {
-          message: 'Troca concluída com sucesso! Itens retornaram ao estoque.',
-          dados: {
-            pedidoId: 104,
-            statusAnterior: 'ItemRecebido',
-            statusAtual: 'Trocado',
-            cupomTrocaGerado: {
-              codigo: 'TRC-104-TROCA',
-              valorDesconto: 120.0
-            },
-            proximosStatus: []
-          }
-        }
-      });
-    }).as('concluirTrocaAdmin');
+        cy.wait('@patchStatusTroca').then((interception) => {
+          expect(interception.response.statusCode).to.eq(200);
+          const dados = interception.response.body.dados;
+          expect(dados.statusAtual).to.eq('Trocado');
+          expect(dados.cupomTrocaGerado).to.exist;
 
-    cy.get('#status-select-104').select('Trocado');
-    cy.get('#status-select-104').siblings('button').click();
-    cy.wait('@concluirTrocaAdmin');
+          const codigoCupom = dados.cupomTrocaGerado.codigo;
+          const valorCupom = Number(dados.cupomTrocaGerado.valorDesconto);
+          expect(valorCupom).to.eq(Number(skuReal.produto.preco));
 
-    cy.get('#notificacoes-container')
-      .should('be.visible')
-      .and('contain', 'TRC-104-TROCA')
-      .and(($el) => {
-        expect($el.text()).to.match(/120[,.]00/);
+          cy.get('#notificacoes-container')
+            .should('be.visible')
+            .and('contain', codigoCupom);
+
+          // Comprova reentrada real de +1 unidade no estoque físico no PostgreSQL
+          consultarQuantidadeEstoqueReal().should('eq', estoqueAntesDeConcluirTroca + 1);
+
+          // Comprova persistência real do cupom na carteira do cliente no PostgreSQL
+          cy.request('GET', `${apiUrl}/cupons/cliente/${clienteTeste.id}`).then((resCupons) => {
+            const cupomBanco = resCupons.body.find((c) => c.codigo === codigoCupom);
+            expect(cupomBanco, 'cupom de troca gravado no PostgreSQL').to.exist;
+            expect(cupomBanco.valorDesconto).to.eq(valorCupom);
+            expect(cupomBanco.categoria).to.eq('Troca');
+          });
+        });
       });
   });
 });

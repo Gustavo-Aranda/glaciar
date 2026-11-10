@@ -1,115 +1,141 @@
-describe('Inativar cadastro de Cliente (C)', () => {
-  it('recusa o login de uma conta de cliente inativada', () => {
-    cy.intercept('POST', 'http://localhost:5205/api/conta/login', {
-      statusCode: 401,
-      body: { erro: 'Esta conta está inativada. Entre em contato com o suporte.' }
-    }).as('loginContaInativada')
+const apiUrl = Cypress.expose('apiUrl') || 'http://localhost:5205/api';
 
-    cy.visit('login.html')
-    cy.get('#email').type('maria@example.com')
-    cy.get('#password').type('Senha123!')
-    cy.get('#loginForm').submit()
+describe('Inativar cadastro de Cliente (C e A)', () => {
+  let idsUsuariosParaLimpar = [];
 
-    cy.wait('@loginContaInativada')
-    cy.get('#mensagem-login')
-      .should('be.visible')
-      .and('contain', 'Esta conta está inativada. Entre em contato com o suporte.')
-    cy.location('pathname').should('eq', '/frontend/user/login.html')
-  })
-
-  it('inativa o cadastro do cliente e volta para o login', () => {
-    cy.intercept('PATCH', 'http://localhost:5205/api/conta/42/status', {
-      statusCode: 200,
-      body: { id: 42, ativo: false }
-    }).as('inativarCliente')
-
-    cy.visit('editar-perfil.html?id=42', {
-      onBeforeLoad(window) {
-        window.sessionStorage.setItem('usuarioLogado', JSON.stringify({
-          id: 42,
-          nome: 'Maria',
-          sobrenome: 'Silva',
-          email: 'maria@example.com',
-          telefone: '11987654321'
-        }))
-        window.mostrarLoadingUsuario = () => {}
-        window.esconderLoadingUsuario = () => {}
-      }
-    })
-
-    cy.get('#btn-inativar-conta').click()
-    cy.get('#modal-inativar-conta').should('be.visible')
-    cy.get('#btn-confirmar-inativacao').click()
-
-    cy.wait('@inativarCliente').its('request.body').should('deep.equal', { ativo: false })
-    cy.location('pathname').should('eq', '/frontend/user/login.html')
-  })
-
-  it('Inativar cadastro de Cliente (A)', () => {
-    const cliente = {
-      id: 42,
-      nome: 'Maria',
-      sobrenome: 'Silva',
-      cpf: '52998224725',
-      email: 'maria@example.com',
-      telefone: '11987654321',
-      tipoUsuario: 0,
-      ativo: true,
-      createdAt: '2026-01-10T00:00:00Z'
-    }
-
-    cy.intercept('GET', 'http://localhost:5205/api/conta', {
-      statusCode: 200,
-      body: [cliente]
-    }).as('listarClientes')
-    cy.intercept('PATCH', 'http://localhost:5205/api/conta/42/status', {
-      statusCode: 200,
-      body: { ...cliente, ativo: false }
-    }).as('inativarClienteAdmin')
-
-    cy.visit('http://127.0.0.1:5500/frontend/admin/clientes.html')
-    cy.wait('@listarClientes')
-    cy.get('.btn-warning').first().click()
-    cy.get('#modal-status-cliente').should('be.visible')
-    cy.get('#btn-confirmar-status').click()
-
-    cy.wait('@inativarClienteAdmin').its('request.body').should('deep.equal', { ativo: false })
-    cy.get('#resultado-titulo').should('contain', 'Status atualizado')
-  })
-
-  it('preserva histórico de transações e integridade referencial após inativação (Inativação vs Exclusão)', () => {
-    const pedidosCliente = [
-      {
-        id: 301,
-        codigo: 'PED-301-HISTORICO',
-        status: 'Entregue',
-        valorTotal: 490.0,
-        data: '2026-02-10T14:30:00Z',
-        itens: [
-          { id: 1, nomeProduto: 'Mochila Cargueira 70L', quantidade: 1, precoUnitario: 490.0 }
-        ]
-      }
-    ];
-
-    // Consulta de transações do cliente inativado permanece íntegra (RF0025)
-    cy.intercept('GET', 'http://localhost:5205/api/pedidos*', {
-      statusCode: 200,
-      body: pedidosCliente
-    }).as('historicoTransacoes');
-
-    cy.visit('pedidos.html?id=42', {
-      onBeforeLoad(win) {
-        win.sessionStorage.setItem('usuarioLogado', JSON.stringify({
-          id: 42,
-          nome: 'Maria Silva (Inativada)',
-          ativo: false
-        }));
-      }
+  afterEach(() => {
+    idsUsuariosParaLimpar.reverse().forEach((id) => {
+      cy.limparUsuarioTesteReal(id);
     });
+    idsUsuariosParaLimpar = [];
+  });
 
-    cy.wait('@historicoTransacoes');
-    cy.get('.order-card').should('be.visible');
-    cy.get('.order-number').should('contain', 'PED-301-HISTORICO');
-    cy.get('.status').should('contain', 'Entregue');
-  })
-})
+  it('recusa o login real de uma conta de cliente inativada no banco', () => {
+    cy.criarClienteTesteReal({ nome: 'Conta', sobrenome: 'InativadaLogin' }).then((cli) => {
+      idsUsuariosParaLimpar.push(cli.id);
+
+      cy.request('PATCH', `${apiUrl}/conta/${cli.id}/status`, { ativo: false }).then((resPatch) => {
+        expect(resPatch.status).to.eq(200);
+        expect(resPatch.body.ativo).to.be.false;
+      });
+
+      cy.intercept('POST', `${apiUrl}/conta/login`).as('loginContaInativada');
+
+      cy.visit('login.html');
+      cy.get('#email').type(cli.email);
+      cy.get('#password').type(cli.senha);
+      cy.get('#loginForm').submit();
+
+      cy.wait('@loginContaInativada').its('response.statusCode').should('eq', 401);
+      cy.get('#mensagem-login')
+        .should('be.visible')
+        .and('contain', 'inativada');
+      cy.location('pathname').should('eq', '/frontend/user/login.html');
+    });
+  });
+
+  it('inativa o cadastro do cliente pela tela de perfil e redireciona para o login', () => {
+    cy.criarClienteTesteReal({ nome: 'Maria', sobrenome: 'AutoInativar' }).then((cli) => {
+      idsUsuariosParaLimpar.push(cli.id);
+
+      cy.intercept('PATCH', `${apiUrl}/conta/${cli.id}/status`).as('inativarCliente');
+
+      cy.visit(`editar-perfil.html?id=${cli.id}`, {
+        onBeforeLoad(win) {
+          win.sessionStorage.setItem('usuarioLogado', JSON.stringify(cli));
+          win.mostrarLoadingUsuario = () => {};
+          win.esconderLoadingUsuario = () => {};
+        }
+      });
+
+      cy.get('#btn-inativar-conta').click();
+      cy.get('#modal-inativar-conta').should('be.visible');
+      cy.get('#btn-confirmar-inativacao').click();
+
+      cy.wait('@inativarCliente').then((interception) => {
+        expect(interception.request.body).to.deep.equal({ ativo: false });
+        expect(interception.response.statusCode).to.eq(200);
+      });
+      cy.location('pathname').should('eq', '/frontend/user/login.html');
+
+      cy.request('GET', `${apiUrl}/conta/${cli.id}`).its('body.ativo').should('eq', false);
+    });
+  });
+
+  it('Inativar cadastro de Cliente (A) pelo painel administrativo', () => {
+    cy.criarClienteTesteReal({ nome: 'Cliente', sobrenome: 'InativarAdmin' }).then((cli) => {
+      idsUsuariosParaLimpar.push(cli.id);
+
+      cy.intercept('GET', `${apiUrl}/conta`).as('listarClientes');
+      cy.intercept('PATCH', `${apiUrl}/conta/${cli.id}/status`).as('inativarClienteAdmin');
+
+      cy.visit('http://127.0.0.1:5500/frontend/admin/clientes.html');
+      cy.wait('@listarClientes').its('response.statusCode').should('eq', 200);
+
+      cy.contains('article.admin-card', cli.email)
+        .find('.btn-warning')
+        .click();
+
+      cy.get('#modal-status-cliente').should('be.visible');
+      cy.get('#btn-confirmar-status').click();
+
+      cy.wait('@inativarClienteAdmin').then((interception) => {
+        expect(interception.request.body).to.deep.equal({ ativo: false });
+        expect(interception.response.statusCode).to.eq(200);
+      });
+      cy.get('#resultado-titulo').should('contain', 'Status atualizado');
+
+      cy.request('GET', `${apiUrl}/conta/${cli.id}`).its('body.ativo').should('eq', false);
+    });
+  });
+
+  it('preserva histórico real de transações entregues e integridade referencial após inativação (RF0025)', () => {
+    let clienteHistorico;
+    let pedidoReal;
+
+    cy.obterSkuComEstoqueReal({ minEstoque: 3 })
+      .then(({ estoque }) =>
+        cy.criarClienteTesteReal({ nome: 'Cliente', sobrenome: 'HistoricoIntegro' }).then((cli) => {
+          clienteHistorico = cli;
+          idsUsuariosParaLimpar.push(cli.id);
+          return cy.criarEnderecoReal(cli.id).then((end) =>
+            cy.criarCartaoReal(cli.id).then((cartao) =>
+              cy.criarPedidoReal({
+                usuarioId: cli.id,
+                usuarioEnderecoId: end.usuarioEnderecoId,
+                usuarioCartaoId: cartao.id,
+                estoqueId: estoque.id,
+                quantidade: 1,
+                statusAlvo: 'Entregue'
+              })
+            )
+          );
+        })
+      )
+      .then((pedido) => {
+        pedidoReal = pedido;
+        // Soft-delete: inativa a conta do cliente mantendo seus dados e pedidos históricos no PostgreSQL
+        return cy.request('PATCH', `${apiUrl}/conta/${clienteHistorico.id}/status`, { ativo: false });
+      })
+      .then((resStatus) => {
+        expect(resStatus.status).to.eq(200);
+        expect(resStatus.body.ativo).to.be.false;
+
+        cy.intercept('GET', `${apiUrl}/pedidos*`).as('historicoTransacoes');
+
+        cy.visit(`pedidos.html?id=${clienteHistorico.id}`, {
+          onBeforeLoad(win) {
+            win.sessionStorage.setItem(
+              'usuarioLogado',
+              JSON.stringify({ ...clienteHistorico, ativo: false })
+            );
+          }
+        });
+
+        cy.wait('@historicoTransacoes').its('response.statusCode').should('eq', 200);
+        cy.get('.order-card').should('be.visible');
+        cy.get('.order-number').should('contain', pedidoReal.codigo);
+        cy.get('.status').should('contain', 'Entregue');
+      });
+  });
+});

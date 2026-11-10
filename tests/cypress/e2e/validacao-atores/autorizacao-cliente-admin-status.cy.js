@@ -1,211 +1,180 @@
 /**
  * ===============================================================================
- * Teste E2E & Segurança: Validação de Atores e Autorização em Estados de Pedido (DRS)
+ * Teste E2E & Segurança: Validação de Atores e Isolamento IDOR (100% Backend Real)
  * Arquivo: tests/cypress/e2e/validacao-atores/autorizacao-cliente-admin-status.cy.js
- * ===============================================================================
- * Matriz de Permissão do DRS (PedidoMaquinaEstados):
- * - Cliente:
- *   - PODE: Confirmar Entrega (EmTransporte -> Entregue)
- *   - PODE: Solicitar Troca (Entregue -> TrocaSolicitada)
- *   - PODE: Informar Despacho do Pacote (TrocaAceita -> ItemEnviado)
- *   - NÃO PODE: Auto-aprovar pagamento (PagamentoRealizado)
- *   - NÃO PODE: Auto-aprovar troca (TrocaAceita)
- *   - NÃO PODE: Confirmar recebimento no CD ou gerar cupom (ItemRecebido, Trocado)
- * - Administrador:
- *   - PODE: Aprovar/Reprovar Pagamento, Despachar, Avaliar Trocas e Concluir Troca
- * - Segurança e Isolamento (IDOR):
- *   - Um cliente nunca pode alterar ou visualizar pedidos de outro cliente (HTTP 404)
  * ===============================================================================
  */
 
 const apiUrl = Cypress.expose('apiUrl') || 'http://localhost:5205/api';
 
-describe('Validação de Atores - Permissões de Cliente vs Admin (DRS)', () => {
-  const clienteId = 42;
-  const outroClienteId = 99;
+describe('Validação de Atores - Permissões Reais de Cliente vs Admin e Isolamento IDOR', () => {
+  let clienteA;
+  let enderecoA;
+  let cartaoA;
+  let clienteB;
+  let skuReal;
+  const idsUsuarios = [];
 
-  const cliente = {
-    id: 42,
-    nome: 'Maria Silva',
-    email: 'maria@example.com'
-  };
+  before(() => {
+    cy.obterSkuComEstoqueReal({ minEstoque: 8 }).then((res) => {
+      skuReal = res;
+    });
 
-  context('Bloqueios de Atores Não Autorizados via API', () => {
+    cy.criarClienteTesteReal({ nome: 'Maria', sobrenome: 'AtorClienteA' }).then((cliA) => {
+      clienteA = cliA;
+      idsUsuarios.push(cliA.id);
+      return cy
+        .criarEnderecoReal(cliA.id, { estado: 'SP', padrao: true })
+        .then((end) => {
+          enderecoA = end;
+          return cy.criarCartaoReal(cliA.id, { padrao: true });
+        })
+        .then((cartao) => {
+          cartaoA = cartao;
+        });
+    });
+
+    cy.criarClienteTesteReal({ nome: 'Roberto', sobrenome: 'OutroClienteIDOR' }).then((cliB) => {
+      clienteB = cliB;
+      idsUsuarios.push(cliB.id);
+    });
+  });
+
+  after(() => {
+    idsUsuarios.reverse().forEach((id) => {
+      cy.limparUsuarioTesteReal(id);
+    });
+  });
+
+  const criarPedidoClienteA = (statusAlvo) =>
+    cy.criarPedidoReal({
+      usuarioId: clienteA.id,
+      usuarioEnderecoId: enderecoA.usuarioEnderecoId,
+      usuarioCartaoId: cartaoA.id,
+      estoqueId: skuReal.estoque.id,
+      quantidade: 1,
+      statusAlvo
+    });
+
+  context('Bloqueios Reais de Atores Não Autorizados via API (HTTP 400)', () => {
     it('Cliente NÃO PODE auto-aprovar o próprio pagamento (EmProcessamento -> PagamentoRealizado)', () => {
-      cy.request({
-        method: 'PATCH',
-        url: `${apiUrl}/pedidos/1/status`,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Usuario-Id': String(clienteId)
-        },
-        body: {
-          status: 'PagamentoRealizado'
-        },
-        failOnStatusCode: false
-      }).then((res) => {
-        expect(res.status).to.be.oneOf([400, 404]);
-        if (res.status === 400) {
-          expect(res.body.message || JSON.stringify(res.body)).to.match(/não pode ser executada pelo ator/i);
-        }
+      criarPedidoClienteA('EmProcessamento').then((pedido) => {
+        cy.request({
+          method: 'PATCH',
+          url: `${apiUrl}/pedidos/${pedido.id}/status`,
+          headers: { 'X-Usuario-Id': String(clienteA.id) },
+          body: { status: 'PagamentoRealizado' },
+          failOnStatusCode: false
+        }).then((res) => {
+          expect(res.status).to.eq(400);
+          expect(res.body.message).to.match(/não pode ser executada pelo ator/i);
+        });
       });
     });
 
     it('Cliente NÃO PODE auto-aprovar troca (TrocaSolicitada -> TrocaAceita)', () => {
-      cy.request({
-        method: 'PATCH',
-        url: `${apiUrl}/pedidos/1/status`,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Usuario-Id': String(clienteId)
-        },
-        body: {
-          status: 'TrocaAceita'
-        },
-        failOnStatusCode: false
-      }).then((res) => {
-        expect(res.status).to.be.oneOf([400, 404]);
-        if (res.status === 400) {
-          expect(res.body.message || JSON.stringify(res.body)).to.match(/não pode ser executada pelo ator/i);
-        }
+      criarPedidoClienteA('TrocaSolicitada').then((pedido) => {
+        cy.request({
+          method: 'PATCH',
+          url: `${apiUrl}/pedidos/${pedido.id}/status`,
+          headers: { 'X-Usuario-Id': String(clienteA.id) },
+          body: { status: 'TrocaAceita' },
+          failOnStatusCode: false
+        }).then((res) => {
+          expect(res.status).to.eq(400);
+          expect(res.body.message).to.match(/não pode ser executada pelo ator/i);
+        });
       });
     });
 
-    it('Cliente NÃO PODE auto-concluir troca física (ItemRecebido -> Trocado)', () => {
-      cy.request({
-        method: 'PATCH',
-        url: `${apiUrl}/pedidos/1/status`,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Usuario-Id': String(clienteId)
-        },
-        body: {
-          status: 'Trocado'
-        },
-        failOnStatusCode: false
-      }).then((res) => {
-        expect(res.status).to.be.oneOf([400, 404]);
-        if (res.status === 400) {
-          expect(res.body.message || JSON.stringify(res.body)).to.match(/não pode ser executada pelo ator/i);
-        }
+    it('Cliente NÃO PODE auto-concluir conferência física nem emitir cupom (ItemRecebido -> Trocado)', () => {
+      criarPedidoClienteA('ItemRecebido').then((pedido) => {
+        cy.request({
+          method: 'PATCH',
+          url: `${apiUrl}/pedidos/${pedido.id}/status`,
+          headers: { 'X-Usuario-Id': String(clienteA.id) },
+          body: { status: 'Trocado' },
+          failOnStatusCode: false
+        }).then((res) => {
+          expect(res.status).to.eq(400);
+          expect(res.body.message).to.match(/não pode ser executada pelo ator/i);
+        });
       });
     });
   });
 
-  context('Permissões Válidas do Cliente via UI', () => {
-    it('Cliente PODE confirmar recebimento do pedido na interface (EmTransporte -> Entregue)', () => {
-      const pedidoEmTransporte = [
-        {
-          id: 550,
-          codigo: '550',
-          status: 'EmTransporte',
-          data: new Date().toISOString(),
-          subtotal: 150.0,
-          valorFrete: 0.0,
-          valorTotal: 150.0,
-          proximosStatus: ['Entregue'],
-          itens: [
-            { id: 1, nomeProduto: 'Camisa Segunda Pele Térmica', quantidade: 1, precoUnitario: 150.0 }
-          ]
-        }
-      ];
+  context('Permissões Válidas do Cliente via UI Real', () => {
+    it('Cliente PODE confirmar recebimento do pedido real na interface (EmTransporte -> Entregue)', () => {
+      criarPedidoClienteA('EmTransporte').then((pedido) => {
+        cy.intercept('GET', `${apiUrl}/pedidos`).as('obterPedidos');
+        cy.intercept('PATCH', `${apiUrl}/pedidos/${pedido.id}/status`).as('confirmarRecebimentoUI');
 
-      cy.intercept('GET', `${apiUrl}/pedidos`, {
-        statusCode: 200,
-        body: pedidoEmTransporte
-      }).as('obterPedidos');
-
-      cy.intercept('PATCH', `${apiUrl}/pedidos/550/status`, (req) => {
-        expect(req.body.status).to.eq('Entregue');
-        req.reply({
-          statusCode: 200,
-          body: {
-            message: 'Recebimento confirmado com sucesso.',
-            dados: {
-              pedidoId: 550,
-              statusAnterior: 'EmTransporte',
-              statusAtual: 'Entregue',
-              proximosStatus: ['TrocaSolicitada']
-            }
+        cy.visit(`pedidos.html?id=${clienteA.id}`, {
+          onBeforeLoad(win) {
+            win.sessionStorage.setItem('usuarioLogado', JSON.stringify(clienteA));
           }
         });
-      }).as('confirmarRecebimentoUI');
 
-      cy.visit('pedidos.html?id=42', {
-        onBeforeLoad(win) {
-          win.sessionStorage.setItem('usuarioLogado', JSON.stringify(cliente));
-        }
+        cy.wait('@obterPedidos').its('response.statusCode').should('eq', 200);
+        cy.get(`[data-pedido-id="${pedido.id}"] [data-acao="confirmar-recebimento"]`).click();
+        cy.get('#btn-modal-confirm-ok').click();
+
+        cy.wait('@confirmarRecebimentoUI').then((interception) => {
+          expect(interception.request.body.status).to.eq('Entregue');
+          expect(interception.response.statusCode).to.eq(200);
+          expect(interception.response.body.dados.statusAtual).to.eq('Entregue');
+        });
       });
-
-      cy.wait('@obterPedidos');
-      cy.get('[data-acao="confirmar-recebimento"]').click();
-      cy.get('#btn-modal-confirm-ok').click();
-      cy.wait('@confirmarRecebimentoUI').its('response.statusCode').should('eq', 200);
     });
 
-    it('Cliente PODE informar despacho do pacote de devolução na interface (TrocaAceita -> ItemEnviado)', () => {
-      const pedidoEmTroca = [
-        {
-          id: 551,
-          codigo: '551',
-          status: 'TrocaAceita',
-          data: new Date().toISOString(),
-          subtotal: 200.0,
-          valorFrete: 0.0,
-          valorTotal: 200.0,
-          proximosStatus: ['ItemEnviado'],
-          itens: [
-            { id: 2, nomeProduto: 'Bastão de Trekking Carbono', quantidade: 1, precoUnitario: 200.0 }
-          ]
-        }
-      ];
+    it('Cliente PODE informar despacho do pacote real de devolução na interface (TrocaAceita -> ItemEnviado)', () => {
+      criarPedidoClienteA('TrocaAceita').then((pedido) => {
+        cy.intercept('GET', `${apiUrl}/pedidos`).as('obterPedidosTroca');
+        cy.intercept('PATCH', `${apiUrl}/pedidos/${pedido.id}/status`).as('despacharPacoteUI');
 
-      cy.intercept('GET', `${apiUrl}/pedidos`, {
-        statusCode: 200,
-        body: pedidoEmTroca
-      }).as('obterPedidosTroca');
-
-      cy.intercept('PATCH', `${apiUrl}/pedidos/551/status`, (req) => {
-        expect(req.body.status).to.eq('ItemEnviado');
-        req.reply({
-          statusCode: 200,
-          body: {
-            message: 'Despacho registrado com sucesso.',
-            dados: {
-              pedidoId: 551,
-              statusAnterior: 'TrocaAceita',
-              statusAtual: 'ItemEnviado',
-              proximosStatus: ['ItemRecebido']
-            }
+        cy.visit(`pedidos.html?id=${clienteA.id}`, {
+          onBeforeLoad(win) {
+            win.sessionStorage.setItem('usuarioLogado', JSON.stringify(clienteA));
           }
         });
-      }).as('despacharPacoteUI');
 
-      cy.visit('pedidos.html?id=42', {
-        onBeforeLoad(win) {
-          win.sessionStorage.setItem('usuarioLogado', JSON.stringify(cliente));
-        }
+        cy.wait('@obterPedidosTroca').its('response.statusCode').should('eq', 200);
+        cy.get(`[data-pedido-id="${pedido.id}"] [data-acao="confirmar-despacho"]`).click();
+        cy.get('#btn-modal-confirm-ok').click();
+
+        cy.wait('@despacharPacoteUI').then((interception) => {
+          expect(interception.request.body.status).to.eq('ItemEnviado');
+          expect(interception.response.statusCode).to.eq(200);
+          expect(interception.response.body.dados.statusAtual).to.eq('ItemEnviado');
+        });
       });
-
-      cy.wait('@obterPedidosTroca');
-      cy.get('[data-acao="confirmar-despacho"]').click();
-      cy.get('#btn-modal-confirm-ok').click();
-      cy.wait('@despacharPacoteUI').its('response.statusCode').should('eq', 200);
     });
   });
 
-  context('Isolamento IDOR entre Clientes', () => {
-    it('Cliente tentando consultar pedido de outro usuário deve receber 404 sem vazamento de dados', () => {
-      cy.request({
-        method: 'GET',
-        url: `${apiUrl}/pedidos/9999`,
-        headers: {
-          'X-Usuario-Id': String(outroClienteId)
-        },
-        failOnStatusCode: false
-      }).then((res) => {
-        expect(res.status).to.eq(404);
-        expect(res.body.message).to.contain('não encontrado');
+  context('Isolamento IDOR Real entre Clientes Distintos', () => {
+    it('Cliente B tentando consultar ou alterar pedido real do Cliente A recebe 404 sem vazamento de dados', () => {
+      criarPedidoClienteA('EmTransporte').then((pedidoDeA) => {
+        // 1. Tentativa de leitura cruzada (GET)
+        cy.request({
+          method: 'GET',
+          url: `${apiUrl}/pedidos/${pedidoDeA.id}`,
+          headers: { 'X-Usuario-Id': String(clienteB.id) },
+          failOnStatusCode: false
+        }).then((resGet) => {
+          expect(resGet.status).to.eq(404);
+          expect(resGet.body.message).to.contain('não encontrado');
+        });
+
+        // 2. Tentativa de mutação cruzada (PATCH)
+        cy.request({
+          method: 'PATCH',
+          url: `${apiUrl}/pedidos/${pedidoDeA.id}/status`,
+          headers: { 'X-Usuario-Id': String(clienteB.id) },
+          body: { status: 'Entregue' },
+          failOnStatusCode: false
+        }).then((resPatch) => {
+          expect(resPatch.status).to.eq(404);
+        });
       });
     });
   });

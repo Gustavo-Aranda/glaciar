@@ -1,105 +1,125 @@
+const apiUrl = Cypress.expose('apiUrl') || 'http://localhost:5205/api';
+
 describe('Alterar Cliente (A)', () => {
-  const cliente = {
-    id: 42,
-    nome: 'Maria',
-    sobrenome: 'Silva',
-    cpf: '52998224725',
-    email: 'maria@example.com',
-    telefone: '11987654321',
-    tipoUsuario: 0,
-    ativo: true,
-    createdAt: '2026-01-10T00:00:00Z'
-  }
+  let clienteExistenteReferencia;
+  let clienteTeste;
+
+  before(() => {
+    cy.obterClienteAtivoReal().then((cli) => {
+      clienteExistenteReferencia = cli;
+    });
+  });
 
   beforeEach(() => {
-    cy.intercept('GET', 'http://localhost:5205/api/conta', {
-      statusCode: 200,
-      body: [cliente]
-    }).as('listarClientes')
-
-    cy.visit('http://127.0.0.1:5500/frontend/admin/clientes.html')
-    cy.wait('@listarClientes')
-    cy.get('.btn-edit-client').click()
-    cy.get('#modal-editar-cliente').should('be.visible')
-  })
-
-  it('altera os dados cadastrais do cliente', () => {
-    cy.intercept('PUT', 'http://localhost:5205/api/conta/42', {
-      statusCode: 200,
-      body: { ...cliente, nome: 'Mariana', email: 'mariana@example.com' }
-    }).as('editarCliente')
-
-    cy.get('#editar-nome').clear().type('Mariana')
-    cy.get('#editar-email').clear().type('mariana@example.com')
-    cy.get('#editar-telefone').clear().type('11876543210')
-    cy.get('#form-editar-cliente').submit()
-
-    cy.wait('@editarCliente').its('request.body').should('deep.include', {
-      nome: 'Mariana',
+    cy.criarClienteTesteReal({
+      nome: 'Maria',
       sobrenome: 'Silva',
-      cpf: '52998224725',
-      email: 'mariana@example.com',
-      telefone: '11876543210',
-      tipoUsuario: 0
-    })
-    cy.get('#modal-resultado').should('be.visible')
-    cy.get('#resultado-titulo').should('contain', 'Cliente atualizado')
-  })
+      telefone: '11987654321'
+    }).then((criado) => {
+      clienteTeste = criado;
+
+      cy.intercept('GET', `${apiUrl}/conta`).as('listarClientes');
+      cy.visit('http://127.0.0.1:5500/frontend/admin/clientes.html');
+      cy.wait('@listarClientes').its('response.statusCode').should('eq', 200);
+
+      cy.contains('article.admin-card', clienteTeste.email)
+        .find('.btn-edit-client')
+        .click();
+
+      cy.get('#modal-editar-cliente').should('be.visible');
+      cy.get('#editar-tipoUsuario').select('0');
+    });
+  });
+
+  afterEach(() => {
+    if (clienteTeste?.id) {
+      cy.request({
+        method: 'DELETE',
+        url: `${apiUrl}/conta/${clienteTeste.id}`,
+        failOnStatusCode: false
+      });
+      clienteTeste = null;
+    }
+  });
+
+  it('altera os dados cadastrais do cliente no banco real', () => {
+    const novoEmail = Cypress.glaciar.gerarEmailUnico('mariana.admin.edit');
+    cy.intercept('PUT', `${apiUrl}/conta/${clienteTeste.id}`).as('editarCliente');
+
+    cy.get('#editar-nome').clear().type('Mariana');
+    cy.get('#editar-email').clear().type(novoEmail);
+    cy.get('#editar-telefone').clear().type('11876543210');
+    cy.get('#form-editar-cliente').submit();
+
+    cy.wait('@editarCliente').then((interception) => {
+      expect(interception.request.body).to.deep.include({
+        nome: 'Mariana',
+        sobrenome: 'Silva',
+        cpf: clienteTeste.cpf,
+        email: novoEmail,
+        telefone: '11876543210',
+        tipoUsuario: 0
+      });
+      expect(interception.response.statusCode).to.eq(200);
+    });
+
+    cy.get('#modal-resultado').should('be.visible');
+    cy.get('#resultado-titulo').should('contain', 'Cliente atualizado');
+
+    cy.request('GET', `${apiUrl}/conta/${clienteTeste.id}`).then((res) => {
+      expect(res.body.nome).to.eq('Mariana');
+      expect(res.body.email).to.eq(novoEmail);
+    });
+  });
 
   it('informa erro ao tentar salvar sem preencher os dados', () => {
-    cy.intercept('PUT', 'http://localhost:5205/api/conta/42').as('naoDeveEditarCliente')
+    cy.intercept('PUT', `${apiUrl}/conta/${clienteTeste.id}`).as('naoDeveEditarCliente');
 
-    cy.get('#editar-nome').clear()
-    cy.get('#editar-sobrenome').clear()
-    cy.get('#editar-cpf').clear()
-    cy.get('#editar-email').clear()
-    cy.get('#form-editar-cliente').submit()
+    cy.get('#editar-nome').clear();
+    cy.get('#editar-sobrenome').clear();
+    cy.get('#editar-cpf').clear();
+    cy.get('#editar-email').clear();
+    cy.get('#form-editar-cliente').submit();
 
     cy.get('.notificacao')
       .should('be.visible')
-      .and('contain', 'Preencha os campos corretamente')
-    cy.get('@naoDeveEditarCliente.all').should('have.length', 0)
-  })
+      .and('contain', 'Preencha os campos corretamente');
+    cy.get('@naoDeveEditarCliente.all').should('have.length', 0);
+  });
 
-  it('informa erro ao trocar o CPF por outro ja cadastrado', () => {
-    cy.intercept('PUT', 'http://localhost:5205/api/conta/42', {
-      statusCode: 400,
-      body: { erro: 'CPF já cadastrado.' }
-    }).as('editarCliente')
+  it('informa erro real do backend ao trocar o CPF por outro ja cadastrado', () => {
+    cy.intercept('PUT', `${apiUrl}/conta/${clienteTeste.id}`).as('editarCliente');
 
-    cy.get('#editar-cpf').clear().type('93541134780')
-    cy.get('#form-editar-cliente').submit()
+    cy.get('#editar-cpf').clear().type(clienteExistenteReferencia.cpf);
+    cy.get('#form-editar-cliente').submit();
 
-    cy.wait('@editarCliente')
+    cy.wait('@editarCliente').its('response.statusCode').should('eq', 400);
     cy.get('.notificacao')
       .should('be.visible')
-      .and('contain', 'CPF já cadastrado.')
-  })
+      .and('contain', 'CPF já cadastrado');
+  });
 
-  it('informa erro ao trocar o email por outro ja cadastrado', () => {
-    cy.intercept('PUT', 'http://localhost:5205/api/conta/42', {
-      statusCode: 400,
-      body: { erro: 'Email já cadastrado.' }
-    }).as('editarCliente')
+  it('informa erro real do backend ao trocar o email por outro ja cadastrado', () => {
+    cy.intercept('PUT', `${apiUrl}/conta/${clienteTeste.id}`).as('editarCliente');
 
-    cy.get('#editar-email').clear().type('outro@example.com')
-    cy.get('#form-editar-cliente').submit()
+    cy.get('#editar-email').clear().type(clienteExistenteReferencia.email);
+    cy.get('#form-editar-cliente').submit();
 
-    cy.wait('@editarCliente')
+    cy.wait('@editarCliente').its('response.statusCode').should('eq', 400);
     cy.get('.notificacao')
       .should('be.visible')
-      .and('contain', 'Email já cadastrado.')
-  })
+      .and('contain', 'Email já cadastrado');
+  });
 
   it('informa erro ao tentar salvar um CPF invalido', () => {
-    cy.intercept('PUT', 'http://localhost:5205/api/conta/42').as('naoDeveEditarCliente')
+    cy.intercept('PUT', `${apiUrl}/conta/${clienteTeste.id}`).as('naoDeveEditarCliente');
 
-    cy.get('#editar-cpf').clear().type('11111111111')
-    cy.get('#form-editar-cliente').submit()
+    cy.get('#editar-cpf').clear().type('11111111111');
+    cy.get('#form-editar-cliente').submit();
 
     cy.get('.notificacao')
       .should('be.visible')
-      .and('contain', 'informe um CPF válido')
-    cy.get('@naoDeveEditarCliente.all').should('have.length', 0)
-  })
-})
+      .and('contain', 'informe um CPF válido');
+    cy.get('@naoDeveEditarCliente.all').should('have.length', 0);
+  });
+});

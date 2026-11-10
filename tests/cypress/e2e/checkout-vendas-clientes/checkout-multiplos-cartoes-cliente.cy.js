@@ -1,171 +1,152 @@
 /**
  * ===============================================================================
- * Teste E2E: Checkout com Múltiplos Cartões (RN0034) - Cliente
- * Arquivo: tests/cypress/e2e/checkout-multiplos-cartoes-cliente.cy.js
- * ===============================================================================
- * Regra de Negócio RN0034:
- * - O valor mínimo debitado em cada cartão de crédito deve ser de R$ 10,00.
- *
- * Cenários:
- * - Unhappy Path: Bloqueio ao tentar pagar menos de R$ 10,00 em um cartão (ex: R$ 5,00).
- * - Happy Path: Divisão válida do saldo total entre múltiplos cartões (>= R$ 10,00 cada).
+ * Teste E2E: Checkout com Múltiplos Cartões (RN0034) - Cliente (100% Backend Real)
+ * Arquivo: tests/cypress/e2e/checkout-vendas-clientes/checkout-multiplos-cartoes-cliente.cy.js
  * ===============================================================================
  */
 
 const apiUrl = Cypress.expose('apiUrl') || 'http://localhost:5205/api';
 
-describe('Checkout com múltiplos cartões (RN0034) - Cliente', () => {
-  const cliente = {
-    id: 42,
-    nome: 'Maria Silva',
-    email: 'maria.silva@example.com'
-  };
+describe('Checkout com múltiplos cartões (RN0034) - Cliente (API Real)', () => {
+  let clienteTeste;
+  let cartao1;
+  let cartao2;
+  let skuReal;
+  let totalCompra;
+  let pedidosCriados = [];
 
-  const enderecoPadrao = {
-    id: 10,
-    usuarioId: 42,
-    apelido: 'Casa',
-    padrao: true,
-    cep: '08700000',
-    logradouro: 'Rua das Flores',
-    numero: '123',
-    bairro: 'Centro',
-    cidade: 'Mogi das Cruzes',
-    estado: 'SP'
-  };
+  before(() => {
+    cy.obterSkuComEstoqueReal({ minEstoque: 6 }).then((res) => {
+      skuReal = res;
+    });
 
-  const cartao1 = {
-    id: 5,
-    usuarioId: 42,
-    ultimosDigitos: '1234',
-    bandeira: 'Mastercard',
-    mesValidade: 12,
-    anoValidade: 2028,
-    padrao: true
-  };
-
-  const cartao2 = {
-    id: 6,
-    usuarioId: 42,
-    ultimosDigitos: '5678',
-    bandeira: 'Visa',
-    mesValidade: 8,
-    anoValidade: 2029,
-    padrao: false
-  };
-
-  const contextoMultiplosCartoes = {
-    carrinho: {
-      id: 1,
-      quantidadeItens: 1,
-      subtotal: 50.0,
-      itens: [
-        {
-          id: 102,
-          nomeProduto: 'Bota Glaciar Impermeável',
-          tamanho: '41',
-          cor: 'Marrom',
-          sku: 'BOT-GLA-41-MRR',
-          precoUnitario: 50.0,
-          quantidade: 1,
-          estoqueDisponivel: 10,
-          disponivel: true
-        }
-      ]
-    },
-    enderecoPrincipal: enderecoPadrao,
-    valorFrete: 0.0,
-    valorTotal: 50.0,
-    cartoes: [cartao1, cartao2]
-  };
-
-  beforeEach(() => {
-    cy.intercept('GET', `${apiUrl}/checkout/contexto`, {
-      statusCode: 200,
-      body: contextoMultiplosCartoes
-    }).as('carregarContexto');
-
-    visitarComSessao('checkout.html?id=42');
-    cy.wait('@carregarContexto');
+    cy.criarClienteTesteReal({ nome: 'Maria', sobrenome: 'MultiCartoes' }).then((cli) => {
+      clienteTeste = cli;
+      return cy
+        .criarEnderecoReal(cli.id, { estado: 'SP', padrao: true })
+        .then(() => cy.criarCartaoReal(cli.id, { variante: 'mastercard', padrao: true }))
+        .then((c1) => {
+          cartao1 = c1;
+          return cy.criarCartaoReal(cli.id, { variante: 'visa', padrao: false });
+        })
+        .then((c2) => {
+          cartao2 = c2;
+        });
+    });
   });
 
-  const visitarComSessao = (pagina) => {
-    cy.visit(pagina, {
-      onBeforeLoad(win) {
-        win.sessionStorage.setItem('usuarioLogado', JSON.stringify(cliente));
-      }
+  beforeEach(() => {
+    cy.esvaziarCarrinhoReal(clienteTeste.id)
+      .then(() => cy.adicionarItemCarrinhoReal(clienteTeste.id, skuReal.estoque.id, 1))
+      .then(() => {
+        cy.intercept('GET', `${apiUrl}/checkout/contexto`).as('carregarContexto');
+
+        cy.visit(`checkout.html?id=${clienteTeste.id}`, {
+          onBeforeLoad(win) {
+            win.sessionStorage.setItem('usuarioLogado', JSON.stringify(clienteTeste));
+          }
+        });
+
+        cy.wait('@carregarContexto').then((interception) => {
+          expect(interception.response.statusCode).to.eq(200);
+          totalCompra = Number(interception.response.body.valorTotal);
+        });
+      });
+  });
+
+  afterEach(() => {
+    pedidosCriados.reverse().forEach((pedidoId) => {
+      cy.request({
+        method: 'PATCH',
+        url: `${apiUrl}/admin/pedidos/${pedidoId}/status`,
+        body: { status: 'Cancelado' },
+        failOnStatusCode: false
+      });
     });
-  };
-
-  const cenariosLimiteRN0034 = [
-    {
-      descricao: 'rejeita cartão 2 com valor abaixo do piso (R$ 5,00 < R$ 10,00)',
-      valor1: '45.00',
-      valor2: '5.00',
-      valido: false,
-      mensagemEsperada: 'O valor mínimo por cartão de crédito é R$ 10,00.'
-    },
-    {
-      descricao: 'rejeita cartão 1 com valor de borda inválido (R$ 9,99 < R$ 10,00)',
-      valor1: '9.99',
-      valor2: '40.01',
-      valido: false,
-      mensagemEsperada: 'O valor mínimo por cartão de crédito é R$ 10,00.'
-    },
-    {
-      descricao: 'aprova pagamento exatamente no piso mínimo (R$ 10,00 e R$ 40,00)',
-      valor1: '10.00',
-      valor2: '40.00',
-      valido: true
-    },
-    {
-      descricao: 'aprova pagamento com divisão equilibrada (R$ 30,00 e R$ 20,00)',
-      valor1: '30.00',
-      valor2: '20.00',
-      valido: true
+    pedidosCriados = [];
+    if (clienteTeste?.id) {
+      cy.esvaziarCarrinhoReal(clienteTeste.id);
     }
-  ];
+  });
 
-  cenariosLimiteRN0034.forEach(({ descricao, valor1, valor2, valido, mensagemEsperada }) => {
-    it(`RN0034: ${descricao}`, () => {
-      if (!valido) {
-        cy.intercept('POST', `${apiUrl}/checkout/finalizar`).as('tentativaEnvio');
+  after(() => {
+    if (clienteTeste?.id) {
+      cy.limparUsuarioTesteReal(clienteTeste.id);
+    }
+  });
 
-        cy.get('.input-valor-cartao[data-cartao-id="5"]').clear().type(valor1);
-        cy.get('.input-valor-cartao[data-cartao-id="6"]').clear().type(valor2);
-        cy.get('.btn-submit').click();
+  it('RN0034: rejeita cartão 2 com valor abaixo do piso mínimo (R$ 5,00 < R$ 10,00)', () => {
+    cy.intercept('POST', `${apiUrl}/checkout/finalizar`).as('tentativaEnvio');
 
-        cy.get('.toast-error')
-          .should('be.visible')
-          .and('contain', mensagemEsperada);
-        cy.get('@tentativaEnvio.all').should('have.length', 0);
-      } else {
-        cy.intercept('POST', `${apiUrl}/checkout/finalizar`, (req) => {
-          expect(req.body.cartoes).to.have.length(2);
-          expect(req.body.cartoes[0].valor).to.eq(parseFloat(valor1));
-          expect(req.body.cartoes[1].valor).to.eq(parseFloat(valor2));
+    const valor1 = (totalCompra - 5.0).toFixed(2);
+    cy.get(`.input-valor-cartao[data-cartao-id="${cartao1.id}"]`).clear().type(valor1);
+    cy.get(`.input-valor-cartao[data-cartao-id="${cartao2.id}"]`).clear().type('5.00');
+    cy.get('.btn-submit').click();
 
-          req.reply({
-            statusCode: 200,
-            body: {
-              id: 701,
-              codigo: 'PED-701-MULTI',
-              status: 'EmProcessamento',
-              valorTotal: 50.0,
-              valorPagoCartoes: 50.0
-            }
-          });
-        }).as('finalizarMultiplos');
+    cy.get('.toast-error')
+      .should('be.visible')
+      .and('contain', 'O valor mínimo por cartão de crédito é R$ 10,00.');
+    cy.get('@tentativaEnvio.all').should('have.length', 0);
+  });
 
-        cy.get('.input-valor-cartao[data-cartao-id="5"]').clear().type(valor1);
-        cy.get('.input-valor-cartao[data-cartao-id="6"]').clear().type(valor2);
-        cy.get('.btn-submit').click();
+  it('RN0034: rejeita cartão 1 com valor de borda inválido (R$ 9,99 < R$ 10,00)', () => {
+    cy.intercept('POST', `${apiUrl}/checkout/finalizar`).as('tentativaEnvio');
 
-        cy.wait('@finalizarMultiplos').its('response.body.status').should('eq', 'EmProcessamento');
-        cy.get('.checkout-main')
-          .should('contain', 'Compra finalizada com sucesso! 🎉')
-          .and('contain', 'PED-701-MULTI');
-      }
+    const valor2 = (totalCompra - 9.99).toFixed(2);
+    cy.get(`.input-valor-cartao[data-cartao-id="${cartao1.id}"]`).clear().type('9.99');
+    cy.get(`.input-valor-cartao[data-cartao-id="${cartao2.id}"]`).clear().type(valor2);
+    cy.get('.btn-submit').click();
+
+    cy.get('.toast-error')
+      .should('be.visible')
+      .and('contain', 'O valor mínimo por cartão de crédito é R$ 10,00.');
+    cy.get('@tentativaEnvio.all').should('have.length', 0);
+  });
+
+  it('RN0034: aprova pagamento real exatamente no piso mínimo no cartão 1 (R$ 10,00 e saldo restante)', () => {
+    cy.intercept('POST', `${apiUrl}/checkout/finalizar`).as('finalizarMultiplos');
+
+    const valor1 = 10.0;
+    const valor2 = Number((totalCompra - 10.0).toFixed(2));
+
+    cy.get(`.input-valor-cartao[data-cartao-id="${cartao1.id}"]`).clear().type(valor1.toFixed(2));
+    cy.get(`.input-valor-cartao[data-cartao-id="${cartao2.id}"]`).clear().type(valor2.toFixed(2));
+    cy.get('.btn-submit').click();
+
+    cy.wait('@finalizarMultiplos').then((interception) => {
+      expect(interception.request.body.cartoes).to.have.length(2);
+      expect(interception.request.body.cartoes[0].valor).to.eq(valor1);
+      expect(interception.request.body.cartoes[1].valor).to.eq(valor2);
+
+      expect(interception.response.statusCode).to.eq(200);
+      expect(interception.response.body.status).to.eq('EmProcessamento');
+      pedidosCriados.push(interception.response.body.id);
+
+      cy.get('.checkout-main')
+        .should('contain', 'Compra finalizada com sucesso!')
+        .and('contain', interception.response.body.codigo);
+    });
+  });
+
+  it('RN0034: aprova pagamento real com divisão equilibrada entre os dois cartões (>= R$ 10,00 cada)', () => {
+    cy.intercept('POST', `${apiUrl}/checkout/finalizar`).as('finalizarDividido');
+
+    const metade1 = Math.floor((totalCompra / 2) * 100) / 100;
+    const metade2 = Number((totalCompra - metade1).toFixed(2));
+
+    cy.get(`.input-valor-cartao[data-cartao-id="${cartao1.id}"]`).clear().type(metade1.toFixed(2));
+    cy.get(`.input-valor-cartao[data-cartao-id="${cartao2.id}"]`).clear().type(metade2.toFixed(2));
+    cy.get('.btn-submit').click();
+
+    cy.wait('@finalizarDividido').then((interception) => {
+      expect(interception.response.statusCode).to.eq(200);
+      expect(interception.response.body.status).to.eq('EmProcessamento');
+      expect(interception.response.body.pagamentos).to.have.length(2);
+      pedidosCriados.push(interception.response.body.id);
+
+      cy.get('.checkout-main')
+        .should('contain', 'Compra finalizada com sucesso!')
+        .and('contain', interception.response.body.codigo);
     });
   });
 });

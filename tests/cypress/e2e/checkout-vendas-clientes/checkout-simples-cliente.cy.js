@@ -1,196 +1,165 @@
 /**
  * ===============================================================================
- * Teste E2E: Checkout Simples com Dados Salvos - Cliente
- * Arquivo: tests/cypress/e2e/checkout-simples-cliente.cy.js
- * ===============================================================================
- * Escopo:
- * - Carregamento automático de endereço principal e cartão previamente cadastrados
- * - Submissão do checkout simples (Happy Path)
- * - Validação da mensagem de sucesso e status EmProcessamento
+ * Teste E2E: Checkout Simples com Dados Salvos - Cliente (100% Backend Real)
+ * Arquivo: tests/cypress/e2e/checkout-vendas-clientes/checkout-simples-cliente.cy.js
  * ===============================================================================
  */
 
 const apiUrl = Cypress.expose('apiUrl') || 'http://localhost:5205/api';
+const formatarBRL = (valor) =>
+  new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(valor);
 
-describe('Checkout simples com dados pré-cadastrados - Cliente', () => {
-  const cliente = {
-    id: 42,
-    nome: 'Maria Silva',
-    email: 'maria.silva@example.com'
-  };
+describe('Checkout simples com dados pré-cadastrados - Cliente (API Real)', () => {
+  let clienteTeste;
+  let enderecoSalvo;
+  let cartaoSalvo;
+  let skuReal;
+  let contextoReal;
+  let pedidosCriados = [];
 
-  const enderecoPadrao = {
-    id: 10,
-    usuarioId: 42,
-    apelido: 'Casa',
-    padrao: true,
-    cep: '08700000',
-    logradouro: 'Rua das Flores',
-    numero: '123',
-    complemento: 'Apto 4B',
-    bairro: 'Jardim das Palmeiras',
-    cidade: 'Mogi das Cruzes',
-    estado: 'SP'
-  };
-
-  const cartaoPadrao = {
-    id: 5,
-    usuarioId: 42,
-    ultimosDigitos: '1234',
-    bandeira: 'Mastercard',
-    mesValidade: 12,
-    anoValidade: 2028,
-    padrao: true
-  };
-
-  const contextoCheckout = {
-    carrinho: {
-      id: 1,
-      quantidadeItens: 1,
-      subtotal: 100.0,
-      itens: [
-        {
-          id: 101,
-          nomeProduto: 'Casaco Polar Térmico',
-          tamanho: 'G',
-          cor: 'Preto',
-          sku: 'CAS-POL-G-PRT',
-          precoUnitario: 100.0,
-          quantidade: 1,
-          estoqueDisponivel: 5,
-          disponivel: true
-        }
-      ]
-    },
-    enderecoPrincipal: enderecoPadrao,
-    valorFrete: 20.0,
-    valorTotal: 120.0,
-    cartoes: [cartaoPadrao]
-  };
-
-  beforeEach(() => {
-    cy.intercept('GET', `${apiUrl}/checkout/contexto`, {
-      statusCode: 200,
-      body: contextoCheckout
-    }).as('carregarContexto');
-
-    cy.visit('checkout.html?id=42', {
-      onBeforeLoad(win) {
-        win.sessionStorage.setItem('usuarioLogado', JSON.stringify(cliente));
-      }
+  before(() => {
+    cy.obterSkuComEstoqueReal({ minEstoque: 6 }).then((res) => {
+      skuReal = res;
     });
 
-    cy.wait('@carregarContexto');
+    cy.criarClienteTesteReal({ nome: 'Maria', sobrenome: 'CheckoutSimples' }).then((cli) => {
+      clienteTeste = cli;
+      return cy
+        .criarEnderecoReal(cli.id, {
+          apelido: 'Casa Mogi',
+          logradouro: 'Rua das Flores',
+          numero: '123',
+          cidade: 'Mogi das Cruzes',
+          estado: 'SP',
+          padrao: true
+        })
+        .then((end) => {
+          enderecoSalvo = end;
+          return cy.criarCartaoReal(cli.id, { padrao: true });
+        })
+        .then((cartao) => {
+          cartaoSalvo = cartao;
+        });
+    });
   });
 
-  it('carrega endereço principal e cartão vinculado automaticamente', () => {
-    cy.get('#usar-existente').should('be.checked');
-    cy.get('#endereco-info').should('contain', 'Rua das Flores, 123');
-    cy.get('#resumo-subtotal').should('contain', '100,00');
-    cy.get('#resumo-frete').should('contain', '20,00');
-    cy.get('#resumo-total').should('contain', '120,00');
-
-    // Valor do cartão pré-preenchido com o total
-    cy.get('.input-valor-cartao[data-cartao-id="5"]').should('have.value', '120.00');
-  });
-
-  it('finaliza a compra com sucesso e registra o status EmProcessamento', () => {
-    cy.intercept('POST', `${apiUrl}/checkout/finalizar`, (req) => {
-      expect(req.headers['x-usuario-id']).to.eq('42');
-      expect(req.body.usuarioEnderecoId).to.eq(10);
-      expect(req.body.cartoes).to.have.length(1);
-      expect(req.body.cartoes[0].usuarioCartaoId).to.eq(5);
-      expect(req.body.cartoes[0].valor).to.eq(120.0);
-
-      req.reply({
-        statusCode: 200,
-        body: {
-          id: 501,
-          codigo: 'PED-501-SIMPLES',
-          data: new Date().toISOString(),
-          status: 'EmProcessamento',
-          subtotal: 100.0,
-          valorFrete: 20.0,
-          valorAbatidoCupons: 0.0,
-          valorTotal: 120.0,
-          valorPagoCartoes: 120.0
-        }
+  afterEach(() => {
+    pedidosCriados.reverse().forEach((pedidoId) => {
+      cy.request({
+        method: 'PATCH',
+        url: `${apiUrl}/admin/pedidos/${pedidoId}/status`,
+        body: { status: 'Cancelado' },
+        failOnStatusCode: false
       });
-    }).as('finalizarPedido');
+    });
+    pedidosCriados = [];
+    if (clienteTeste?.id) {
+      cy.esvaziarCarrinhoReal(clienteTeste.id);
+    }
+  });
+
+  after(() => {
+    if (clienteTeste?.id) {
+      cy.limparUsuarioTesteReal(clienteTeste.id);
+    }
+  });
+
+  const prepararCarrinhoEVisitarCheckout = () => {
+    cy.esvaziarCarrinhoReal(clienteTeste.id)
+      .then(() => cy.adicionarItemCarrinhoReal(clienteTeste.id, skuReal.estoque.id, 1))
+      .then(() => {
+        cy.intercept('GET', `${apiUrl}/checkout/contexto`).as('carregarContexto');
+
+        cy.visit(`checkout.html?id=${clienteTeste.id}`, {
+          onBeforeLoad(win) {
+            win.sessionStorage.setItem('usuarioLogado', JSON.stringify(clienteTeste));
+          }
+        });
+
+        cy.wait('@carregarContexto').then((interception) => {
+          expect(interception.response.statusCode).to.eq(200);
+          contextoReal = interception.response.body;
+        });
+      });
+  };
+
+  it('carrega endereço principal e cartão vinculado automaticamente do PostgreSQL', () => {
+    prepararCarrinhoEVisitarCheckout();
+
+    cy.then(() => {
+      cy.get('#usar-existente').should('be.checked');
+      cy.get('#endereco-info').should('contain', 'Rua das Flores, 123');
+      cy.get('#resumo-subtotal').should('contain', formatarBRL(contextoReal.carrinho.subtotal));
+      cy.get('#resumo-frete').should('contain', formatarBRL(contextoReal.valorFrete));
+      cy.get('#resumo-total').should('contain', formatarBRL(contextoReal.valorTotal));
+
+      cy.get(`.input-valor-cartao[data-cartao-id="${cartaoSalvo.id}"]`).should(
+        'have.value',
+        Number(contextoReal.valorTotal).toFixed(2)
+      );
+    });
+  });
+
+  it('finaliza a compra real com sucesso, grava EmProcessamento e exibe em Meus Pedidos', () => {
+    prepararCarrinhoEVisitarCheckout();
+
+    cy.intercept('POST', `${apiUrl}/checkout/finalizar`).as('finalizarPedido');
 
     cy.get('.btn-submit').click();
 
-    cy.wait('@finalizarPedido').its('response.body.status').should('eq', 'EmProcessamento');
+    cy.wait('@finalizarPedido').then((interception) => {
+      expect(interception.request.headers['x-usuario-id']).to.eq(String(clienteTeste.id));
+      expect(interception.request.body.usuarioEnderecoId).to.eq(enderecoSalvo.usuarioEnderecoId);
+      expect(interception.request.body.cartoes).to.have.length(1);
+      expect(interception.request.body.cartoes[0].usuarioCartaoId).to.eq(cartaoSalvo.id);
+      expect(interception.request.body.cartoes[0].valor).to.eq(Number(contextoReal.valorTotal));
 
-    cy.get('.checkout-main')
-      .should('contain', 'Compra finalizada com sucesso! 🎉')
-      .and('contain', 'PED-501-SIMPLES')
-      .and('contain', 'Valor Final:')
-      .and('contain', '120,00');
-  });
+      expect(interception.response.statusCode).to.eq(200);
+      const pedidoCriado = interception.response.body;
+      pedidosCriados.push(pedidoCriado.id);
+      expect(pedidoCriado.status).to.eq('EmProcessamento');
 
-  it('exibe o pedido com status Em Processamento no histórico de Meus Pedidos', () => {
-    cy.intercept('GET', `${apiUrl}/pedidos*`, {
-      statusCode: 200,
-      body: [
-        {
-          id: 501,
-          codigo: 'PED-501-SIMPLES',
-          data: new Date().toISOString(),
-          status: 'EmProcessamento',
-          subtotal: 100.0,
-          valorFrete: 20.0,
-          valorAbatidoCupons: 0.0,
-          valorTotal: 120.0,
-          pagamentos: [
-            {
-              id: 1,
-              valor: 120.0,
-              metodo: 1,
-              cartaoUltimosDigitos: '1234',
-              cartaoBandeira: 'Mastercard'
-            }
-          ],
-          produtosDoPedido: contextoCheckout.carrinho.itens
+      cy.get('.checkout-main')
+        .should('contain', 'Compra finalizada com sucesso!')
+        .and('contain', pedidoCriado.codigo)
+        .and('contain', 'Valor Final:')
+        .and('contain', formatarBRL(pedidoCriado.valorTotal));
+
+      // Valida persistência real na tela de histórico Meus Pedidos
+      cy.intercept('GET', `${apiUrl}/pedidos*`).as('listarPedidos');
+      cy.visit(`pedidos.html?id=${clienteTeste.id}`, {
+        onBeforeLoad(win) {
+          win.sessionStorage.setItem('usuarioLogado', JSON.stringify(clienteTeste));
         }
-      ]
-    }).as('listarPedidos');
+      });
 
-    cy.visit('pedidos.html?id=42', {
-      onBeforeLoad(win) {
-        win.sessionStorage.setItem('usuarioLogado', JSON.stringify(cliente));
-      }
+      cy.wait('@listarPedidos').its('response.statusCode').should('eq', 200);
+      cy.get('.order-card').should('be.visible');
+      cy.get('.order-number').should('contain', pedidoCriado.codigo);
+      cy.get('.status')
+        .should('have.class', 'status-atencao')
+        .and('contain', 'Em Processamento');
     });
-
-    cy.wait('@listarPedidos');
-    cy.get('.order-card').should('be.visible');
-    cy.get('.order-number').should('contain', 'PED-501-SIMPLES');
-    cy.get('.status')
-      .should('have.class', 'status-atencao')
-      .and('contain', 'Em Processamento');
   });
 
-  it('recalcula o frete dinamicamente com base no endereço de entrega selecionado (RF0034)', () => {
-    // Intercepta cálculo de frete para destino RJ com valor R$ 35,00
-    cy.intercept('GET', `${apiUrl}/carrinho/frete/RJ`, {
-      statusCode: 200,
-      body: {
-        estado: 'RJ',
-        quantidadeItens: 1,
-        valor: 35.0,
-        valorFrete: 35.0
-      }
-    }).as('calcularFreteRJ');
+  it('recalcula o frete dinamicamente no backend real com base na UF do endereço (RF0034)', () => {
+    prepararCarrinhoEVisitarCheckout();
 
-    // Abre seção de novo endereço e seleciona Estado RJ
+    // Região Norte (AM) tem tarifa base R$ 35,00 para 1 item no FreteService real (vs R$ 15,00 em SP)
+    cy.intercept('GET', `${apiUrl}/carrinho/frete/AM`).as('calcularFreteAM');
+
     cy.get('#btn-toggle-endereco').click();
     cy.get('#novo-endereco-form').should('have.class', 'active');
-    cy.get('#estado').select('RJ');
+    cy.get('#estado').select('AM');
 
-    cy.wait('@calcularFreteRJ');
+    cy.wait('@calcularFreteAM').then((interception) => {
+      expect(interception.response.statusCode).to.eq(200);
+      const freteAM = Number(interception.response.body.valorFrete ?? interception.response.body.valor);
+      expect(freteAM).to.eq(35.0);
 
-    // Frete reativo atualizado no resumo (R$ 35,00) e total recalculado (100 subtotal + 35 frete = 135)
-    cy.get('#resumo-frete').should('contain', '35,00');
-    cy.get('#resumo-total').should('contain', '135,00');
+      const subtotal = Number(contextoReal.carrinho.subtotal);
+      cy.get('#resumo-frete').should('contain', '35,00');
+      cy.get('#resumo-total').should('contain', formatarBRL(subtotal + freteAM));
+    });
   });
 });

@@ -1,160 +1,121 @@
 /**
  * ===============================================================================
- * Teste E2E: Checkout com Pagamento Misto Cupom e Cartão (RN0035) - Cliente
- * Arquivo: tests/cypress/e2e/checkout-pagamento-misto-cliente.cy.js
+ * Teste E2E: Checkout com Pagamento Misto Cupom e Cartão (RN0035) - 100% Backend Real
+ * Arquivo: tests/cypress/e2e/checkout-vendas-clientes/checkout-pagamento-misto-cliente.cy.js
  * ===============================================================================
- * Regra de Negócio RN0035:
- * - Quando há cupons aplicados e o saldo restante da compra for inferior a R$ 10,00,
- *   é permitido debitar valor inferior a R$ 10,00 no cartão de crédito (exceção à RN0034).
+ * Matemática Real na Base:
+ * - Produto real de R$ 390,00 (ex: Top Segunda Pele Merino Warm) + Frete SP R$ 15,00 = R$ 405,00
+ * - Cupom promocional real GLACIAR400 (-R$ 400,00) => Saldo residual exato = R$ 5,00 (< R$ 10,00)!
  * ===============================================================================
  */
 
 const apiUrl = Cypress.expose('apiUrl') || 'http://localhost:5205/api';
 
-describe('Checkout com pagamento misto cupom e cartão (RN0035) - Cliente', () => {
-  const cliente = {
-    id: 42,
-    nome: 'Maria Silva',
-    email: 'maria.silva@example.com'
-  };
+describe('Checkout com pagamento misto cupom e cartão (RN0035) - Cliente (API Real)', () => {
+  let clienteTeste;
+  let cartaoPadrao;
+  let skuMerino390;
+  let pedidosCriados = [];
 
-  const enderecoPadrao = {
-    id: 10,
-    usuarioId: 42,
-    apelido: 'Casa',
-    padrao: true,
-    cep: '08700000',
-    logradouro: 'Rua das Flores',
-    numero: '123',
-    bairro: 'Centro',
-    cidade: 'Mogi das Cruzes',
-    estado: 'SP'
-  };
-
-  const cartaoPadrao = {
-    id: 5,
-    usuarioId: 42,
-    ultimosDigitos: '1234',
-    bandeira: 'Mastercard',
-    mesValidade: 12,
-    anoValidade: 2028,
-    padrao: true
-  };
-
-  const contextoInicial = {
-    carrinho: {
-      id: 1,
-      quantidadeItens: 1,
-      subtotal: 85.0,
-      itens: [
-        {
-          id: 101,
-          nomeProduto: 'Casaco Polar Térmico',
-          tamanho: 'G',
-          cor: 'Preto',
-          sku: 'CAS-POL-G-PRT',
-          precoUnitario: 85.0,
-          quantidade: 1,
-          estoqueDisponivel: 5,
-          disponivel: true
-        }
-      ]
-    },
-    enderecoPrincipal: enderecoPadrao,
-    valorFrete: 20.0,
-    valorTotal: 105.0,
-    cartoes: [cartaoPadrao]
-  };
-
-  beforeEach(() => {
-    cy.intercept('GET', `${apiUrl}/checkout/contexto`, {
-      statusCode: 200,
-      body: contextoInicial
-    }).as('carregarContexto');
-
-    cy.visit('checkout.html?id=42', {
-      onBeforeLoad(win) {
-        win.sessionStorage.setItem('usuarioLogado', JSON.stringify(cliente));
-      }
+  before(() => {
+    // Busca SKU real de preço R$ 390,00 na base Glaciar (total com frete SP = R$ 405,00)
+    cy.obterSkuComEstoqueReal({ minEstoque: 4, precoExato: 390 }).then((res) => {
+      skuMerino390 = res;
     });
 
-    cy.wait('@carregarContexto');
+    cy.criarClienteTesteReal({ nome: 'Maria', sobrenome: 'PagamentoMisto' }).then((cli) => {
+      clienteTeste = cli;
+      return cy
+        .criarEnderecoReal(cli.id, { estado: 'SP', padrao: true })
+        .then(() => cy.criarCartaoReal(cli.id, { padrao: true }))
+        .then((cartao) => {
+          cartaoPadrao = cartao;
+        });
+    });
   });
 
-  it('aplica cupom promocional e recalcula o saldo devedor reativamente', () => {
-    cy.intercept('GET', `${apiUrl}/cupons/validar/*`, {
-      statusCode: 200,
-      body: {
-        id: 99,
-        codigo: 'GLACIAR100',
-        valorDesconto: 100.0,
-        categoria: 'Promocional'
-      }
-    }).as('validarCupom');
+  beforeEach(() => {
+    cy.esvaziarCarrinhoReal(clienteTeste.id)
+      .then(() => cy.adicionarItemCarrinhoReal(clienteTeste.id, skuMerino390.estoque.id, 1))
+      .then(() => {
+        cy.intercept('GET', `${apiUrl}/checkout/contexto`).as('carregarContexto');
 
-    // Abre seção de cupom e aplica GLACIAR100
+        cy.visit(`checkout.html?id=${clienteTeste.id}`, {
+          onBeforeLoad(win) {
+            win.sessionStorage.setItem('usuarioLogado', JSON.stringify(clienteTeste));
+          }
+        });
+
+        cy.wait('@carregarContexto').its('response.statusCode').should('eq', 200);
+      });
+  });
+
+  afterEach(() => {
+    pedidosCriados.reverse().forEach((pedidoId) => {
+      cy.request({
+        method: 'PATCH',
+        url: `${apiUrl}/admin/pedidos/${pedidoId}/status`,
+        body: { status: 'Cancelado' },
+        failOnStatusCode: false
+      });
+    });
+    pedidosCriados = [];
+    if (clienteTeste?.id) {
+      cy.esvaziarCarrinhoReal(clienteTeste.id);
+    }
+  });
+
+  after(() => {
+    if (clienteTeste?.id) {
+      cy.limparUsuarioTesteReal(clienteTeste.id);
+    }
+  });
+
+  it('consulta cupom promocional real no backend e recalcula o saldo residual para R$ 5,00', () => {
+    cy.intercept('GET', `${apiUrl}/cupons/validar/GLACIAR400`).as('validarCupom');
+
     cy.get('#btn-toggle-cupom').click();
-    cy.get('#cupom-codigo').type('GLACIAR100');
+    cy.get('#cupom-codigo').type('GLACIAR400');
     cy.get('#btn-aplicar-cupom').click();
-    cy.wait('@validarCupom');
 
-    // O resumo substitui impostos por desconto de R$ 100,00 e total vai para R$ 5,00
-    cy.get('#resumo-desconto').should('contain', '100,00');
+    cy.wait('@validarCupom').its('response.statusCode').should('eq', 200);
+
+    // 390,00 (produto) + 15,00 (frete SP) - 400,00 (cupom GLACIAR400) = R$ 5,00
+    cy.get('#resumo-desconto').should('contain', '400,00');
     cy.get('#resumo-total').should('contain', '5,00');
 
-    // Campo de cobrança do cartão sincroniza automaticamente para R$ 5,00
-    cy.get('.input-valor-cartao[data-cartao-id="5"]').should('have.value', '5.00');
+    cy.get(`.input-valor-cartao[data-cartao-id="${cartaoPadrao.id}"]`).should('have.value', '5.00');
   });
 
-  it('permite cartão com valor inferior a R$ 10,00 quando houver cupom cobrindo o restante da compra (RN0035)', () => {
-    cy.intercept('GET', `${apiUrl}/cupons/validar/*`, {
-      statusCode: 200,
-      body: {
-        id: 99,
-        codigo: 'GLACIAR100',
-        valorDesconto: 100.0,
-        categoria: 'Promocional'
-      }
-    }).as('validarCupom');
+  it('permite finalizar pedido real cobrando R$ 5,00 (< R$ 10,00) no cartão após abatimento de cupom (RN0035)', () => {
+    cy.intercept('GET', `${apiUrl}/cupons/validar/GLACIAR400`).as('validarCupom');
+    cy.intercept('POST', `${apiUrl}/checkout/finalizar`).as('finalizarPedidoMisto');
 
-    cy.intercept('POST', `${apiUrl}/checkout/finalizar`, (req) => {
-      expect(req.body.codigosCupons).to.deep.equal(['GLACIAR100']);
-      expect(req.body.cartoes).to.have.length(1);
-      expect(req.body.cartoes[0].valor).to.eq(5.0); // Permitido pela RN0035
-
-      req.reply({
-        statusCode: 200,
-        body: {
-          id: 801,
-          codigo: 'PED-801-RN0035',
-          status: 'EmProcessamento',
-          subtotal: 85.0,
-          valorFrete: 20.0,
-          valorAbatidoCupons: 100.0,
-          valorTotal: 5.0,
-          valorPagoCartoes: 5.0
-        }
-      });
-    }).as('finalizarPedidoMisto');
-
-    // Aplica o cupom
     cy.get('#btn-toggle-cupom').click();
-    cy.get('#cupom-codigo').type('GLACIAR100');
+    cy.get('#cupom-codigo').type('GLACIAR400');
     cy.get('#btn-aplicar-cupom').click();
-    cy.wait('@validarCupom');
+    cy.wait('@validarCupom').its('response.statusCode').should('eq', 200);
 
-    // Finaliza compra com R$ 5,00 no cartão
     cy.get('.btn-submit').click();
 
     cy.wait('@finalizarPedidoMisto').then((interception) => {
-      expect(interception.response.body.status).to.eq('EmProcessamento');
-      expect(interception.response.body.valorTotal).to.eq(5.0);
-    });
+      expect(interception.request.body.codigosCupons).to.deep.equal(['GLACIAR400']);
+      expect(interception.request.body.cartoes).to.have.length(1);
+      expect(interception.request.body.cartoes[0].valor).to.eq(5.0);
 
-    cy.get('.checkout-main')
-      .should('contain', 'Compra finalizada com sucesso! 🎉')
-      .and('contain', 'PED-801-RN0035')
-      .and('contain', 'Valor Final:')
-      .and('contain', '5,00');
+      expect(interception.response.statusCode).to.eq(200);
+      const pedido = interception.response.body;
+      pedidosCriados.push(pedido.id);
+
+      expect(pedido.status).to.eq('EmProcessamento');
+      expect(pedido.valorTotal).to.eq(5.0);
+      expect(pedido.valorPagoCartoes).to.eq(5.0);
+
+      cy.get('.checkout-main')
+        .should('contain', 'Compra finalizada com sucesso!')
+        .and('contain', pedido.codigo)
+        .and('contain', 'Valor Final:')
+        .and('contain', '5,00');
+    });
   });
 });

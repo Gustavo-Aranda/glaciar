@@ -1,103 +1,97 @@
 /**
  * ===============================================================================
- * TaaC - Test Automation as Code (E2E)
- * Suite: Temporizador de Reserva de Estoque no Carrinho de Compras
+ * Suite: Temporizador de Reserva de Estoque no Carrinho de Compras (100% Backend Real)
  * Arquivo: tests/cypress/e2e/expiracao-carrinho/timer-carrinho-ui.cy.js
  * ===============================================================================
- * Escopo:
- * - Exibição do container de contagem regressiva no carrinho de compras (carrinho.html).
- * - Formatação precisa de minutos e segundos (MM:SS).
- * - Gatilho de alerta visual aos 5 minutos restantes (SegundosRestantes <= 300).
- * - Disparo de notificação/toast de advertência ao cliente informando a proximidade da expiração.
+ * Estratégia Zero-Mock:
+ * - Reserva criada de verdade no PostgreSQL via POST /api/carrinho/itens (janela de 15 min).
+ * - GET /api/checkout/contexto bate direto no backend real.
+ * - Para validar o gatilho visual de <= 5 minutos (<= 300s), avança-se apenas o relógio
+ *   do setInterval local (cy.clock / cy.tick), sem qualquer stub HTTP!
  * ===============================================================================
  */
 
 const apiUrl = Cypress.expose('apiUrl') || 'http://localhost:5205/api';
 
-describe('Expiração de Carrinho - Temporizador e Alerta Visual de 5 Minutos', () => {
-  const cliente = {
-    id: 42,
-    nome: 'Maria Silva',
-    email: 'maria@example.com'
-  };
+describe('Expiração de Carrinho - Temporizador e Alerta Visual de 5 Minutos (API Real)', () => {
+  let clienteTeste;
+  let skuReal;
 
-  const itemMock = {
-    id: 101,
-    nomeProduto: 'Barraca Expedition 2P',
-    quantidade: 1,
-    precoUnitario: 890.0,
-    subtotal: 890.0,
-    disponivel: true
-  };
+  before(() => {
+    cy.obterSkuComEstoqueReal({ minEstoque: 4 }).then((res) => {
+      skuReal = res;
+    });
 
-  it('deve exibir o temporizador ativo com contagem no formato MM:SS para reserva em andamento (janela de 15 min)', () => {
-    // 14 minutos restantes = 840 segundos
-    cy.intercept('GET', `${apiUrl}/checkout/contexto`, {
-      statusCode: 200,
-      body: {
-        carrinho: {
-          id: 1,
-          quantidadeItens: 1,
-          subtotal: 890.0,
-          itens: [itemMock],
-          expiraEm: new Date(Date.now() + 840000).toISOString(),
-          segundosRestantes: 840,
-          exibirAvisoExpiracao: false,
-          expirado: false,
-          compraHabilitada: true
-        },
-        valorFrete: 0.0,
-        valorTotal: 890.0
-      }
-    }).as('carrinhoAtivo');
+    cy.criarClienteTesteReal({ nome: 'Maria', sobrenome: 'TimerCarrinho' }).then((cli) => {
+      clienteTeste = cli;
+    });
+  });
 
-    cy.visit('carrinho.html?id=42', {
+  beforeEach(() => {
+    cy.esvaziarCarrinhoReal(clienteTeste.id).then(() =>
+      cy.adicionarItemCarrinhoReal(clienteTeste.id, skuReal.estoque.id, 1)
+    );
+  });
+
+  afterEach(() => {
+    if (clienteTeste?.id) {
+      cy.esvaziarCarrinhoReal(clienteTeste.id);
+    }
+  });
+
+  after(() => {
+    if (clienteTeste?.id) {
+      cy.limparUsuarioTesteReal(clienteTeste.id);
+    }
+  });
+
+  it('exibe o temporizador ativo com contagem real no formato MM:SS para reserva em andamento (janela de 15 min)', () => {
+    cy.intercept('GET', `${apiUrl}/checkout/contexto`).as('carrinhoAtivo');
+
+    cy.visit(`carrinho.html?id=${clienteTeste.id}`, {
       onBeforeLoad(win) {
-        win.sessionStorage.setItem('usuarioLogado', JSON.stringify(cliente));
+        win.sessionStorage.setItem('usuarioLogado', JSON.stringify(clienteTeste));
       }
     });
 
-    cy.wait('@carrinhoAtivo');
+    cy.wait('@carrinhoAtivo').then((interception) => {
+      expect(interception.response.statusCode).to.eq(200);
+      expect(interception.response.body.carrinho.expirado).to.be.false;
+      expect(interception.response.body.carrinho.segundosRestantes).to.be.greaterThan(800);
+    });
 
-    // O container do timer deve estar visível com contagem regressiva
     cy.get('#cart-timer-box').should('be.visible');
-    cy.get('#cart-timer-box').should('contain', '14:');
+    cy.get('#cart-timer-box')
+      .invoke('text')
+      .should('match', /14:\d{2}|15:00/);
     cy.contains('Estoque reservado por mais', { matchCase: false }).should('be.visible');
   });
 
-  it('deve acionar aviso visual quando restarem 5 minutos ou menos (<= 300s)', () => {
-    // 4 minutos e 30 segundos restantes = 270 segundos (gatilho de aviso aos 5 min)
-    cy.intercept('GET', `${apiUrl}/checkout/contexto`, {
-      statusCode: 200,
-      body: {
-        carrinho: {
-          id: 1,
-          quantidadeItens: 1,
-          subtotal: 890.0,
-          itens: [itemMock],
-          expiraEm: new Date(Date.now() + 270000).toISOString(),
-          segundosRestantes: 270,
-          exibirAvisoExpiracao: true,
-          expirado: false,
-          compraHabilitada: true
-        },
-        valorFrete: 0.0,
-        valorTotal: 890.0
-      }
-    }).as('carrinhoQuaseExpirando');
+  it('aciona aviso visual e alerta quando a reserva real atinge 5 minutos ou menos (<= 300s)', () => {
+    cy.intercept('GET', `${apiUrl}/checkout/contexto`).as('carrinhoAtivo');
 
-    cy.visit('carrinho.html?id=42', {
+    // Controla apenas o setInterval do navegador para avançar o contador real de ~15min até ~4m30s
+    cy.clock(Date.now(), ['setInterval', 'clearInterval']);
+
+    cy.visit(`carrinho.html?id=${clienteTeste.id}`, {
       onBeforeLoad(win) {
-        win.sessionStorage.setItem('usuarioLogado', JSON.stringify(cliente));
+        win.sessionStorage.setItem('usuarioLogado', JSON.stringify(clienteTeste));
       }
     });
 
-    cy.wait('@carrinhoQuaseExpirando');
+    cy.wait('@carrinhoAtivo').then((interception) => {
+      expect(interception.response.statusCode).to.eq(200);
+      const segundosIniciais = interception.response.body.carrinho.segundosRestantes;
+      const avancoPara270s = Math.max(1, segundosIniciais - 270);
 
-    // Timer visível com mensagem de alerta e contagem
-    cy.get('#cart-timer-box').should('be.visible');
-    cy.get('#cart-timer-box').should('contain', '04:30');
-    cy.contains('Sua reserva expira em', { matchCase: false }).should('be.visible');
-    cy.contains('Finalize sua compra antes que os itens retornem ao estoque', { matchCase: false }).should('be.visible');
+      cy.tick(avancoPara270s * 1000);
+
+      cy.get('#cart-timer-box').should('be.visible');
+      cy.get('#cart-timer-box').should('contain', '04:30');
+      cy.contains('Sua reserva expira em', { matchCase: false }).should('be.visible');
+      cy.contains('Finalize sua compra antes que os itens retornem ao estoque', {
+        matchCase: false
+      }).should('be.visible');
+    });
   });
 });
