@@ -42,11 +42,12 @@ namespace glaciar.API.Controllers
             }
             catch (DomainValidationException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new { erro = ex.Message, message = ex.Message });
             }
             catch (Exception)
             {
-                return StatusCode(500, new { message = "Erro interno no servidor ao carregar pedidos." });
+                const string msg = "Erro interno no servidor ao carregar pedidos.";
+                return StatusCode(500, new { erro = msg, message = msg });
             }
         }
 
@@ -61,17 +62,21 @@ namespace glaciar.API.Controllers
                 var usuarioId = GetUsuarioId();
                 var pedido = await _pedidoService.ObterPedidoPorIdAsync(usuarioId, id);
                 if (pedido == null)
-                    return NotFound(new { message = "Pedido não encontrado." });
+                {
+                    const string msg = "Pedido não encontrado.";
+                    return NotFound(new { erro = msg, message = msg });
+                }
 
                 return Ok(pedido);
             }
             catch (DomainValidationException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new { erro = ex.Message, message = ex.Message });
             }
             catch (Exception)
             {
-                return StatusCode(500, new { message = "Erro interno no servidor ao buscar o pedido." });
+                const string msg = "Erro interno no servidor ao buscar o pedido.";
+                return StatusCode(500, new { erro = msg, message = msg });
             }
         }
 
@@ -83,7 +88,8 @@ namespace glaciar.API.Controllers
         {
             if (!ModelState.IsValid || !dto.Status.HasValue)
             {
-                return BadRequest(new { message = "Informe um status válido para o pedido." });
+                const string msg = "Informe um status válido para o pedido.";
+                return BadRequest(new { erro = msg, message = msg });
             }
 
             try
@@ -103,19 +109,20 @@ namespace glaciar.API.Controllers
             }
             catch (EntidadeNaoEncontradaException ex)
             {
-                return NotFound(new { message = ex.Message });
+                return NotFound(new { erro = ex.Message, message = ex.Message });
             }
             catch (ConflitoDeConcorrenciaException ex)
             {
-                return Conflict(new { message = ex.Message });
+                return Conflict(new { erro = ex.Message, message = ex.Message });
             }
             catch (DomainValidationException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new { erro = ex.Message, message = ex.Message });
             }
             catch (Exception)
             {
-                return StatusCode(500, new { message = "Erro interno no servidor ao atualizar o status." });
+                const string msg = "Erro interno no servidor ao atualizar o status.";
+                return StatusCode(500, new { erro = msg, message = msg });
             }
         }
 
@@ -161,19 +168,20 @@ namespace glaciar.API.Controllers
             }
             catch (EntidadeNaoEncontradaException ex)
             {
-                return NotFound(new { message = ex.Message });
+                return NotFound(new { erro = ex.Message, message = ex.Message });
             }
             catch (ConflitoDeConcorrenciaException ex)
             {
-                return Conflict(new { message = ex.Message });
+                return Conflict(new { erro = ex.Message, message = ex.Message });
             }
             catch (DomainValidationException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new { erro = ex.Message, message = ex.Message });
             }
             catch (Exception)
             {
-                return StatusCode(500, new { message = "Erro interno no servidor ao solicitar a troca." });
+                const string msg = "Erro interno no servidor ao solicitar a troca.";
+                return StatusCode(500, new { erro = msg, message = msg });
             }
         }
     }

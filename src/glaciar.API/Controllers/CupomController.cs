@@ -31,8 +31,8 @@ namespace glaciar.API.Controllers
                 var result = await _cupomService.ValidarAsync(usuarioId, codigo);
                 return Ok(result);
             }
-            catch (DomainValidationException ex) { return BadRequest(new { message = ex.Message }); }
-            catch (Exception ex) { return StatusCode(500, new { message = "Erro interno no servidor.", details = ex.Message }); }
+            catch (DomainValidationException ex) { return BadRequest(new { erro = ex.Message, message = ex.Message }); }
+            catch (Exception ex) { return StatusCode(500, new { erro = "Erro interno no servidor.", message = "Erro interno no servidor.", details = ex.Message }); }
         }
 
         [HttpGet("trocas")]
@@ -44,8 +44,8 @@ namespace glaciar.API.Controllers
                 var result = await _cupomService.ListarCuponsDeTrocaAsync(usuarioId);
                 return Ok(result);
             }
-            catch (DomainValidationException ex) { return BadRequest(new { message = ex.Message }); }
-            catch (Exception ex) { return StatusCode(500, new { message = "Erro interno no servidor.", details = ex.Message }); }
+            catch (DomainValidationException ex) { return BadRequest(new { erro = ex.Message, message = ex.Message }); }
+            catch (Exception ex) { return StatusCode(500, new { erro = "Erro interno no servidor.", message = "Erro interno no servidor.", details = ex.Message }); }
         }
 
         [HttpGet("cliente/{usuarioId:int}")]
@@ -56,8 +56,8 @@ namespace glaciar.API.Controllers
                 var result = await _cupomService.ListarPorClienteAsync(usuarioId);
                 return Ok(result);
             }
-            catch (DomainValidationException ex) { return BadRequest(new { message = ex.Message }); }
-            catch (Exception ex) { return StatusCode(500, new { message = "Erro interno no servidor.", details = ex.Message }); }
+            catch (DomainValidationException ex) { return BadRequest(new { erro = ex.Message, message = ex.Message }); }
+            catch (Exception ex) { return StatusCode(500, new { erro = "Erro interno no servidor.", message = "Erro interno no servidor.", details = ex.Message }); }
         }
 
         [HttpGet("meus-cupons")]
@@ -69,8 +69,8 @@ namespace glaciar.API.Controllers
                 var result = await _cupomService.ListarPorClienteAsync(usuarioId);
                 return Ok(result);
             }
-            catch (DomainValidationException ex) { return BadRequest(new { message = ex.Message }); }
-            catch (Exception ex) { return StatusCode(500, new { message = "Erro interno no servidor.", details = ex.Message }); }
+            catch (DomainValidationException ex) { return BadRequest(new { erro = ex.Message, message = ex.Message }); }
+            catch (Exception ex) { return StatusCode(500, new { erro = "Erro interno no servidor.", message = "Erro interno no servidor.", details = ex.Message }); }
         }
     }
 }

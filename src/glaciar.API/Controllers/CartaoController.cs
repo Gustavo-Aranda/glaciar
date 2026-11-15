@@ -1,7 +1,7 @@
-using glaciar.Application.Mappings;
 using Microsoft.AspNetCore.Mvc;
 using glaciar.Application.DTOs.Clientes;
 using glaciar.Application.Interfaces.Services;
+using glaciar.Application.Mappings;
 using glaciar.Domain.Exceptions;
 
 namespace glaciar.API.Controllers
@@ -31,7 +31,7 @@ namespace glaciar.API.Controllers
             }
             catch (DomainValidationException ex)
             {
-                return BadRequest(new { erro = ex.Message });
+                return BadRequest(new { erro = ex.Message, message = ex.Message });
             }
         }
 
@@ -45,7 +45,7 @@ namespace glaciar.API.Controllers
             }
             catch (DomainValidationException ex)
             {
-                return BadRequest(new { erro = ex.Message });
+                return BadRequest(new { erro = ex.Message, message = ex.Message });
             }
         }
 
@@ -59,7 +59,7 @@ namespace glaciar.API.Controllers
             }
             catch (DomainValidationException ex)
             {
-                return BadRequest(new { erro = ex.Message });
+                return BadRequest(new { erro = ex.Message, message = ex.Message });
             }
         }
 
@@ -76,7 +76,7 @@ namespace glaciar.API.Controllers
             }
             catch (DomainValidationException ex)
             {
-                return BadRequest(new { erro = ex.Message });
+                return BadRequest(new { erro = ex.Message, message = ex.Message });
             }
         }
 
@@ -90,7 +90,7 @@ namespace glaciar.API.Controllers
             }
             catch (DomainValidationException ex)
             {
-                return BadRequest(new { erro = ex.Message });
+                return BadRequest(new { erro = ex.Message, message = ex.Message });
             }
         }
     }

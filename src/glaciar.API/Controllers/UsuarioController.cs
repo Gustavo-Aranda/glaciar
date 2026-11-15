@@ -27,12 +27,12 @@ namespace glaciar.API.Controllers
             }
             catch (DomainValidationException ex)
             {
-                return BadRequest(new { erro = ex.Message });
+                return BadRequest(new { erro = ex.Message, message = ex.Message });
             }
             catch (Exception)
             {
                 const string msg = "Ocorreu um erro interno no servidor.";
-                return StatusCode(500, new { erro = msg });
+                return StatusCode(500, new { erro = msg, message = msg });
             }
         }
 
@@ -52,12 +52,12 @@ namespace glaciar.API.Controllers
             }
             catch (DomainValidationException ex)
             {
-                return BadRequest(new { erro = ex.Message });
+                return BadRequest(new { erro = ex.Message, message = ex.Message });
             }
             catch (Exception)
             {
                 const string msg = "Ocorreu um erro interno no servidor.";
-                return StatusCode(500, new { erro = msg });
+                return StatusCode(500, new { erro = msg, message = msg });
             }
         }
 
@@ -71,12 +71,12 @@ namespace glaciar.API.Controllers
             }
             catch (DomainValidationException ex)
             {
-                return Unauthorized(new { erro = ex.Message });
+                return Unauthorized(new { erro = ex.Message, message = ex.Message });
             }
             catch (Exception)
             {
                 const string msg = "Ocorreu um erro interno no servidor.";
-                return StatusCode(500, new { erro = msg });
+                return StatusCode(500, new { erro = msg, message = msg });
             }
         }
 
@@ -90,7 +90,7 @@ namespace glaciar.API.Controllers
             }
             catch (DomainValidationException ex)
             {
-                return NotFound(new { erro = ex.Message });
+                return NotFound(new { erro = ex.Message, message = ex.Message });
             }
         }
 
@@ -111,7 +111,7 @@ namespace glaciar.API.Controllers
             }
             catch (DomainValidationException ex)
             {
-                return BadRequest(new { erro = ex.Message });
+                return BadRequest(new { erro = ex.Message, message = ex.Message });
             }
         }
 
@@ -125,7 +125,7 @@ namespace glaciar.API.Controllers
             }
             catch (DomainValidationException ex)
             {
-                return BadRequest(new { erro = ex.Message });
+                return BadRequest(new { erro = ex.Message, message = ex.Message });
             }
         }
 
@@ -139,7 +139,7 @@ namespace glaciar.API.Controllers
             }
             catch (DomainValidationException ex)
             {
-                return NotFound(new { erro = ex.Message });
+                return NotFound(new { erro = ex.Message, message = ex.Message });
             }
         }
 
@@ -153,7 +153,7 @@ namespace glaciar.API.Controllers
             }
             catch (DomainValidationException ex)
             {
-                return NotFound(new { erro = ex.Message });
+                return NotFound(new { erro = ex.Message, message = ex.Message });
             }
         }
     }

@@ -16,9 +16,6 @@ namespace glaciar.API.Controllers
             _enderecoService = enderecoService;
         }
 
-        // ==========================================
-        // CREATE: Adicionar um novo endereço
-        // ==========================================
         [HttpPost]
         public async Task<IActionResult> AdicionarEndereco([FromBody] EnderecoCreateDTO dto)
         {
@@ -29,13 +26,10 @@ namespace glaciar.API.Controllers
             }
             catch (DomainValidationException ex)
             {
-                return BadRequest(new { erro = ex.Message });
+                return BadRequest(new { erro = ex.Message, message = ex.Message });
             }
         }
 
-        // ==========================================
-        // READ: Listar endereços de um cliente específico
-        // ==========================================
         [HttpGet("cliente/{clienteId}")]
         public async Task<IActionResult> ListarEnderecos(int clienteId)
         {
@@ -43,41 +37,39 @@ namespace glaciar.API.Controllers
             return Ok(enderecos);
         }
 
-        // ==========================================
-        // READ: Buscar um endereço específico
-        // ==========================================
         [HttpGet("{id}")]
         public async Task<IActionResult> BuscarPorId(int id)
         {
             var endereco = await _enderecoService.GetEnderecoAsync(id);
-            if (endereco == null) return NotFound(new { erro = "Endereço não encontrado." });
-            
+            if (endereco == null)
+            {
+                const string msg = "Endereço não encontrado.";
+                return NotFound(new { erro = msg, message = msg });
+            }
+
             return Ok(endereco);
         }
 
-        // ==========================================
-        // UPDATE: Editar um endereço existente
-        // ==========================================
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateEndereco(int id, [FromBody] EnderecoUpdateDTO dto)
         {
             try
             {
-                if (id != dto.UsuarioEnderecoId) 
-                    return BadRequest(new { erro = "IDs incompatíveis." });
+                if (id != dto.UsuarioEnderecoId)
+                {
+                    const string msg = "IDs incompatíveis.";
+                    return BadRequest(new { erro = msg, message = msg });
+                }
 
                 await _enderecoService.UpdateEnderecoAsync(dto);
-                return NoContent(); 
+                return NoContent();
             }
             catch (DomainValidationException ex)
             {
-                return BadRequest(new { erro = ex.Message });
+                return BadRequest(new { erro = ex.Message, message = ex.Message });
             }
         }
 
-        // ==========================================
-        // DELETE: Remover um endereço
-        // ==========================================
         [HttpDelete("{id}")]
         public async Task<IActionResult> RemoverEndereco(int id)
         {
@@ -88,7 +80,7 @@ namespace glaciar.API.Controllers
             }
             catch (DomainValidationException ex)
             {
-                return BadRequest(new { erro = ex.Message });
+                return BadRequest(new { erro = ex.Message, message = ex.Message });
             }
         }
     }

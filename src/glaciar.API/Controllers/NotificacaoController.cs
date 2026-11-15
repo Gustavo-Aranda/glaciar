@@ -33,12 +33,12 @@ namespace glaciar.API.Controllers
             }
             catch (DomainValidationException ex)
             {
-                return BadRequest(new { erro = ex.Message });
+                return BadRequest(new { erro = ex.Message, message = ex.Message });
             }
             catch (Exception)
             {
                 const string msg = "Erro interno no servidor ao carregar notificações.";
-                return StatusCode(500, new { erro = msg });
+                return StatusCode(500, new { erro = msg, message = msg });
             }
         }
 
@@ -53,12 +53,12 @@ namespace glaciar.API.Controllers
             }
             catch (DomainValidationException ex)
             {
-                return BadRequest(new { erro = ex.Message });
+                return BadRequest(new { erro = ex.Message, message = ex.Message });
             }
             catch (Exception)
             {
                 const string msg = "Erro interno no servidor ao marcar notificação como lida.";
-                return StatusCode(500, new { erro = msg });
+                return StatusCode(500, new { erro = msg, message = msg });
             }
         }
     }

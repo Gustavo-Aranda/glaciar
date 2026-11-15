@@ -38,8 +38,8 @@ namespace glaciar.API.Controllers
                 var result = await _pagamentoService.ObterContextoAsync(usuarioId);
                 return Ok(result);
             }
-            catch (DomainValidationException ex) { return BadRequest(new { message = ex.Message }); }
-            catch (Exception ex) { return StatusCode(500, new { message = "Erro interno no servidor.", details = ex.Message }); }
+            catch (DomainValidationException ex) { return BadRequest(new { erro = ex.Message, message = ex.Message }); }
+            catch (Exception ex) { return StatusCode(500, new { erro = "Erro interno no servidor.", message = "Erro interno no servidor.", details = ex.Message }); }
         }
 
         [HttpGet("contexto/{usuarioId:int}")]
@@ -51,8 +51,8 @@ namespace glaciar.API.Controllers
                 var result = await _pagamentoService.ObterContextoAsync(id);
                 return Ok(result);
             }
-            catch (DomainValidationException ex) { return BadRequest(new { message = ex.Message }); }
-            catch (Exception ex) { return StatusCode(500, new { message = "Erro interno no servidor.", details = ex.Message }); }
+            catch (DomainValidationException ex) { return BadRequest(new { erro = ex.Message, message = ex.Message }); }
+            catch (Exception ex) { return StatusCode(500, new { erro = "Erro interno no servidor.", message = "Erro interno no servidor.", details = ex.Message }); }
         }
     }
 }

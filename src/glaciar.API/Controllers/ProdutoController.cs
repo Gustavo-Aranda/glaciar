@@ -26,7 +26,7 @@ namespace glaciar.API.Controllers
             catch (Exception)
             {
                 const string msg = "Erro interno no servidor.";
-                return StatusCode(500, new { erro = msg });
+                return StatusCode(500, new { erro = msg, message = msg });
             }
         }
 
@@ -40,7 +40,7 @@ namespace glaciar.API.Controllers
                 if (result == null)
                 {
                     const string msg = "Produto não encontrado.";
-                    return NotFound(new { erro = msg });
+                    return NotFound(new { erro = msg, message = msg });
                 }
 
                 return Ok(result);
@@ -48,7 +48,7 @@ namespace glaciar.API.Controllers
             catch (Exception)
             {
                 const string msg = "Erro interno no servidor.";
-                return StatusCode(500, new { erro = msg });
+                return StatusCode(500, new { erro = msg, message = msg });
             }
         }
     }

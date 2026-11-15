@@ -32,7 +32,7 @@ namespace glaciar.API.Controllers
             catch (Exception)
             {
                 const string msg = "Erro interno no servidor ao listar pedidos.";
-                return StatusCode(500, new { erro = msg });
+                return StatusCode(500, new { erro = msg, message = msg });
             }
         }
 
@@ -42,7 +42,7 @@ namespace glaciar.API.Controllers
             if (!ModelState.IsValid || !dto.Status.HasValue)
             {
                 const string msg = "Informe um status válido para o pedido.";
-                return BadRequest(new { erro = msg });
+                return BadRequest(new { erro = msg, message = msg });
             }
 
             try
@@ -60,20 +60,20 @@ namespace glaciar.API.Controllers
             }
             catch (EntidadeNaoEncontradaException ex)
             {
-                return NotFound(new { erro = ex.Message });
+                return NotFound(new { erro = ex.Message, message = ex.Message });
             }
             catch (ConflitoDeConcorrenciaException ex)
             {
-                return Conflict(new { erro = ex.Message });
+                return Conflict(new { erro = ex.Message, message = ex.Message });
             }
             catch (DomainValidationException ex)
             {
-                return BadRequest(new { erro = ex.Message });
+                return BadRequest(new { erro = ex.Message, message = ex.Message });
             }
             catch (Exception)
             {
                 const string msg = "Erro interno no servidor ao atualizar o status.";
-                return StatusCode(500, new { erro = msg });
+                return StatusCode(500, new { erro = msg, message = msg });
             }
         }
     }

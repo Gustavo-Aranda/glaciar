@@ -57,7 +57,7 @@ namespace glaciar.API.Controllers
                 if (!await PossuiAcessoAdminAsync())
                 {
                     const string msg = "Acesso restrito ao perfil ADMIN.";
-                    return StatusCode(403, new { erro = msg });
+                    return StatusCode(403, new { erro = msg, message = msg });
                 }
 
                 var categorias = await _relatorioVendasService.ListarCategoriasAsync();
@@ -66,7 +66,7 @@ namespace glaciar.API.Controllers
             catch (Exception)
             {
                 const string msg = "Erro interno no servidor ao listar categorias.";
-                return StatusCode(500, new { erro = msg });
+                return StatusCode(500, new { erro = msg, message = msg });
             }
         }
 
@@ -86,7 +86,7 @@ namespace glaciar.API.Controllers
                 if (!await PossuiAcessoAdminAsync())
                 {
                     const string msg = "Acesso restrito ao perfil ADMIN.";
-                    return StatusCode(403, new { erro = msg });
+                    return StatusCode(403, new { erro = msg, message = msg });
                 }
 
                 var idsSelecionados = new List<int>();
@@ -130,12 +130,12 @@ namespace glaciar.API.Controllers
             }
             catch (DomainValidationException ex)
             {
-                return BadRequest(new { erro = ex.Message });
+                return BadRequest(new { erro = ex.Message, message = ex.Message });
             }
             catch (Exception)
             {
                 const string msg = "Erro interno no servidor ao processar o relatório de vendas.";
-                return StatusCode(500, new { erro = msg });
+                return StatusCode(500, new { erro = msg, message = msg });
             }
         }
     }
