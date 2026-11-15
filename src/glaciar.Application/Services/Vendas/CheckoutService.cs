@@ -22,6 +22,7 @@ namespace glaciar.Application.Services.Vendas
         private readonly IEnderecoService _enderecoService;
         private readonly ICartaoService _cartaoService;
         private readonly IFreteService _freteService;
+        private readonly ICarrinhoExpiracaoService _expiracaoService;
 
         public CheckoutService(
             IPedidoRepository pedidoRepository,
@@ -29,7 +30,8 @@ namespace glaciar.Application.Services.Vendas
             IUnitOfWork unitOfWork,
             IEnderecoService enderecoService,
             ICartaoService cartaoService,
-            IFreteService freteService)
+            IFreteService freteService,
+            ICarrinhoExpiracaoService expiracaoService)
         {
             _pedidoRepository = pedidoRepository;
             _cupomRepository = cupomRepository;
@@ -37,6 +39,7 @@ namespace glaciar.Application.Services.Vendas
             _enderecoService = enderecoService;
             _cartaoService = cartaoService;
             _freteService = freteService;
+            _expiracaoService = expiracaoService;
         }
 
         // ==========================================
@@ -44,17 +47,24 @@ namespace glaciar.Application.Services.Vendas
         // ==========================================
         public async Task<PedidoResponseDTO> FinalizarCompraAsync(int usuarioId, CheckoutRequestDTO dto)
         {
+            var pedido = await _pedidoRepository.GetCarrinhoAsync(usuarioId);
+            if (pedido == null || !pedido.ProdutosDoPedido.Any())
+            {
+                throw new DomainValidationException("Carrinho vazio ou não encontrado.");
+            }
+
+            // Se a reserva venceu, expira e devolve os itens ao estoque antes de abrir a transação de compra
+            if (await _expiracaoService.ExpirarSeVencidoAsync(pedido))
+            {
+                throw new DomainValidationException("O tempo de reserva do carrinho (15 minutos) esgotou. Adicione os itens novamente.");
+            }
+
+            // Revalidação de tempo: garante que a reserva temporária ainda está vigente
+            pedido.GarantirReservaVigente(DateTime.UtcNow);
+
             await _unitOfWork.BeginTransactionAsync();
             try
             {
-                var pedido = await _pedidoRepository.GetCarrinhoAsync(usuarioId);
-                if (pedido == null || !pedido.ProdutosDoPedido.Any())
-                {
-                    throw new DomainValidationException("Carrinho vazio ou não encontrado.");
-                }
-
-                // Revalidação de tempo: garante que a reserva temporária ainda está vigente
-                pedido.GarantirReservaVigente(DateTime.UtcNow);
 
                 // 1. Processar Endereço de Entrega
                 var enderecoFisico = await ProcessarEnderecoEntregaAsync(usuarioId, dto);
@@ -109,8 +119,12 @@ namespace glaciar.Application.Services.Vendas
         // ==========================================
         public async Task<CheckoutContextoDTO> ObterContextoAsync(int usuarioId)
         {
-            // 1. Carrinho e itens
+            // 1. Carrinho e itens (expira imediatamente caso os 15 minutos tenham vencido)
             var carrinho = await _pedidoRepository.GetCarrinhoAsync(usuarioId);
+            if (carrinho != null)
+            {
+                await _expiracaoService.ExpirarSeVencidoAsync(carrinho);
+            }
             var carrinhoDto = VendasMapper.ParaCarrinho(carrinho);
 
             // 2. Endereço principal do cliente

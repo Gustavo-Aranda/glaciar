@@ -32,6 +32,17 @@ namespace glaciar.Infrastructure.Repositories
                     .SetProperty(e => e.Quantidade, e => e.Quantidade - quantidade)
                     .SetProperty(e => e.UpdatedAt, agora));
 
+            if (linhasAfetadas == 1)
+            {
+                var rastreado = _context.ChangeTracker.Entries<Estoque>()
+                    .FirstOrDefault(e => e.Entity.Id == estoqueId);
+                if (rastreado != null)
+                {
+                    rastreado.Entity.Quantidade = Math.Max(0, rastreado.Entity.Quantidade - quantidade);
+                    rastreado.Property(e => e.Quantidade).IsModified = false;
+                }
+            }
+
             return linhasAfetadas == 1;
         }
 
@@ -45,6 +56,14 @@ namespace glaciar.Infrastructure.Repositories
                 .ExecuteUpdateAsync(s => s
                     .SetProperty(e => e.Quantidade, e => e.Quantidade + quantidade)
                     .SetProperty(e => e.UpdatedAt, agora));
+
+            var rastreado = _context.ChangeTracker.Entries<Estoque>()
+                .FirstOrDefault(e => e.Entity.Id == estoqueId);
+            if (rastreado != null)
+            {
+                rastreado.Entity.Quantidade += quantidade;
+                rastreado.Property(e => e.Quantidade).IsModified = false;
+            }
         }
     }
 }

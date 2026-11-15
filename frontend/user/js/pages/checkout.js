@@ -70,16 +70,20 @@ function renderizarItensResumo(carrinho) {
         return;
     }
 
-    itensContainer.innerHTML = itens.map(item => `
+    itensContainer.innerHTML = itens.map(item => {
+        const imgUrl = typeof resolverImagemProduto === 'function' ? resolverImagemProduto(item) : '';
+        const escape = typeof escaparHtml === 'function' ? escaparHtml : (s => s);
+        return `
         <div class="product-item">
-            <div class="product-img" style="background-color: #eee;"></div>
+            <div class="product-img" style="background-color: #eee; ${imgUrl ? `background-image: url('${imgUrl}'); background-size: cover; background-position: center;` : ''}"></div>
             <div class="product-details">
-                <p class="product-name">${item.nomeProduto}</p>
-                <p class="product-meta">${item.quantidade}x / ${item.cor} / ${item.tamanho}</p>
+                <p class="product-name">${escape(item.nomeProduto)}</p>
+                <p class="product-meta">${item.quantidade}x / ${escape(item.cor)} / ${escape(item.tamanho)}</p>
                 <p class="product-price">${formatarBRL(item.subtotal)}</p>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 /**

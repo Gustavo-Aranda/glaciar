@@ -52,11 +52,13 @@ namespace glaciar.Application.Services.Vendas
         {
             ValidarQuantidadeInformada(dto.Quantidade);
 
-            var estoque = await ObterEstoqueVendavelAsync(dto.EstoqueId);
-            estoque.GarantirDisponivel(dto.Quantidade);
-
+            // 1. Obtém ou cria o carrinho e expira reservas vencidas ANTES de validar o estoque,
+            // garantindo que itens retidos por um carrinho vencido deste cliente já tenham retornado ao saldo.
             var carrinho = await ObterOuCriarCarrinhoAsync(usuarioId);
             await _expiracaoService.ExpirarSeVencidoAsync(carrinho);
+
+            var estoque = await ObterEstoqueVendavelAsync(dto.EstoqueId);
+            estoque.GarantirDisponivel(dto.Quantidade);
 
             await _unitOfWork.BeginTransactionAsync();
             try
@@ -160,10 +162,14 @@ namespace glaciar.Application.Services.Vendas
                     carrinho.ProdutosDoPedido.Remove(item);
                 }
 
-                // Congela os preços oficiais vigentes
+                // Congela os preços oficiais vigentes e garante que os produtos continuam ativos no catálogo
                 foreach (var item in carrinho.ProdutosDoPedido)
                 {
-                    ValidarEstoqueVendavel(item.Estoque);
+                    if (item.Estoque?.Produto == null || !item.Estoque.Produto.Visivel)
+                    {
+                        throw new DomainValidationException(
+                            $"O produto '{item.Estoque?.Produto?.Nome ?? "selecionado"}' está indisponível.");
+                    }
                     item.Preco = item.Estoque.Produto.Preco;
                 }
 

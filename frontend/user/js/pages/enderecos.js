@@ -48,7 +48,7 @@ async function carregarEnderecos(usuarioId, ignorarCache = false) {
         if (!resposta.ok) throw new Error('Não foi possível carregar os endereços.');
 
         enderecos = await resposta.json();
-    salvarEnderecosEmCache(usuarioId, enderecos);
+        salvarEnderecosEmCache(usuarioId, enderecos);
         renderizarEnderecos();
     } catch (error) {
         console.error('Erro ao carregar endereços:', error);
@@ -245,16 +245,6 @@ function formatarEnderecoTexto(endereco) {
     const complemento = endereco.complemento || endereco.Complemento;
     const localidade = `${endereco.bairro || endereco.Bairro || ''} - ${endereco.cidade || endereco.Cidade || ''}/${endereco.estado || endereco.Estado || ''}`;
     return `${rua}${complemento ? `, ${complemento}` : ''} | ${localidade} | CEP ${formatarCep(endereco.cep || endereco.Cep || '')}`;
-}
-
-function escaparHtml(valor) {
-    return String(valor ?? '').replace(/[&<>'"]/g, caractere => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        "'": '&#39;',
-        '"': '&quot;'
-    }[caractere]));
 }
 
 function mostrarMensagemEndereco(mensagem) {

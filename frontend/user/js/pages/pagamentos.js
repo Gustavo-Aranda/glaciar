@@ -338,13 +338,3 @@ async function obterErro(resposta) {
     const dados = await resposta.json().catch(() => null);
     return dados?.erro || dados?.message || 'Não foi possível concluir a operação.';
 }
-
-function escaparHtml(valor) {
-    return String(valor ?? '').replace(/[&<>'"]/g, caractere => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        "'": '&#39;',
-        '"': '&quot;'
-    }[caractere]));
-}

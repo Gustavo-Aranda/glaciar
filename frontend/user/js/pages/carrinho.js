@@ -22,9 +22,6 @@ const estado = {
 const moeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const formatarMoeda = (valor) => moeda.format(valor ?? 0);
 
-const escaparHtml = (texto = '') =>
-    String(texto).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-
 const dom = {
     get container() { return document.querySelector('.cart-items-section'); },
     get header() { return document.querySelector('.cart-table-header'); },
@@ -62,6 +59,7 @@ async function carregarCarrinho() {
 
         if (!response.ok) {
             console.error('Erro ao carregar o contexto do carrinho', await response.text());
+            renderizarCarrinho();
             return;
         }
 
@@ -69,6 +67,7 @@ async function carregarCarrinho() {
         renderizarCarrinho();
     } catch (error) {
         console.error('Erro de rede ao carregar carrinho:', error);
+        renderizarCarrinho();
     } finally {
         window.LoadingService?.hide();
     }
@@ -80,6 +79,7 @@ function aplicarEstadoDoServidor(contexto) {
 
     estado.itens = (carrinho.itens ?? []).map((item) => ({
         id: item.id,
+        produtoId: item.produtoId,
         nomeProduto: item.nomeProduto,
         tamanho: item.tamanho,
         cor: item.cor,
@@ -320,11 +320,12 @@ function renderizarCarrinho() {
 
 function templateItem(item) {
     const { id, nomeProduto, tamanho, cor, sku, quantidade, estoqueDisponivel, disponivel } = item;
+    const imgUrl = typeof resolverImagemProduto === 'function' ? resolverImagemProduto(item) : '';
 
     return `
         <article class="cart-item" data-item-id="${id}">
             <div class="item-details">
-                <div class="item-img" style="background-color: #eee;"></div>
+                <div class="item-img" style="background-color: #eee; ${imgUrl ? `background-image: url('${imgUrl}');` : ''}"></div>
                 <div class="item-info">
                     <h3>${escaparHtml(nomeProduto)}</h3>
                     <p>Tamanho: ${escaparHtml(tamanho)}, Cor: ${escaparHtml(cor)}</p>
@@ -376,9 +377,9 @@ function renderizarResumo() {
         dom.frete.className = '';
         dom.frete.textContent =
             subtotal <= 0 ? formatarMoeda(0)
-            : alterado ? (frete > 0 ? formatarMoeda(frete) : 'Recalculado no checkout')
-            : frete > 0 ? formatarMoeda(frete)
-            : temEndereco ? formatarMoeda(0) : 'Calculado no checkout';
+                : alterado ? (frete > 0 ? formatarMoeda(frete) : 'Recalculado no checkout')
+                    : frete > 0 ? formatarMoeda(frete)
+                        : temEndereco ? formatarMoeda(0) : 'Calculado no checkout';
     }
 
     if (dom.total) {

@@ -26,16 +26,6 @@ function formatarData(dataIso) {
     }
 }
 
-function escaparHtml(texto = '') {
-    return String(texto).replace(/[&<>"']/g, (c) => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
-    }[c]));
-}
-
 // Configuração e mapeamento de status
 const STATUS_CONFIG = {
     'EmAberto': {

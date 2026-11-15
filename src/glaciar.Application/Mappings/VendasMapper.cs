@@ -36,7 +36,7 @@ namespace glaciar.Application.Mappings
                         PrecoUnitario = i.Preco,
                         Quantidade = i.Quantidade,
                         Subtotal = i.Preco * i.Quantidade,
-                        EstoqueDisponivel = estoque?.Quantidade ?? 0,
+                        EstoqueDisponivel = (estoque?.Quantidade ?? 0) + i.Quantidade,
                         Disponivel = disponivel
                     };
                 })
