@@ -1,4 +1,3 @@
-using AutoMapper;
 using glaciar.Application.DTOs.Clientes;
 using glaciar.Application.DTOs.Enderecos;
 using glaciar.Application.DTOs.Vendas;
@@ -23,7 +22,6 @@ namespace glaciar.Application.Services.Vendas
         private readonly IEnderecoService _enderecoService;
         private readonly ICartaoService _cartaoService;
         private readonly IFreteService _freteService;
-        private readonly IMapper _mapper;
 
         public CheckoutService(
             IPedidoRepository pedidoRepository,
@@ -31,8 +29,7 @@ namespace glaciar.Application.Services.Vendas
             IUnitOfWork unitOfWork,
             IEnderecoService enderecoService,
             ICartaoService cartaoService,
-            IFreteService freteService,
-            IMapper mapper)
+            IFreteService freteService)
         {
             _pedidoRepository = pedidoRepository;
             _cupomRepository = cupomRepository;
@@ -40,7 +37,6 @@ namespace glaciar.Application.Services.Vendas
             _enderecoService = enderecoService;
             _cartaoService = cartaoService;
             _freteService = freteService;
-            _mapper = mapper;
         }
 
         // ==========================================
@@ -132,7 +128,7 @@ namespace glaciar.Application.Services.Vendas
 
             // 4. Cartões cadastrados do cliente
             var cartoes = await _cartaoService.GetByUsuarioAsync(usuarioId);
-            var cartoesDto = _mapper.Map<IEnumerable<CartaoResponseDTO>>(cartoes);
+            var cartoesDto = cartoes.Select(ClientesMapper.ParaCartao).ToList();
 
             return new CheckoutContextoDTO
             {

@@ -1,10 +1,10 @@
+using glaciar.Application.Mappings;
 using glaciar.Application.DTOs.Clientes;
 using glaciar.Domain.Entities.Clientes;
 using glaciar.Domain.Entities.Clientes.Enum;
 using glaciar.Application.Interfaces.Services;
 using glaciar.Domain.Interfaces.Repositories;
 using glaciar.Domain.Exceptions;
-using AutoMapper;
 using System.Globalization;
 using System.ComponentModel.DataAnnotations;
 using glaciar.Domain.Validators;
@@ -15,13 +15,11 @@ namespace glaciar.Application.Services.Clientes
     {
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IPasswordHasher _hasher;
-        private readonly IMapper _mapper;
 
-        public UsuarioService(IUsuarioRepository usuarioRepository, IPasswordHasher hasher, IMapper mapper)
+        public UsuarioService(IUsuarioRepository usuarioRepository, IPasswordHasher hasher)
         {
             _usuarioRepository = usuarioRepository;
             _hasher = hasher;
-            _mapper = mapper;
         }
 
         public async Task<UsuarioResponseDTO> CreateUsuarioAsync(UsuarioCreateDTO dto, TipoUsuario tipoUsuario = TipoUsuario.CLI)
@@ -47,7 +45,7 @@ namespace glaciar.Application.Services.Clientes
             };
 
             await _usuarioRepository.AddAsync(usuario);
-            return _mapper.Map<UsuarioResponseDTO>(usuario);
+            return ClientesMapper.ParaUsuario(usuario);
         }
 
         public async Task<UsuarioResponseDTO> LoginAsync(UsuarioLoginDTO dto)
@@ -65,21 +63,21 @@ namespace glaciar.Application.Services.Clientes
                 throw new DomainValidationException("Esta conta está inativada. Entre em contato com o suporte.");
             }
 
-            return _mapper.Map<UsuarioResponseDTO>(usuario);
+            return ClientesMapper.ParaUsuario(usuario);
         }
 
         public async Task<IEnumerable<UsuarioResponseDTO>> GetUsuariosAsync()
         {
             var usuarios = await _usuarioRepository.GetAllAsync();
             
-            return _mapper.Map<IEnumerable<UsuarioResponseDTO>>(usuarios);
+            return usuarios.Select(ClientesMapper.ParaUsuario).ToList();
         }
 
         public async Task<UsuarioResponseDTO> GetUsuarioAsync(int id)
         {
             var usuario = await ObterUsuarioAsync(id);
 
-            return _mapper.Map<UsuarioResponseDTO>(usuario);
+            return ClientesMapper.ParaUsuario(usuario);
         }
 
         public async Task<UsuarioResponseDTO> AtualizarUsuarioAsync(int id, UsuarioAdminUpdateDTO dto)
@@ -98,7 +96,7 @@ namespace glaciar.Application.Services.Clientes
             usuario.Telefone = telefone;
 
             await _usuarioRepository.UpdateAsync(usuario);
-            return _mapper.Map<UsuarioResponseDTO>(usuario);
+            return ClientesMapper.ParaUsuario(usuario);
         }
 
         public async Task<UsuarioResponseDTO> AtualizarPerfilAsync(int id, UsuarioPerfilUpdateDTO dto)
@@ -129,7 +127,7 @@ namespace glaciar.Application.Services.Clientes
                 usuario.SenhaHash = _hasher.Hash(dto.Senha);
 
             await _usuarioRepository.UpdateAsync(usuario);
-            return _mapper.Map<UsuarioResponseDTO>(usuario);
+            return ClientesMapper.ParaUsuario(usuario);
         }
 
         public async Task ExcluirUsuarioAsync(int id)
@@ -146,7 +144,7 @@ namespace glaciar.Application.Services.Clientes
             usuario.Ativo = ativo;
             await _usuarioRepository.UpdateAsync(usuario);
 
-            return _mapper.Map<UsuarioResponseDTO>(usuario);
+            return ClientesMapper.ParaUsuario(usuario);
         }
 
         private async Task<Usuario> ObterUsuarioAsync(int id)

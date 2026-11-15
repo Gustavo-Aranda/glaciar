@@ -1,9 +1,9 @@
 using glaciar.Application.DTOs.Enderecos;
 using glaciar.Application.Interfaces.Services;
+using glaciar.Application.Mappings;
 using glaciar.Domain.Entities.Clientes;
 using glaciar.Domain.Exceptions;
 using glaciar.Domain.Interfaces.Repositories;
-using AutoMapper;
 
 namespace glaciar.Application.Services.Enderecos
 {
@@ -13,20 +13,17 @@ namespace glaciar.Application.Services.Enderecos
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IUsuarioEnderecoRepository _usuarioEnderecoRepository;
         private readonly IPedidoRepository _pedidoRepository;
-        private readonly IMapper _mapper;
 
         public EnderecoService(
             IEnderecoRepository enderecoRepository, 
             IUsuarioRepository usuarioRepository,
             IUsuarioEnderecoRepository usuarioEnderecoRepository,
-            IPedidoRepository pedidoRepository,
-            IMapper mapper)
+            IPedidoRepository pedidoRepository)
         {
             _enderecoRepository = enderecoRepository;
             _usuarioRepository = usuarioRepository;
             _usuarioEnderecoRepository = usuarioEnderecoRepository;
             _pedidoRepository = pedidoRepository;
-            _mapper = mapper;
         }
 
         // ==========================================
@@ -43,7 +40,7 @@ namespace glaciar.Application.Services.Enderecos
 
             await CriarVinculoDeEnderecoAsync(dto, enderecoFisico.Id);
 
-            return _mapper.Map<EnderecoResponseDTO>(enderecoFisico);
+            return ClientesMapper.ParaEndereco(enderecoFisico);
         }
 
         // ==========================================
@@ -52,13 +49,13 @@ namespace glaciar.Application.Services.Enderecos
         public async Task<IEnumerable<UsuarioEnderecoResponseDTO>> GetEnderecoClienteAsync(int clienteId)
         {
             var vinculos = await _usuarioEnderecoRepository.GetAtivosByUsuarioIdAsync(clienteId);
-            return _mapper.Map<IEnumerable<UsuarioEnderecoResponseDTO>>(vinculos);
+            return vinculos.Select(ClientesMapper.ParaUsuarioEndereco).ToList();
         }
 
         public async Task<EnderecoResponseDTO?> GetEnderecoAsync(int id)
         {
             var endereco = await _enderecoRepository.GetByIdAsync(id);
-            return endereco == null ? null : _mapper.Map<EnderecoResponseDTO>(endereco);
+            return endereco == null ? null : ClientesMapper.ParaEndereco(endereco);
         }
 
         // ==========================================
@@ -130,7 +127,7 @@ namespace glaciar.Application.Services.Enderecos
             if (vinculo == null || vinculo.UsuarioId != usuarioId || !vinculo.Ativo || vinculo.Endereco == null)
                 throw new DomainValidationException("Endereço de entrega não encontrado para este cliente.");
 
-            return _mapper.Map<EnderecoResponseDTO>(vinculo.Endereco);
+            return ClientesMapper.ParaEndereco(vinculo.Endereco);
         }
 
         public async Task<EnderecoResponseDTO> RegistrarEnderecoDeEntregaAsync(EnderecoCreateDTO dto, bool salvarNoPerfil)
@@ -152,7 +149,7 @@ namespace glaciar.Application.Services.Enderecos
                 await CriarVinculoDeEnderecoAsync(dto, enderecoFisico.Id);
             }
 
-            return _mapper.Map<EnderecoResponseDTO>(enderecoFisico);
+            return ClientesMapper.ParaEndereco(enderecoFisico);
         }
 
         // ==========================================

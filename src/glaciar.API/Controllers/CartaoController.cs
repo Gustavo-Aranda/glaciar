@@ -1,5 +1,5 @@
+using glaciar.Application.Mappings;
 using Microsoft.AspNetCore.Mvc;
-using AutoMapper;
 using glaciar.Application.DTOs.Clientes;
 using glaciar.Application.Interfaces.Services;
 using glaciar.Domain.Exceptions;
@@ -11,12 +11,10 @@ namespace glaciar.API.Controllers
     public class CartaoController : ControllerBase
     {
         private readonly ICartaoService _cartaoService;
-        private readonly IMapper _mapper;
 
-        public CartaoController(ICartaoService cartaoService, IMapper mapper)
+        public CartaoController(ICartaoService cartaoService)
         {
             _cartaoService = cartaoService;
-            _mapper = mapper;
         }
 
         [HttpPost]
@@ -25,7 +23,7 @@ namespace glaciar.API.Controllers
             try
             {
                 var cartao = await _cartaoService.CreateAsync(dto);
-                var resposta = _mapper.Map<CartaoResponseDTO>(cartao);
+                var resposta = ClientesMapper.ParaCartao(cartao);
                 return CreatedAtAction(
                     nameof(BuscarPorId),
                     new { usuarioId = dto.UsuarioId, usuarioCartaoId = resposta.Id },
@@ -43,7 +41,7 @@ namespace glaciar.API.Controllers
             try
             {
                 var cartoes = await _cartaoService.GetByUsuarioAsync(usuarioId);
-                return Ok(_mapper.Map<IEnumerable<CartaoResponseDTO>>(cartoes));
+                return Ok(cartoes.Select(ClientesMapper.ParaCartao));
             }
             catch (DomainValidationException ex)
             {
@@ -57,7 +55,7 @@ namespace glaciar.API.Controllers
             try
             {
                 var cartao = await _cartaoService.GetByIdAsync(usuarioId, usuarioCartaoId);
-                return Ok(_mapper.Map<CartaoResponseDTO>(cartao));
+                return Ok(ClientesMapper.ParaCartao(cartao));
             }
             catch (DomainValidationException ex)
             {
@@ -74,7 +72,7 @@ namespace glaciar.API.Controllers
             try
             {
                 var cartao = await _cartaoService.UpdateAsync(usuarioId, usuarioCartaoId, dto);
-                return Ok(_mapper.Map<CartaoResponseDTO>(cartao));
+                return Ok(ClientesMapper.ParaCartao(cartao));
             }
             catch (DomainValidationException ex)
             {

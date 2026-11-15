@@ -28,8 +28,6 @@ builder.Services.AddScoped<IUsuarioEnderecoRepository, UsuarioEnderecoRepository
 builder.Services.AddScoped<ICartaoService, CartaoService>();
 builder.Services.AddScoped<ICartaoRepository, CartaoRepository>();
 builder.Services.AddScoped<IPagamentoService, PagamentoService>();
-builder.Services.AddAutoMapper(config =>
-    config.AddMaps(typeof(glaciar.Application.Mappings.UsuarioProfile).Assembly));
 
 // Módulo de Vendas
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();

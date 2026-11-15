@@ -1,7 +1,6 @@
-using AutoMapper;
 using glaciar.Application.DTOs.Clientes;
-using glaciar.Application.DTOs.Vendas;
 using glaciar.Application.Interfaces.Services;
+using glaciar.Application.Mappings;
 
 namespace glaciar.Application.Services.Clientes
 {
@@ -9,16 +8,13 @@ namespace glaciar.Application.Services.Clientes
     {
         private readonly ICartaoService _cartaoService;
         private readonly ICupomService _cupomService;
-        private readonly IMapper _mapper;
 
         public PagamentoService(
             ICartaoService cartaoService,
-            ICupomService cupomService,
-            IMapper mapper)
+            ICupomService cupomService)
         {
             _cartaoService = cartaoService;
             _cupomService = cupomService;
-            _mapper = mapper;
         }
 
         public async Task<PagamentoContextoDTO> ObterContextoAsync(int usuarioId)
@@ -28,7 +24,7 @@ namespace glaciar.Application.Services.Clientes
 
             return new PagamentoContextoDTO
             {
-                Cartoes = _mapper.Map<IEnumerable<CartaoResponseDTO>>(cartoes),
+                Cartoes = cartoes.Select(ClientesMapper.ParaCartao).ToList(),
                 Cupons = cupons
             };
         }

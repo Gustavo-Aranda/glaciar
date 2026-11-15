@@ -1,5 +1,6 @@
 using glaciar.Application.DTOs.Enderecos;
 using glaciar.Application.DTOs.Vendas;
+using glaciar.Domain.Entities.Catalogos;
 using glaciar.Domain.Entities.Vendas;
 using glaciar.Domain.Entities.Vendas.Enum;
 
@@ -202,6 +203,26 @@ namespace glaciar.Application.Mappings
             ValorDesconto = cupom.ValorDesconto,
             DataValidade = cupom.DataValidade,
             Categoria = cupom.CategoriaCupom
+        };
+
+        public static ProdutoCatalogoDTO ParaCatalogo(Produto produto) => new()
+        {
+            Id = produto.Id,
+            Nome = produto.Nome,
+            Descricao = produto.Descricao,
+            Tipo = produto.Tipo.ToString(),
+            Categoria = produto.CategoriasDoProduto.Select(cp => cp.Categoria.Nome).FirstOrDefault() ?? produto.Tipo.ToString(),
+            Preco = produto.Preco,
+            Estoques = produto.Estoques
+                .OrderBy(e => e.Id)
+                .Select(e => new ProdutoCatalogoEstoqueDTO
+                {
+                    EstoqueId = e.Id,
+                    Tamanho = e.Tamanho,
+                    Cor = e.Cor,
+                    Quantidade = e.Quantidade
+                })
+                .ToList()
         };
     }
 }
