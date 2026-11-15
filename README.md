@@ -163,7 +163,7 @@ Para aprofundar nos detalhes de cada módulo, consulte as documentações dedica
 | 🔁 **Máquina de Estados e Logística** | [`MAQUINA_DE_ESTADOS.md`](./MAQUINA_DE_ESTADOS.md) | Ciclo de vida completo do pedido, diagrama visual de estados, matriz de transições e atores autorizados (Admin vs. Cliente), logística reversa e pilares de blindagem contra burlas. |
 | 📡 **Contratos de API** | [`CONTRATOS_API.md`](./CONTRATOS_API.md) | Especificação das rotas REST, headers de contexto (`X-Usuario-Id`), exemplos completos de payloads JSON de envio e retorno, e catálogo de códigos de erro HTTP. |
 | 🧪 **Catálogo de Casos de Teste** | [`CASOS_DE_TESTE.md`](./CASOS_DE_TESTE.md) | Inventário exaustivo de todos os testes automatizados Cypress método a método, nomes dos testes (`it`), descritivo funcional, requisitos cobertos (DRS) e guia de execução. |
-| 📋 **Documento de Requisitos** | [`documento_de_requisitos.md`](./documento_de_requisitos.md) | Especificação original dos Requisitos Funcionais (RFs), Regras de Negócio (RNs) e Requisitos Não Funcionais (RNFs) da disciplina. |
+
 
 ---
 
