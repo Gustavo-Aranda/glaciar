@@ -17,48 +17,6 @@ const colorMap = {
     'cinza': '#999'
 };
 
-// Map de imagens locais por ID de Produto
-const productImageMap = {
-    1: './assets/img/masculino/termica-apex.jpg',
-    2: './assets/img/masculino/alpine-pro.jpg',
-    3: './assets/img/calcados/bota-montanhismo.jpg',
-    4: './assets/img/masculino/stormbreaker.jpg',
-    5: './assets/img/masculino/ridge-cargo.jpg',
-    6: './assets/img/feminino/calca-ascent.jpg',
-    7: './assets/img/feminino/jaqueta-aurora.jpg',
-    8: './assets/img/feminino/segunda-pele-merino.jpg',
-    9: './assets/img/calcados/tenis-trekking.jpg',
-    10: './assets/img/calcados/bota-alpinismo.jpg',
-    11: './assets/img/equipamentos/mochila-covert.jpg',
-    12: './assets/img/equipamentos/barraca-k2.jpg',
-    13: './assets/img/equipamentos/saco-subzero.jpg'
-};
-
-function getProductImageUrl(product) {
-    if (!product) return './assets/img/masculino/alpine-pro.jpg';
-    if (product.imagem) return product.imagem;
-    const prodId = product.id || product.Id;
-    if (prodId && productImageMap[prodId]) return productImageMap[prodId];
-    
-    // Fallback por correspondência no nome
-    const nome = (product.nome || '').toLowerCase();
-    if (nome.includes('apex')) return './assets/img/masculino/termica-apex.jpg';
-    if (nome.includes('alpine')) return './assets/img/masculino/alpine-pro.jpg';
-    if (nome.includes('stormbreaker')) return './assets/img/masculino/stormbreaker.jpg';
-    if (nome.includes('ridge')) return './assets/img/masculino/ridge-cargo.jpg';
-    if (nome.includes('ascent')) return './assets/img/feminino/calca-ascent.jpg';
-    if (nome.includes('aurora')) return './assets/img/feminino/jaqueta-aurora.jpg';
-    if (nome.includes('merino')) return './assets/img/feminino/segunda-pele-merino.jpg';
-    if (nome.includes('trekking xt')) return './assets/img/calcados/bota-montanhismo.jpg';
-    if (nome.includes('trailblaze')) return './assets/img/calcados/tenis-trekking.jpg';
-    if (nome.includes('summit')) return './assets/img/calcados/bota-alpinismo.jpg';
-    if (nome.includes('covert')) return './assets/img/equipamentos/mochila-covert.jpg';
-    if (nome.includes('k2')) return './assets/img/equipamentos/barraca-k2.jpg';
-    if (nome.includes('subzero')) return './assets/img/equipamentos/saco-subzero.jpg';
-
-    return './assets/img/masculino/alpine-pro.jpg';
-}
-
 document.addEventListener("DOMContentLoaded", async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const produtoId = urlParams.get('produto');
