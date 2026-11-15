@@ -155,6 +155,5 @@ namespace glaciar.Application.Services.Vendas
         public decimal ValorTrocoGerado { get; set; }
         public List<Cupom> CuponsUtilizados { get; set; } = new();
         public bool TemTroco => ValorTrocoGerado > 0;
-        public bool HouveCuponsUtilizados => CuponsUtilizados.Any();
     }
 }

@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (usuarioEmCache) {
         preencherPerfil(usuarioEmCache);
     } else {
-        mostrarLoadingUsuario('Carregando seus dados...');
+        window.LoadingService?.show('Carregando seus dados...');
         try {
             const response = await fetch(`http://localhost:5205/api/conta/${id}`);
             if (!response.ok) throw new Error('Não foi possível carregar o perfil.');
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('conta-email').textContent = 'Não disponível';
             document.getElementById('conta-telefone').textContent = 'Não disponível';
         } finally {
-            esconderLoadingUsuario();
+            window.LoadingService?.hide();
         }
     }
 

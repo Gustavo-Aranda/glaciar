@@ -52,12 +52,6 @@ namespace glaciar.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        public async Task<bool> ExisteCodigoAsync(string codigo)
-        {
-            var codigoNormalizado = codigo.Trim().ToUpper();
-            return await _context.Cupons.AnyAsync(c => c.Codigo.ToUpper() == codigoNormalizado);
-        }
-
         public async Task AddAsync(Cupom cupom)
         {
             await _context.Cupons.AddAsync(cupom);

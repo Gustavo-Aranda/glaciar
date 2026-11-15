@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         preencherFormulario(usuarioEmCache);
         dadosOriginaisPerfil = criarSnapshotPerfil(usuarioEmCache);
     } else {
-        mostrarLoadingUsuario('Carregando seus dados...');
+        window.LoadingService?.show('Carregando seus dados...');
         try {
         const response = await fetch(`http://localhost:5205/api/conta/${id}`);
         if (!response.ok) throw new Error('Não foi possível carregar o perfil.');
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         mostrarMensagem('Não foi possível carregar seus dados.', 'erro');
             return;
         } finally {
-            esconderLoadingUsuario();
+            window.LoadingService?.hide();
         }
     }
 
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         definirEstadoEnvio(true);
-        mostrarLoadingUsuario('Salvando alterações...');
+        window.LoadingService?.show('Salvando alterações...');
 
         try {
             const response = await fetch(`http://localhost:5205/api/conta/${id}/perfil`, {
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             mostrarMensagem('Não foi possível conectar ao servidor.', 'erro');
         } finally {
             definirEstadoEnvio(false);
-            esconderLoadingUsuario();
+            window.LoadingService?.hide();
         }
     });
 });
@@ -166,7 +166,7 @@ function fecharModalInativacao() {
 
 async function inativarConta(id) {
     fecharModalInativacao();
-    mostrarLoadingUsuario('Inativando sua conta...');
+    window.LoadingService?.show('Inativando sua conta...');
 
     try {
         const response = await fetch(`http://localhost:5205/api/conta/${id}/status`, {
@@ -186,6 +186,6 @@ async function inativarConta(id) {
         console.error('Erro ao inativar conta:', error);
         mostrarMensagem('Não foi possível conectar ao servidor.', 'erro');
     } finally {
-        esconderLoadingUsuario();
+        window.LoadingService?.hide();
     }
 }

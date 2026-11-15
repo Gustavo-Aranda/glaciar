@@ -20,18 +20,6 @@ namespace glaciar.Domain.Entities.Catalogos
         [Required]
         public int Quantidade { get; set; }
 
-        public void Deduzir(int quantidadeDesejada)
-        {
-            GarantirDisponivel(quantidadeDesejada);
-            Quantidade -= quantidadeDesejada;
-        }
-
-        public void Repor(int quantidadeParaRepor)
-        {
-            if (quantidadeParaRepor <= 0) return;
-            Quantidade += quantidadeParaRepor;
-        }
-
         public void GarantirDisponivel(int quantidadeDesejada)
         {
             if (quantidadeDesejada > Quantidade)

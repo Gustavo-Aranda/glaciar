@@ -58,10 +58,6 @@
     width: 100%;
 }
 
-.autofill-simulated {
-    background-color: #fdfae5;
-}
-
 .password-wrapper {
     position: relative;
     display: flex;

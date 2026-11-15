@@ -324,12 +324,6 @@ namespace glaciar.Domain.Entities.Vendas
             return Math.Round(credito, 2, MidpointRounding.AwayFromZero);
         }
 
-        public decimal CalcularValorCreditoTroca()
-        {
-            GarantirItensCarregados();
-            return CalcularCreditoTroca(ProdutosDoPedido.Select(i => (i, i.Quantidade)).ToList());
-        }
-
         private void ReporTodosOsItens(ResultadoTransicaoPedido resultado)
         {
             foreach (var item in ProdutosDoPedido)

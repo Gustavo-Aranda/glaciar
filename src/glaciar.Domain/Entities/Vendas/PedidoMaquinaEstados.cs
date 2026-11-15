@@ -37,12 +37,6 @@ namespace glaciar.Domain.Entities.Vendas
                 [(StatusPedido.ItemRecebido,       StatusPedido.Trocado)]            = AtorTransicao.Administrador,
             };
 
-        /// <summary>Indica se <paramref name="ator"/> pode levar o pedido de <paramref name="de"/> para <paramref name="para"/>.</summary>
-        public static bool PodeTransicionar(StatusPedido de, StatusPedido para, AtorTransicao ator) =>
-            EhAtorUnico(ator)
-            && Transicoes.TryGetValue((de, para), out var autorizados)
-            && autorizados.HasFlag(ator);
-
         /// <summary>
         /// Próximos status que o <paramref name="ator"/> pode aplicar a partir de <paramref name="atual"/>.
         /// É exatamente esta lista que o frontend deve exibir — nada além dela.
@@ -57,10 +51,6 @@ namespace glaciar.Domain.Entities.Vendas
                 .OrderBy(s => s)
                 .ToList();
         }
-
-        /// <summary>Estado final: nenhuma transição de saída, para nenhum ator.</summary>
-        public static bool EhEstadoFinal(StatusPedido status) =>
-            !Transicoes.Keys.Any(k => k.De == status);
 
         /// <summary>
         /// Garante a transição ou lança <see cref="DomainValidationException"/> com uma mensagem precisa

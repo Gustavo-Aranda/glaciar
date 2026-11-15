@@ -248,12 +248,6 @@
     text-shadow: 0 0 2px rgba(0, 0, 0, 0.7);
 }
 
-.swatch-more {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--cinza-rocha);
-}
-
 .product-title a {
     font-size: 1rem;
     font-weight: 600;

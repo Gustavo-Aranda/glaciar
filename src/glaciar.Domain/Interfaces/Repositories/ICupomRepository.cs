@@ -10,8 +10,6 @@ namespace glaciar.Domain.Interfaces.Repositories
 
         Task<IEnumerable<Cupom>> GetDisponiveisByUsuarioAsync(int usuarioId);
 
-        Task<bool> ExisteCodigoAsync(string codigo);
-
         Task AddAsync(Cupom cupom);
     }
 }

@@ -290,3 +290,43 @@
     from { transform: translateY(0.5rem); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
 }
+
+/* =========================================
+   BUSCA E CONTROLES DE STATUS COMPARTILHADOS
+   ========================================= */
+.search-bar-container {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+}
+
+.admin-search-input {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    border: 1px solid var(--borda-cinza);
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 1rem;
+}
+
+.admin-search-input:focus {
+    outline: none;
+    border-color: var(--azul-gelo);
+}
+
+.status-updater {
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+}
+
+.status-select {
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--borda-cinza);
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--cinza-rocha);
+    background-color: var(--branco);
+    cursor: pointer;
+}

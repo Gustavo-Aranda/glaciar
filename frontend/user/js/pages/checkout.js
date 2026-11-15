@@ -82,11 +82,6 @@ function renderizarItensResumo(carrinho) {
     `).join('');
 }
 
-function renderizarResumo(carrinho, frete, total) {
-    renderizarItensResumo(carrinho);
-    atualizarTotaisCheckout();
-}
-
 /**
  * Recálculo reativo centralizado do checkout.
  * Respeita as regras de negócio de cupons (RN0033, RN0035, RN0036):

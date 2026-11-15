@@ -76,10 +76,6 @@
     gap: 1rem;
 }
 
-.text-danger {
-    color: #e74c3c !important;
-}
-
 /* Linha de Separação */
 .wallet-separator {
     border: 0;
