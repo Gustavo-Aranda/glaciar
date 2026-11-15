@@ -22,6 +22,22 @@ namespace glaciar.Infrastructure.Repositories
                 .FirstOrDefaultAsync(c => c.Codigo.ToUpper() == codigoNormalizado);
         }
 
+        public async Task<IReadOnlyList<Cupom>> GetByCodigosAsync(IEnumerable<string> codigos)
+        {
+            var normalizados = codigos
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .Select(c => c.Trim().ToUpper())
+                .Distinct()
+                .ToList();
+
+            if (normalizados.Count == 0)
+                return Array.Empty<Cupom>();
+
+            return await _context.Cupons
+                .Where(c => normalizados.Contains(c.Codigo.ToUpper()))
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<Cupom>> GetTrocaDisponiveisByUsuarioAsync(int usuarioId)
         {
             var agora = DateTime.UtcNow;

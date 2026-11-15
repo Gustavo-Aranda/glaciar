@@ -6,6 +6,8 @@ namespace glaciar.Domain.Interfaces.Repositories
     {
         Task<Cupom?> GetByCodigoAsync(string codigo);
 
+        Task<IReadOnlyList<Cupom>> GetByCodigosAsync(IEnumerable<string> codigos);
+
         Task<IEnumerable<Cupom>> GetTrocaDisponiveisByUsuarioAsync(int usuarioId);
 
         Task<IEnumerable<Cupom>> GetDisponiveisByUsuarioAsync(int usuarioId);

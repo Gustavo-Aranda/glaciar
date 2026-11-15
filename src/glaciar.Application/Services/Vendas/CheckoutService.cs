@@ -204,11 +204,14 @@ namespace glaciar.Application.Services.Vendas
                 return new ResultadoProcessamentoCupons { SaldoDevedor = valorTotalCompra };
             }
 
-            // 2. Consulta ao banco de dados e validação de elegibilidade
-            var cuponsCarregados = new List<Cupom>();
+            // 2. Consulta em lote ao banco de dados (evita N+1 queries) e validação de elegibilidade
+            var cuponsNoBanco = await _cupomRepository.GetByCodigosAsync(codigosLimpos);
+            var mapaCupons = cuponsNoBanco.ToDictionary(c => c.Codigo.Trim().ToUpperInvariant(), StringComparer.OrdinalIgnoreCase);
+
+            var cuponsCarregados = new List<Cupom>(codigosLimpos.Count);
             foreach (var codigo in codigosLimpos)
             {
-                var cupom = await _cupomRepository.GetByCodigoAsync(codigo);
+                mapaCupons.TryGetValue(codigo.Trim().ToUpperInvariant(), out var cupom);
                 CupomRegras.ValidarUso(cupom, usuarioId, codigo);
                 cuponsCarregados.Add(cupom!);
             }

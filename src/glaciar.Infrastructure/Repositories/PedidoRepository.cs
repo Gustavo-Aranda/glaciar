@@ -115,16 +115,42 @@ namespace glaciar.Infrastructure.Repositories
                 .AnyAsync(p => p.EnderecoId == enderecoId && p.Status != StatusPedido.EmAberto);
         }
 
-        public async Task<IEnumerable<Pedido>> GetAllParaAdminAsync()
+        public async Task<IEnumerable<Pedido>> GetAllParaAdminAsync(string? tipo = null)
         {
-            return await _context.Pedidos
+            var query = _context.Pedidos
                 .AsNoTracking()
+                .AsSplitQuery()
                 .Include(p => p.Usuario)
                 .Include(p => p.Devolucoes)
                     .ThenInclude(d => d.PedidoProduto)
                         .ThenInclude(pp => pp.Estoque)
                             .ThenInclude(e => e.Produto)
-                .Where(p => p.Status != StatusPedido.EmAberto)
+                .Where(p => p.Status != StatusPedido.EmAberto);
+
+            if (string.Equals(tipo, "troca", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(tipo, "devolucao", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(p =>
+                    p.Status == StatusPedido.TrocaSolicitada ||
+                    p.Status == StatusPedido.TrocaAceita ||
+                    p.Status == StatusPedido.TrocaNegada ||
+                    p.Status == StatusPedido.ItemEnviado ||
+                    p.Status == StatusPedido.ItemRecebido ||
+                    p.Status == StatusPedido.Trocado);
+            }
+            else if (string.Equals(tipo, "venda", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(tipo, "pedido", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(p =>
+                    p.Status == StatusPedido.EmProcessamento ||
+                    p.Status == StatusPedido.PagamentoRealizado ||
+                    p.Status == StatusPedido.PagamentoReprovado ||
+                    p.Status == StatusPedido.EmTransporte ||
+                    p.Status == StatusPedido.Entregue ||
+                    p.Status == StatusPedido.Cancelado);
+            }
+
+            return await query
                 .OrderByDescending(p => p.Data)
                 .ToListAsync();
         }

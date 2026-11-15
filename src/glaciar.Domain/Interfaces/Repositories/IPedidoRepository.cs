@@ -27,7 +27,7 @@ namespace glaciar.Domain.Interfaces.Repositories
         Task<bool> ExisteComEnderecoAsync(int enderecoId);
 
         // --- MÉTODOS DE ADMINISTRAÇÃO ---
-        Task<IEnumerable<Pedido>> GetAllParaAdminAsync();
+        Task<IEnumerable<Pedido>> GetAllParaAdminAsync(string? tipo = null);
 
         /// <summary>
         /// Retorna o pedido (não carrinho) RASTREADO, com o agregado necessário para uma transição de status:

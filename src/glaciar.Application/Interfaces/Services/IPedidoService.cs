@@ -8,6 +8,6 @@ namespace glaciar.Application.Interfaces.Services
         Task<PedidoResponseDTO?> ObterPedidoPorIdAsync(int usuarioId, int pedidoId);
 
         /// <summary>Todos os pedidos finalizados, com os próximos status permitidos ao administrador.</summary>
-        Task<IEnumerable<PedidoAdminResumoDTO>> ListarParaAdminAsync();
+        Task<IEnumerable<PedidoAdminResumoDTO>> ListarParaAdminAsync(string? tipo = null);
     }
 }
