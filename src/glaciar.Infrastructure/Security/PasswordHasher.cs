@@ -1,6 +1,6 @@
 using System;
 using System.Security.Cryptography;
-using glaciar.Application.Interfaces.Services;
+using glaciar.Domain.Interfaces.Security;
 
 namespace glaciar.Infrastructure.Security
 {

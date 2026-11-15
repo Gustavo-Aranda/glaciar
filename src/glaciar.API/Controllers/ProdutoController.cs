@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using glaciar.Application.DTOs.Vendas;
-using glaciar.Domain.Interfaces.Repositories;
+using glaciar.Application.Interfaces.Services;
 
 namespace glaciar.API.Controllers
 {
@@ -8,11 +7,11 @@ namespace glaciar.API.Controllers
     [Route("api/produtos")]
     public class ProdutoController : ControllerBase
     {
-        private readonly IProdutoRepository _produtoRepository;
+        private readonly IProdutoService _produtoService;
 
-        public ProdutoController(IProdutoRepository produtoRepository)
+        public ProdutoController(IProdutoService produtoService)
         {
-            _produtoRepository = produtoRepository;
+            _produtoService = produtoService;
         }
 
         // GET api/produtos?categoria=Masculino
@@ -21,30 +20,14 @@ namespace glaciar.API.Controllers
         {
             try
             {
-                var produtos = await _produtoRepository.GetVisiveisAsync(categoria);
-
-                var result = produtos.Select(p => new ProdutoCatalogoDTO
-                {
-                    Id = p.Id,
-                    Nome = p.Nome,
-                    Descricao = p.Descricao,
-                    Tipo = p.Tipo.ToString(),
-                    Categoria = p.CategoriasDoProduto.Select(cp => cp.Categoria.Nome).FirstOrDefault() ?? p.Tipo.ToString(),
-                    Preco = p.Preco,
-                    Estoques = p.Estoques
-                        .OrderBy(e => e.Id)
-                        .Select(e => new ProdutoCatalogoEstoqueDTO
-                        {
-                            EstoqueId = e.Id,
-                            Tamanho = e.Tamanho,
-                            Cor = e.Cor,
-                            Quantidade = e.Quantidade
-                        }).ToList()
-                });
-
+                var result = await _produtoService.ListarVisiveisAsync(categoria);
                 return Ok(result);
             }
-            catch (Exception) { return StatusCode(500, new { message = "Erro interno no servidor." }); }
+            catch (Exception)
+            {
+                const string msg = "Erro interno no servidor.";
+                return StatusCode(500, new { erro = msg });
+            }
         }
 
         // GET api/produtos/{id}
@@ -53,31 +36,20 @@ namespace glaciar.API.Controllers
         {
             try
             {
-                var produto = await _produtoRepository.GetByIdAsync(id);
-                if (produto == null) return NotFound(new { message = "Produto não encontrado." });
-
-                var result = new ProdutoCatalogoDTO
+                var result = await _produtoService.ObterPorIdAsync(id);
+                if (result == null)
                 {
-                    Id = produto.Id,
-                    Nome = produto.Nome,
-                    Descricao = produto.Descricao,
-                    Tipo = produto.Tipo.ToString(),
-                    Categoria = produto.CategoriasDoProduto.Select(cp => cp.Categoria.Nome).FirstOrDefault() ?? produto.Tipo.ToString(),
-                    Preco = produto.Preco,
-                    Estoques = produto.Estoques
-                        .OrderBy(e => e.Id)
-                        .Select(e => new ProdutoCatalogoEstoqueDTO
-                        {
-                            EstoqueId = e.Id,
-                            Tamanho = e.Tamanho,
-                            Cor = e.Cor,
-                            Quantidade = e.Quantidade
-                        }).ToList()
-                };
+                    const string msg = "Produto não encontrado.";
+                    return NotFound(new { erro = msg });
+                }
 
                 return Ok(result);
             }
-            catch (Exception) { return StatusCode(500, new { message = "Erro interno no servidor." }); }
+            catch (Exception)
+            {
+                const string msg = "Erro interno no servidor.";
+                return StatusCode(500, new { erro = msg });
+            }
         }
     }
 }

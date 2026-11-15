@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using glaciar.Application.DTOs.Clientes;
+using glaciar.Application.Interfaces.Services;
 using glaciar.Domain.Exceptions;
-using glaciar.Domain.Interfaces.Repositories;
 
 namespace glaciar.API.Controllers
 {
@@ -9,11 +8,11 @@ namespace glaciar.API.Controllers
     [Route("api/notificacoes")]
     public class NotificacaoController : ControllerBase
     {
-        private readonly INotificacaoRepository _notificacaoRepository;
+        private readonly INotificacaoService _notificacaoService;
 
-        public NotificacaoController(INotificacaoRepository notificacaoRepository)
+        public NotificacaoController(INotificacaoService notificacaoService)
         {
-            _notificacaoRepository = notificacaoRepository;
+            _notificacaoService = notificacaoService;
         }
 
         private int GetUsuarioId()
@@ -29,27 +28,17 @@ namespace glaciar.API.Controllers
             try
             {
                 var usuarioId = GetUsuarioId();
-                var notificacoes = await _notificacaoRepository.GetByUsuarioAsync(usuarioId);
-
-                var dtos = notificacoes.Select(n => new NotificacaoResponseDTO
-                {
-                    Id = n.Id,
-                    UsuarioId = n.UsuarioId,
-                    PedidoId = n.PedidoId,
-                    Mensagem = n.Mensagem,
-                    Lida = n.Lida,
-                    CreatedAt = n.CreatedAt
-                });
-
+                var dtos = await _notificacaoService.ListarPorUsuarioAsync(usuarioId);
                 return Ok(dtos);
             }
             catch (DomainValidationException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new { erro = ex.Message });
             }
             catch (Exception)
             {
-                return StatusCode(500, new { message = "Erro interno no servidor ao carregar notificações." });
+                const string msg = "Erro interno no servidor ao carregar notificações.";
+                return StatusCode(500, new { erro = msg });
             }
         }
 
@@ -59,16 +48,17 @@ namespace glaciar.API.Controllers
             try
             {
                 var usuarioId = GetUsuarioId();
-                await _notificacaoRepository.MarcarComoLidaAsync(usuarioId, id);
+                await _notificacaoService.MarcarComoLidaAsync(usuarioId, id);
                 return Ok(new { message = "Notificação marcada como lida." });
             }
             catch (DomainValidationException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new { erro = ex.Message });
             }
             catch (Exception)
             {
-                return StatusCode(500, new { message = "Erro interno no servidor ao marcar notificação como lida." });
+                const string msg = "Erro interno no servidor ao marcar notificação como lida.";
+                return StatusCode(500, new { erro = msg });
             }
         }
     }

@@ -1,4 +1,4 @@
-namespace glaciar.Application.Interfaces.Services
+namespace glaciar.Domain.Interfaces.Security
 {
     public interface IPasswordHasher
     {

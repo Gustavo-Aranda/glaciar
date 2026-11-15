@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using glaciar.Infrastructure.Data;
 using glaciar.Domain.Interfaces.Repositories;
+using glaciar.Domain.Interfaces.Security;
 using glaciar.Infrastructure.Repositories;
 using glaciar.Application.Services.Clientes;
 using glaciar.Application.Services.Enderecos;
+using glaciar.Application.Services.Vendas;
 using glaciar.Infrastructure.Security;
 using glaciar.Application.Interfaces.Services;
 using System.Text.Json.Serialization;
@@ -21,30 +23,32 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // ==========================================
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
-builder.Services.AddScoped<UsuarioService>();
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IEnderecoService, EnderecoService>();
 builder.Services.AddScoped<IEnderecoRepository, EnderecoRepository>();
 builder.Services.AddScoped<IUsuarioEnderecoRepository, UsuarioEnderecoRepository>();
 builder.Services.AddScoped<ICartaoService, CartaoService>();
 builder.Services.AddScoped<ICartaoRepository, CartaoRepository>();
 builder.Services.AddScoped<IPagamentoService, PagamentoService>();
+builder.Services.AddScoped<INotificacaoRepository, NotificacaoRepository>();
+builder.Services.AddScoped<INotificacaoService, NotificacaoService>();
 
-// Módulo de Vendas
+// Módulo de Vendas e Catálogo
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IPedidoRepository, PedidoRepository>();
 builder.Services.AddScoped<ICupomRepository, CupomRepository>();
-builder.Services.AddScoped<INotificacaoRepository, NotificacaoRepository>();
 builder.Services.AddScoped<IEstoqueRepository, EstoqueRepository>();
 builder.Services.AddScoped<IProdutoRepository, ProdutoRepository>();
-builder.Services.AddScoped<IFreteService, glaciar.Application.Services.Vendas.FreteService>();
-builder.Services.AddScoped<ICarrinhoService, glaciar.Application.Services.Vendas.CarrinhoService>();
-builder.Services.AddScoped<ICheckoutService, glaciar.Application.Services.Vendas.CheckoutService>();
-builder.Services.AddScoped<ICupomService, glaciar.Application.Services.Vendas.CupomService>();
-builder.Services.AddScoped<IPedidoService, glaciar.Application.Services.Vendas.PedidoService>();
-builder.Services.AddScoped<IPedidoStatusService, glaciar.Application.Services.Vendas.PedidoStatusService>();
-builder.Services.AddScoped<ICarrinhoExpiracaoService, glaciar.Application.Services.Vendas.CarrinhoExpiracaoService>();
+builder.Services.AddScoped<IProdutoService, ProdutoService>();
+builder.Services.AddScoped<IFreteService, FreteService>();
+builder.Services.AddScoped<ICarrinhoService, CarrinhoService>();
+builder.Services.AddScoped<ICheckoutService, CheckoutService>();
+builder.Services.AddScoped<ICupomService, CupomService>();
+builder.Services.AddScoped<IPedidoService, PedidoService>();
+builder.Services.AddScoped<IPedidoStatusService, PedidoStatusService>();
+builder.Services.AddScoped<ICarrinhoExpiracaoService, CarrinhoExpiracaoService>();
 builder.Services.AddScoped<IRelatorioVendasRepository, RelatorioVendasRepository>();
-builder.Services.AddScoped<IRelatorioVendasService, glaciar.Application.Services.Vendas.RelatorioVendasService>();
+builder.Services.AddScoped<IRelatorioVendasService, RelatorioVendasService>();
 builder.Services.AddHostedService<glaciar.API.Workers.CarrinhoExpiracaoWorker>();
 
 // ==========================================

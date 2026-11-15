@@ -1,17 +1,18 @@
-using glaciar.Application.Mappings;
 using glaciar.Application.DTOs.Clientes;
+using glaciar.Application.Interfaces.Services;
+using glaciar.Application.Mappings;
 using glaciar.Domain.Entities.Clientes;
 using glaciar.Domain.Entities.Clientes.Enum;
-using glaciar.Application.Interfaces.Services;
-using glaciar.Domain.Interfaces.Repositories;
 using glaciar.Domain.Exceptions;
-using System.Globalization;
-using System.ComponentModel.DataAnnotations;
+using glaciar.Domain.Interfaces.Repositories;
+using glaciar.Domain.Interfaces.Security;
 using glaciar.Domain.Validators;
+using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 
 namespace glaciar.Application.Services.Clientes
 {
-    public class UsuarioService
+    public class UsuarioService : IUsuarioService
     {
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IPasswordHasher _hasher;
@@ -145,6 +146,12 @@ namespace glaciar.Application.Services.Clientes
             await _usuarioRepository.UpdateAsync(usuario);
 
             return ClientesMapper.ParaUsuario(usuario);
+        }
+
+        public async Task<bool> EhAdminAsync(int usuarioId)
+        {
+            var usuario = await _usuarioRepository.GetByIdAsync(usuarioId);
+            return usuario == null || usuario.TipoUsuario == TipoUsuario.ADM;
         }
 
         private async Task<Usuario> ObterUsuarioAsync(int id)
