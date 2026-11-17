@@ -5,9 +5,6 @@
  * Arquivo: tests/cypress/e2e/painel-analitico/admin-analise-grafico.cy.js
  * Sistema: Glaciar - Artigos e Vestuário de Montanhismo, Trekking e Outdoor
  * ===============================================================================
- * ZERO MOCKS: Todas as consultas (/categorias e /vendas-por-categoria) batem
- * diretamente no backend C# (.NET) e extraem agregações reais do PostgreSQL.
- * ===============================================================================
  */
 
 const apiUrl = Cypress.expose('apiUrl') || 'http://localhost:5205/api';
@@ -136,7 +133,7 @@ describe('Entrega 7 — Módulo de Análise Gráfica de Vendas (Glaciar Admin)',
     });
   }
 
-  it('1. Consulta Real de Categoria Única: Plota valores reais de vendas ENTREGUES agrupadas por mês (RN0071)', () => {
+  it('1. Consulta de Categoria Única: Plota valores das vendas ENTREGUES agrupadas por mês', () => {
     const catCalcados = categoriasReais.find((c) => c.nome === 'Calçados') || categoriasReais[0];
 
     visitarTelaAnaliseComoAdmin();
@@ -166,7 +163,7 @@ describe('Entrega 7 — Módulo de Análise Gráfica de Vendas (Glaciar Admin)',
     });
   });
 
-  it('2. Comparação Multicategoria Real: Renderiza múltiplas linhas simultâneas do PostgreSQL com cores distintas (RF0055, RF0057)', () => {
+  it('2. Comparação Multicategoria Real: Renderiza múltiplas linhas com cores distintas', () => {
     const tresCategorias = categoriasReais.slice(0, 3);
     const idsSelecionados = tresCategorias.map((c) => c.id);
 
@@ -190,7 +187,7 @@ describe('Entrega 7 — Módulo de Análise Gráfica de Vendas (Glaciar Admin)',
     });
   });
 
-  it('3. Isolamento Estrito de Status Real no Banco: Pedidos não ENTREGUES (EmProcessamento, PagamentoReprovado, EmTransporte) NÃO alteram o gráfico (RN0074)', () => {
+  it('3. Isolamento Estrito de Status Real no Banco: Pedidos não ENTREGUES (EmProcessamento, PagamentoReprovado, EmTransporte) NÃO alteram o gráfico', () => {
     const catEquipamentos =
       categoriasReais.find((c) => c.nome === 'Equipamentos') || categoriasReais[categoriasReais.length - 1];
     const { dataInicio, dataFim } = obterIntervaloRecente();
@@ -259,7 +256,7 @@ describe('Entrega 7 — Módulo de Análise Gráfica de Vendas (Glaciar Admin)',
       });
   });
 
-  it('4. Reflexo Dinâmico Real: Pedido recém-transicionado para ENTREGUE soma imediatamente no gráfico (RN0074)', () => {
+  it('4. Reflexo Dinâmico Real: Pedido recém-transicionado para ENTREGUE soma imediatamente no gráfico', () => {
     const catEquipamentos =
       categoriasReais.find((c) => c.nome === 'Equipamentos') || categoriasReais[categoriasReais.length - 1];
     const { dataInicio, dataFim } = obterIntervaloRecente();
@@ -312,7 +309,7 @@ describe('Entrega 7 — Módulo de Análise Gráfica de Vendas (Glaciar Admin)',
       });
   });
 
-  it('5. Controle de Acesso Real (RBAC): Permite Admin e bloqueia cliente comum na tela e na API (HTTP 403)', () => {
+  it('5. Controle de Acesso Real: Permite Admin e bloqueia cliente comum na tela e na API (HTTP 403)', () => {
     cy.visit('http://127.0.0.1:5500/frontend/admin/analise.html', {
       onBeforeLoad(win) {
         win.sessionStorage.setItem('usuarioLogado', JSON.stringify(usuarioCliente));
@@ -346,7 +343,7 @@ describe('Entrega 7 — Módulo de Análise Gráfica de Vendas (Glaciar Admin)',
     });
   });
 
-  it('6. Validação de Performance Real contra PostgreSQL: Tempo de resposta <= 1000ms (RNF0011)', () => {
+  it('6. Validação de Performance Real contra PostgreSQL: Tempo de resposta <= 1000ms', () => {
     const queryIds = categoriasReais
       .slice(0, 2)
       .map((c) => `categoriaIds=${c.id}`)
