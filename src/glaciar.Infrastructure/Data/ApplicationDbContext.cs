@@ -24,6 +24,7 @@ namespace glaciar.Infrastructure.Data
         public DbSet<UsuarioEndereco> UsuariosEnderecos { get; set; }
         public DbSet<Cartao> Cartoes { get; set; }
         public DbSet<UsuarioCartao> UsuariosCartoes { get; set; }
+        public DbSet<ChatbotFeedback> ChatbotFeedbacks { get; set; }
         
         // Logística
         public DbSet<Devolucao> Devolucoes { get; set; }
@@ -114,6 +115,18 @@ namespace glaciar.Infrastructure.Data
                 .HasMany(p => p.Devolucoes)
                 .WithOne(d => d.Pedido)
                 .HasForeignKey(d => d.PedidoId);
+
+            modelBuilder.Entity<ChatbotFeedback>()
+                .HasOne(cf => cf.Usuario)
+                .WithMany()
+                .HasForeignKey(cf => cf.UsuarioId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ChatbotFeedback>()
+                .HasIndex(cf => cf.UsuarioId);
+
+            modelBuilder.Entity<ChatbotFeedback>()
+                .HasIndex(cf => cf.Util);
         }
     }
 }

@@ -172,6 +172,53 @@ namespace glaciar.Infrastructure.Migrations
                     b.ToTable("Cartoes");
                 });
 
+            modelBuilder.Entity("glaciar.Domain.Entities.Clientes.ChatbotFeedback", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ComentarioFeedback")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("DataFeedback")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DataInteracao")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PerguntaUsuario")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("ProdutosRecomendados")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("RespostaIa")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool?>("Util")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.HasIndex("Util");
+
+                    b.ToTable("ChatbotFeedbacks");
+                });
+
             modelBuilder.Entity("glaciar.Domain.Entities.Clientes.Endereco", b =>
                 {
                     b.Property<int>("Id")
@@ -682,6 +729,17 @@ namespace glaciar.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Produto");
+                });
+
+            modelBuilder.Entity("glaciar.Domain.Entities.Clientes.ChatbotFeedback", b =>
+                {
+                    b.HasOne("glaciar.Domain.Entities.Clientes.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("glaciar.Domain.Entities.Clientes.UsuarioCartao", b =>
