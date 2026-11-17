@@ -4,7 +4,7 @@
     </svg>
 </button>
 
-<div id="chatbot-window" class="chatbot-window hidden">
+<div id="chatbot-window" class="chatbot-window hidden" role="dialog" aria-label="Assistente Virtual Glaucia">
     <div class="chat-header">
         <div class="chat-title-group">
             <h4>Glaucia</h4>
@@ -13,14 +13,21 @@
         <button id="chatbot-close-btn" class="btn-close-chat" aria-label="Fechar">&times;</button>
     </div>
 
+    <div class="chat-quick-prompts" id="chat-quick-prompts">
+        <button type="button" class="chip-prompt" data-prompt="Vou fazer uma expedição em alta montanha com neve. O que me recomenda?">🏔️ Alta Montanha / Neve</button>
+        <button type="button" class="chip-prompt" data-prompt="Busco equipamentos leves e respiráveis para trekking de verão. O que indica?">☀️ Trekking Leve / Verão</button>
+        <button type="button" class="chip-prompt" data-prompt="Quero montar um acampamento resistente a ventos fortes e frio.">⛺ Acampamento 4 Estações</button>
+    </div>
+
     <div class="chat-body" id="chat-body">
-        <div class="message bot-message">
-            Olá! Sou a assistente virtual da Glaciar, <b>Glaucia!</b>. <br>Vai enfrentar qual clima na sua próxima expedição? Posso te recomendar o equipamento ideal!
+        <div class="message bot-message" id="chat-welcome-msg">
+            Olá! Sou a assistente virtual da Glaciar, <b>Glaucia!</b><br>
+            Posso te recomendar o equipamento ideal. Qual clima ou terreno você vai enfrentar na próxima expedição?
         </div>
     </div>
 
     <div class="chat-input-area">
-        <input type="text" id="chat-input" placeholder="Ex: Preciso de uma bota para neve..." autocomplete="off">
+        <input type="text" id="chat-input" placeholder="Ex: Preciso de uma bota ou barraca para neve..." maxlength="600" autocomplete="off">
         <button id="chat-send-btn" class="btn-send-chat" aria-label="Enviar mensagem">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="22" y1="2" x2="11" y2="13"></line>
