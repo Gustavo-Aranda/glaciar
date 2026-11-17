@@ -59,8 +59,9 @@ namespace glaciar.Application.Services.Vendas
                 throw new DomainValidationException("O tempo de reserva do carrinho (15 minutos) esgotou. Adicione os itens novamente.");
             }
 
-            // Revalidação de tempo: garante que a reserva temporária ainda está vigente
+            // Revalidação de tempo e Guardrail de Entrada (Fail-Fast antes de abrir transação no banco)
             pedido.GarantirReservaVigente(DateTime.UtcNow);
+            dto.ValidarGuardrailsDeEntrada();
 
             await _unitOfWork.BeginTransactionAsync();
             try

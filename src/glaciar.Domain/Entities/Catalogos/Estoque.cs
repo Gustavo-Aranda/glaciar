@@ -22,6 +22,12 @@ namespace glaciar.Domain.Entities.Catalogos
 
         public void GarantirDisponivel(int quantidadeDesejada)
         {
+            if (quantidadeDesejada <= 0)
+            {
+                throw new glaciar.Domain.Exceptions.DomainValidationException(
+                    "A quantidade solicitada do item deve ser maior que zero.");
+            }
+
             if (quantidadeDesejada > Quantidade)
             {
                 throw new glaciar.Domain.Exceptions.DomainValidationException(

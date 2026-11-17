@@ -70,6 +70,21 @@ namespace glaciar.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IReadOnlyList<string>> GetDescricaoItensCompradosAsync(int usuarioId, int limite = 20)
+        {
+            return await _context.PedidosProdutos
+                .AsNoTracking()
+                .Where(pp => pp.Pedido.UsuarioId == usuarioId &&
+                             pp.Pedido.Status != StatusPedido.EmAberto &&
+                             pp.Pedido.Status != StatusPedido.Cancelado &&
+                             pp.Pedido.Status != StatusPedido.PagamentoReprovado)
+                .OrderByDescending(pp => pp.Pedido.Data)
+                .Select(pp => pp.Estoque.Produto.Nome + " (Tam: " + pp.Estoque.Tamanho + ", Cor: " + pp.Estoque.Cor + ")")
+                .Distinct()
+                .Take(limite)
+                .ToListAsync();
+        }
+
         public async Task AddAsync(Pedido pedido)
         {
             await _context.Pedidos.AddAsync(pedido);

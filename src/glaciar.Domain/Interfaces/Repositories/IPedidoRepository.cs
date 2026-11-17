@@ -13,6 +13,12 @@ namespace glaciar.Domain.Interfaces.Repositories
         /// <summary>Lista os pedidos do usuário, excluindo o carrinho (EmAberto).</summary>
         Task<IEnumerable<Pedido>> GetByUsuarioAsync(int usuarioId);
 
+        /// <summary>
+        /// Consulta leve (projeção): descrições dos itens já comprados pelo usuário, considerando apenas
+        /// pedidos efetivados (exclui carrinho, cancelados e pagamento reprovado).
+        /// </summary>
+        Task<IReadOnlyList<string>> GetDescricaoItensCompradosAsync(int usuarioId, int limite = 20);
+
         Task AddAsync(Pedido pedido);
 
         /// <summary>Persiste alterações em um Pedido já rastreado (inclui filhos adicionados às coleções).</summary>
