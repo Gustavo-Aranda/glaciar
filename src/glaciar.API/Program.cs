@@ -2,13 +2,17 @@ using Microsoft.EntityFrameworkCore;
 using glaciar.Infrastructure.Data;
 using glaciar.Domain.Interfaces.Repositories;
 using glaciar.Domain.Interfaces.Security;
+using glaciar.Domain.Interfaces.AI;
 using glaciar.Infrastructure.Repositories;
+using glaciar.Infrastructure.AI;
 using glaciar.Application.Services.Clientes;
 using glaciar.Application.Services.Enderecos;
 using glaciar.Application.Services.Vendas;
+using glaciar.Application.Services.Chatbot;
 using glaciar.Infrastructure.Security;
 using glaciar.Application.Interfaces.Services;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,6 +55,33 @@ builder.Services.AddScoped<IRelatorioVendasRepository, RelatorioVendasRepository
 builder.Services.AddScoped<IRelatorioVendasService, RelatorioVendasService>();
 builder.Services.AddHostedService<glaciar.API.Workers.CarrinhoExpiracaoWorker>();
 
+// Módulo de Chatbot de Recomendação com IA Generativa (RNF0044 - Google Gemini)
+builder.Services.AddScoped<IChatbotFeedbackRepository, ChatbotFeedbackRepository>();
+builder.Services.AddScoped<IChatbotService, ChatbotService>();
+builder.Services.AddHttpClient<IGeminiAiService, GeminiAiService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(25);
+});
+
+// Cada mensagem do chatbot custa uma chamada paga ao Gemini: limita por cliente (X-Usuario-Id) ou IP.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("chatbot", httpContext =>
+    {
+        var chave = httpContext.Request.Headers["X-Usuario-Id"].FirstOrDefault()
+                    ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                    ?? "anonimo";
+
+        return RateLimitPartition.GetFixedWindowLimiter(chave, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        });
+    });
+});
+
 // ==========================================
 // CONFIGURAÇÃO DE CORS (LIBERAR FRONTEND)
 // ==========================================
@@ -74,6 +105,7 @@ app.UseHttpsRedirection();
 
 // Ativa o CORS configurado acima ANTES da autorização
 app.UseCors("PermitirFrontend");
+app.UseRateLimiter();
 
 app.UseAuthorization();
 app.MapControllers();
