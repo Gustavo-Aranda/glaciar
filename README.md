@@ -87,10 +87,7 @@ glaciar/
 Toda a infraestrutura (API .NET e Frontend Nginx) pode ser instanciada rapidamente com o Docker Compose:
 
 #### 1. Configurar o arquivo `.env`
-Certifique-se de que o arquivo `.env` existe na raiz do projeto com a string de conexão do Supabase/PostgreSQL configurada:
-```env
-SUPABASE_CONNECTION=Host=aws-1-sa-east-1.pooler.supabase.com;Port=5432;Database=postgres;Username=postgres.izgsumhbskqzuowxttyx;Password=nIlBJHhLf1033tKb;Pooling=false;CommandTimeout=1000
-```
+Certifique-se de que o arquivo `.env` existe na raiz do projeto com a string de conexão do Supabase/PostgreSQL configurada.
 
 #### 2. Subir os Contêineres
 Na raiz do projeto, execute:
