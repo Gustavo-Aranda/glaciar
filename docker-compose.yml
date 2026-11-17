@@ -11,6 +11,9 @@ services:
     environment:
       # O .NET vai ler a string de conexão do Supabase daqui em tempo de execução
       - ConnectionStrings__DefaultConnection=${SUPABASE_CONNECTION}
+      # Chave do Google AI Studio (defina GEMINI_API_KEY no .env); modelo configurável
+      - Gemini__ApiKey=${GEMINI_API_KEY}
+      - Gemini__Model=${GEMINI_MODEL:-gemini-3.8-flash}
 
   frontend:
     build:
