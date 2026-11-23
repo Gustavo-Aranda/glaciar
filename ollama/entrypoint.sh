@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-BASE_MODEL="${OLLAMA_BASE_MODEL:-llama3.2}"
+BASE_MODEL="${OLLAMA_BASE_MODEL:-hf.co/GustavoAranda/glauciar:Q4_K_M}"
 CUSTOM_MODEL="${OLLAMA_MODEL:-glaciar-assistant}"
 MODELFILE_PATH="${OLLAMA_MODELFILE_PATH:-/ollama-init/Modelfile}"
 

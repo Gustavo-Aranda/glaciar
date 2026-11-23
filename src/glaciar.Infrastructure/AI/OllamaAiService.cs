@@ -12,14 +12,18 @@ namespace glaciar.Infrastructure.AI
     /// Configurações esperadas em appsettings / variáveis de ambiente:
     ///   Ollama:BaseUrl (ex: http://ollama:11434 ou http://localhost:11434)
     ///   Ollama:Model (ex: glaciar-assistant)
-    ///   Ollama:Temperature (padrão: 0.2)
-    ///   Ollama:MaxTokens (padrão: 600)
+    ///   Ollama:Temperature (padrão: 0.1)
+    ///   Ollama:MaxTokens (padrão: 85)
+    ///   Ollama:KeepAlive (padrão: 15m)
     /// </summary>
     public class OllamaAiService : IOllamaAiService
     {
         private const string DefaultModel = "glaciar-assistant";
-        private const double DefaultTemperature = 0.2;
-        private const int DefaultMaxTokens = 600;
+        private const double DefaultTemperature = 0.1;
+        private const int DefaultMaxTokens = 160;
+        private const int DefaultNumCtx = 1024;
+        private const int DefaultNumThread = 6;
+        private const string DefaultKeepAlive = "15m";
 
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
@@ -45,6 +49,10 @@ namespace glaciar.Infrastructure.AI
             if (string.IsNullOrWhiteSpace(model))
                 model = DefaultModel;
 
+            var keepAlive = _configuration["Ollama:KeepAlive"];
+            if (string.IsNullOrWhiteSpace(keepAlive))
+                keepAlive = DefaultKeepAlive;
+
             var temperature = DefaultTemperature;
             if (double.TryParse(
                     _configuration["Ollama:Temperature"],
@@ -57,11 +65,6 @@ namespace glaciar.Infrastructure.AI
 
             var messages = new List<OllamaChatMessage>
             {
-                // Guardrails em camadas: ao enviar uma mensagem "system", o Ollama DESCARTA o SYSTEM
-                // definido no Modelfile (ele só é usado quando a requisição não traz role "system").
-                // Por isso, este system prompt montado no ChatbotService (persona + guardrails +
-                // <perfil_cliente> + <catalogo_glaciar>) é a fonte única de verdade em runtime.
-                // O SYSTEM do Modelfile permanece apenas como fallback para uso direto via `ollama run`.
                 new()
                 {
                     Role = "system",
@@ -71,7 +74,8 @@ namespace glaciar.Infrastructure.AI
 
             if (historicoRecente != null)
             {
-                foreach (var turno in historicoRecente.TakeLast(4))
+                // Limita ao último turno para economizar Prompt Eval em CPU
+                foreach (var turno in historicoRecente.TakeLast(1))
                 {
                     messages.Add(new OllamaChatMessage
                     {
@@ -96,15 +100,29 @@ namespace glaciar.Infrastructure.AI
             {
                 Model = model,
                 Stream = false,
+                KeepAlive = keepAlive,
                 Messages = messages,
                 Options = new OllamaModelOptions
                 {
                     Temperature = temperature,
                     TopP = 0.85,
-                    NumCtx = 4096,
+                    RepeatPenalty = 1.15,
+                    NumCtx = DefaultNumCtx,
                     NumPredict = int.TryParse(_configuration["Ollama:MaxTokens"], out var maxTokens) && maxTokens > 0
                         ? maxTokens
-                        : DefaultMaxTokens
+                        : DefaultMaxTokens,
+                    NumThread = DefaultNumThread,
+                    Stop = new List<string>
+                    {
+                        "<|im_start|>",
+                        "<|im_end|>",
+                        "<|eot_id|>",
+                        "Além disso",
+                        "Outros fatores",
+                        "Dicas adicionais",
+                        "Fatores a considerar",
+                        "Vale lembrar"
+                    }
                 }
             };
 
@@ -158,6 +176,9 @@ namespace glaciar.Infrastructure.AI
             [JsonPropertyName("stream")]
             public bool Stream { get; set; }
 
+            [JsonPropertyName("keep_alive")]
+            public string KeepAlive { get; set; } = DefaultKeepAlive;
+
             [JsonPropertyName("options")]
             public OllamaModelOptions Options { get; set; } = new();
         }
@@ -179,12 +200,23 @@ namespace glaciar.Infrastructure.AI
             [JsonPropertyName("top_p")]
             public double TopP { get; set; } = 0.85;
 
-            [JsonPropertyName("num_ctx")]
-            public int NumCtx { get; set; } = 4096;
+            [JsonPropertyName("repeat_penalty")]
+            public double RepeatPenalty { get; set; } = 1.15;
 
-            /// <summary>Limite de tokens gerados: evita respostas longas que estourariam RespostaIa (4000).</summary>
+            [JsonPropertyName("num_ctx")]
+            public int NumCtx { get; set; } = DefaultNumCtx;
+
+            /// <summary>Limite de tokens gerados: evita respostas prolixas e timeout de CPU.</summary>
             [JsonPropertyName("num_predict")]
             public int NumPredict { get; set; } = DefaultMaxTokens;
+
+            /// <summary>Limita a 6 threads físicas para evitar contenção de cache L3 e SMT em CPUs de 6 núcleos.</summary>
+            [JsonPropertyName("num_thread")]
+            public int NumThread { get; set; } = DefaultNumThread;
+
+            /// <summary>Gatilhos de parada que cortam a geração imediatamente ao detectar fim de turno ou seções desnecessárias.</summary>
+            [JsonPropertyName("stop")]
+            public List<string>? Stop { get; set; }
         }
 
         private sealed class OllamaChatResponse
