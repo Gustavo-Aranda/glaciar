@@ -1,5 +1,11 @@
 FROM llama3.2
 
+# IMPORTANTE: no endpoint /api/chat, o Ollama só aplica este SYSTEM quando a requisição
+# NÃO traz uma mensagem com role "system". A API .NET (OllamaAiService) sempre envia o seu
+# próprio system prompt (persona + guardrails + contexto do cliente/catálogo), que é a FONTE
+# ÚNICA de verdade em produção. Este SYSTEM funciona como fallback para uso direto do modelo
+# (ex: `ollama run glaciar-assistant` no terminal) e deve ser mantido alinhado ao do ChatbotService.
+
 # Temperatura baixa (0.2) para respostas determinísticas, técnicas, objetivas e sem alucinação de catálogo
 PARAMETER temperature 0.2
 PARAMETER top_p 0.85

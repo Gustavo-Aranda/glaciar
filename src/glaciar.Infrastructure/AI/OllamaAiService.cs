@@ -13,11 +13,13 @@ namespace glaciar.Infrastructure.AI
     ///   Ollama:BaseUrl (ex: http://ollama:11434 ou http://localhost:11434)
     ///   Ollama:Model (ex: glaciar-assistant)
     ///   Ollama:Temperature (padrão: 0.2)
+    ///   Ollama:MaxTokens (padrão: 600)
     /// </summary>
     public class OllamaAiService : IOllamaAiService
     {
         private const string DefaultModel = "glaciar-assistant";
         private const double DefaultTemperature = 0.2;
+        private const int DefaultMaxTokens = 600;
 
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
@@ -55,6 +57,11 @@ namespace glaciar.Infrastructure.AI
 
             var messages = new List<OllamaChatMessage>
             {
+                // Guardrails em camadas: ao enviar uma mensagem "system", o Ollama DESCARTA o SYSTEM
+                // definido no Modelfile (ele só é usado quando a requisição não traz role "system").
+                // Por isso, este system prompt montado no ChatbotService (persona + guardrails +
+                // <perfil_cliente> + <catalogo_glaciar>) é a fonte única de verdade em runtime.
+                // O SYSTEM do Modelfile permanece apenas como fallback para uso direto via `ollama run`.
                 new()
                 {
                     Role = "system",
@@ -94,7 +101,10 @@ namespace glaciar.Infrastructure.AI
                 {
                     Temperature = temperature,
                     TopP = 0.85,
-                    NumCtx = 4096
+                    NumCtx = 4096,
+                    NumPredict = int.TryParse(_configuration["Ollama:MaxTokens"], out var maxTokens) && maxTokens > 0
+                        ? maxTokens
+                        : DefaultMaxTokens
                 }
             };
 
@@ -171,6 +181,10 @@ namespace glaciar.Infrastructure.AI
 
             [JsonPropertyName("num_ctx")]
             public int NumCtx { get; set; } = 4096;
+
+            /// <summary>Limite de tokens gerados: evita respostas longas que estourariam RespostaIa (4000).</summary>
+            [JsonPropertyName("num_predict")]
+            public int NumPredict { get; set; } = DefaultMaxTokens;
         }
 
         private sealed class OllamaChatResponse

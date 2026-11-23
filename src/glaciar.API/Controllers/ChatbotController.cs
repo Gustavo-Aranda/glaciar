@@ -52,7 +52,7 @@ namespace glaciar.API.Controllers
             }
             catch (Exception)
             {
-                const string msg = "Erro interno ao processar a recomendação com a IA Generativa.";
+                const string msg = "Erro interno ao processar a recomendação da assistente virtual.";
                 return StatusCode(500, new { erro = msg, message = msg });
             }
         }
