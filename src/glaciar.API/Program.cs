@@ -70,15 +70,32 @@ builder.Services.AddHttpClient<IOllamaAiService, OllamaAiService>(client =>
     client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
 });
 
-// Protege a inferência local contra sobrecarga de requisições simultâneas por cliente (X-Usuario-Id) ou IP.
+// Proteção da inferência local (Ollama é CPU/GPU-bound: cada resposta pode levar dezenas de segundos).
+// São duas camadas complementares, ambas respondendo HTTP 429 quando excedidas:
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // 1) Limite de CONCORRÊNCIA global (somente para POST /api/chatbot/mensagem):
+    //    no máximo 2 inferências simultâneas no Ollama e até 4 aguardando na fila (FIFO).
+    //    Impede que rajadas de requisições paralelas travem o modelo para todos os clientes.
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+        httpContext.Request.Path.StartsWithSegments("/api/chatbot/mensagem")
+            ? RateLimitPartition.GetConcurrencyLimiter("ollama-inferencia", _ => new ConcurrencyLimiterOptions
+            {
+                PermitLimit = 2,
+                QueueLimit = 4,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+            })
+            : RateLimitPartition.GetNoLimiter("sem-limite"));
+
+    // 2) Limite de FREQUÊNCIA por IP (política "chatbot"): 10 mensagens/minuto.
+    //    A chave é o IP de origem e NÃO o header X-Usuario-Id, pois o header é controlado pelo
+    //    cliente: bastaria trocá-lo a cada requisição para nunca ser bloqueado.
+    //    Obs.: atrás de proxy/NAT (ex: Docker Desktop), vários clientes podem compartilhar o mesmo IP.
     options.AddPolicy("chatbot", httpContext =>
     {
-        var chave = httpContext.Request.Headers["X-Usuario-Id"].FirstOrDefault()
-                    ?? httpContext.Connection.RemoteIpAddress?.ToString()
-                    ?? "anonimo";
+        var chave = httpContext.Connection.RemoteIpAddress?.ToString() ?? "ip-desconhecido";
 
         return RateLimitPartition.GetFixedWindowLimiter(chave, _ => new FixedWindowRateLimiterOptions
         {

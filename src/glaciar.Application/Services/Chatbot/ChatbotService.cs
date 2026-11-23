@@ -134,27 +134,43 @@ namespace glaciar.Application.Services.Chatbot
             sb.AppendLine("</regras_persona_e_guardrails>");
             sb.AppendLine();
             sb.AppendLine("<perfil_cliente>");
-            sb.AppendLine($"Cliente em atendimento: {usuario.Nome} {usuario.Sobrenome}");
+            sb.AppendLine($"Cliente em atendimento: {Sanitizar(usuario.Nome)} {Sanitizar(usuario.Sobrenome)}");
             sb.AppendLine(itensComprados.Count > 0
-                ? $"Itens já comprados pelo cliente: {string.Join("; ", itensComprados)}"
+                ? $"Itens já comprados pelo cliente: {string.Join("; ", itensComprados.Select(Sanitizar))}"
                 : "Itens já comprados pelo cliente: nenhuma compra anterior registrada.");
 
             var uteis = NomesAvaliados(feedbacks, util: true);
             if (uteis.Count > 0)
-                sb.AppendLine($"Recomendações que o cliente avaliou como Úteis: {string.Join(", ", uteis)}");
+                sb.AppendLine($"Recomendações que o cliente avaliou como Úteis: {string.Join(", ", uteis.Select(Sanitizar))}");
 
             var naoUteis = NomesAvaliados(feedbacks, util: false);
             if (naoUteis.Count > 0)
-                sb.AppendLine($"Recomendações que o cliente avaliou como Não Úteis (evite repetir): {string.Join(", ", naoUteis)}");
+                sb.AppendLine($"Recomendações que o cliente avaliou como Não Úteis (evite repetir): {string.Join(", ", naoUteis.Select(Sanitizar))}");
             sb.AppendLine("</perfil_cliente>");
             sb.AppendLine();
             sb.AppendLine("<catalogo_glaciar>");
             foreach (var p in catalogo)
-                sb.AppendLine($"- {p.Nome} ({p.Categoria}) | R$ {p.Preco:F2} | {p.Descricao}");
+                sb.AppendLine($"- {Sanitizar(p.Nome)} ({Sanitizar(p.Categoria)}) | R$ {p.Preco:F2} | {Sanitizar(p.Descricao)}");
             sb.AppendLine("</catalogo_glaciar>");
 
             return sb.ToString();
         }
+
+        /// <summary>
+        /// Guardrail contra prompt injection indireta: dados vindos do banco (nome do cliente,
+        /// itens comprados, catálogo) são cadastráveis por usuários e entram no system prompt,
+        /// o bloco de maior autoridade. Neutraliza '&lt;' e '&gt;' (impede fechar/abrir tags como
+        /// &lt;/perfil_cliente&gt;) e quebras de linha (impede forjar novas linhas de regra).
+        /// </summary>
+        private static string Sanitizar(string? valor) =>
+            string.IsNullOrWhiteSpace(valor)
+                ? string.Empty
+                : valor
+                    .Replace("<", "&lt;")
+                    .Replace(">", "&gt;")
+                    .Replace("\r", " ")
+                    .Replace("\n", " ")
+                    .Trim();
 
         private static List<string> NomesAvaliados(IReadOnlyList<ChatbotFeedback> feedbacks, bool util) =>
             feedbacks

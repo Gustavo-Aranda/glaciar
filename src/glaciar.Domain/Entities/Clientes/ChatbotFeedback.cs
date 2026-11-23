@@ -58,16 +58,28 @@ namespace glaciar.Domain.Entities.Clientes
                 throw new DomainValidationException("A resposta da IA não pode ser vazia.");
 
             var produtos = produtosRecomendados?.Where(p => !string.IsNullOrWhiteSpace(p)).ToList();
+            var produtosConcatenados = produtos is { Count: > 0 } ? string.Join('|', produtos) : null;
 
             return new ChatbotFeedback
             {
                 UsuarioId = usuarioId,
-                PerguntaUsuario = perguntaUsuario.Trim(),
-                RespostaIa = respostaIa.Trim(),
-                ProdutosRecomendados = produtos is { Count: > 0 } ? string.Join('|', produtos) : null,
+                PerguntaUsuario = Truncar(perguntaUsuario.Trim(), MaxPergunta),
+                RespostaIa = Truncar(respostaIa.Trim(), MaxResposta),
+                ProdutosRecomendados = produtosConcatenados is null ? null : Truncar(produtosConcatenados, MaxProdutos),
                 DataInteracao = DateTime.UtcNow
             };
         }
+
+        private const int MaxPergunta = 1000;
+        private const int MaxResposta = 4000;
+        private const int MaxProdutos = 500;
+
+        /// <summary>
+        /// Garante que o texto gerado pela IA nunca ultrapasse o tamanho das colunas, evitando
+        /// falha no SaveChanges (HTTP 500) e a perda da resposta já gerada.
+        /// </summary>
+        private static string Truncar(string valor, int max) =>
+            valor.Length <= max ? valor : valor[..(max - 3)].TrimEnd() + "...";
 
         public IReadOnlyList<string> ListarProdutosRecomendados() =>
             string.IsNullOrWhiteSpace(ProdutosRecomendados)
