@@ -5,6 +5,7 @@
 *.suo
 .vs/
 .env
+*.gguf
 
 appsettings.Development.json
 appsettings.Local.json
