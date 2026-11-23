@@ -1,6 +1,23 @@
 version: "3.8"
 
 services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: glaciar-ollama
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_BASE_MODEL=${OLLAMA_BASE_MODEL:-llama3.2}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-glaciar-assistant}
+    volumes:
+      - ollama_data:/root/.ollama
+      - ./ollama:/ollama-init:ro
+    entrypoint: ["/bin/sh", "-c", "tr -d '\\r' < /ollama-init/entrypoint.sh | /bin/sh"]
+    networks:
+      - glaciar-net
+    restart: unless-stopped
+
   api:
     build:
       context: ./src
@@ -9,11 +26,18 @@ services:
     ports:
       - "5205:8080"
     environment:
-      # O .NET vai ler a string de conexão do Supabase daqui em tempo de execução
+      # String de conexão do Supabase lida em tempo de execução
       - ConnectionStrings__DefaultConnection=${SUPABASE_CONNECTION}
-      # Chave do Google AI Studio (defina GEMINI_API_KEY no .env); modelo configurável
-      - Gemini__ApiKey=${GEMINI_API_KEY}
-      - Gemini__Model=${GEMINI_MODEL:-gemini-3.8-flash}
+      # Configuração da inferência local via Ollama na mesma rede Docker
+      - Ollama__BaseUrl=${OLLAMA_BASE_URL:-http://ollama:11434}
+      - Ollama__Model=${OLLAMA_MODEL:-glaciar-assistant}
+      - Ollama__Temperature=${OLLAMA_TEMPERATURE:-0.2}
+      - Ollama__TimeoutSeconds=${OLLAMA_TIMEOUT_SECONDS:-120}
+    depends_on:
+      - ollama
+    networks:
+      - glaciar-net
+    restart: unless-stopped
 
   frontend:
     build:
@@ -24,4 +48,13 @@ services:
       - "5500:80"
     depends_on:
       - api
+    networks:
+      - glaciar-net
     restart: unless-stopped
+
+volumes:
+  ollama_data:
+
+networks:
+  glaciar-net:
+    driver: bridge

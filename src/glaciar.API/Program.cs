@@ -55,15 +55,22 @@ builder.Services.AddScoped<IRelatorioVendasRepository, RelatorioVendasRepository
 builder.Services.AddScoped<IRelatorioVendasService, RelatorioVendasService>();
 builder.Services.AddHostedService<glaciar.API.Workers.CarrinhoExpiracaoWorker>();
 
-// Módulo de Chatbot de Recomendação com IA Generativa (RNF0044 - Google Gemini)
+// Módulo de Chatbot de Recomendação com IA Generativa Local (RNF0044 - Ollama)
 builder.Services.AddScoped<IChatbotFeedbackRepository, ChatbotFeedbackRepository>();
 builder.Services.AddScoped<IChatbotService, ChatbotService>();
-builder.Services.AddHttpClient<IGeminiAiService, GeminiAiService>(client =>
+builder.Services.AddHttpClient<IOllamaAiService, OllamaAiService>(client =>
 {
-    client.Timeout = TimeSpan.FromSeconds(25);
+    var baseUrl = builder.Configuration["Ollama:BaseUrl"];
+    if (string.IsNullOrWhiteSpace(baseUrl))
+        baseUrl = "http://localhost:11434";
+
+    var timeoutSeconds = builder.Configuration.GetValue<int?>("Ollama:TimeoutSeconds") ?? 120;
+
+    client.BaseAddress = new Uri(baseUrl);
+    client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
 });
 
-// Cada mensagem do chatbot custa uma chamada paga ao Gemini: limita por cliente (X-Usuario-Id) ou IP.
+// Protege a inferência local contra sobrecarga de requisições simultâneas por cliente (X-Usuario-Id) ou IP.
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
