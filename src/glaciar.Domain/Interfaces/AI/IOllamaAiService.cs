@@ -1,6 +1,6 @@
 namespace glaciar.Domain.Interfaces.AI
 {
-    public interface IGeminiAiService
+    public interface IOllamaAiService
     {
         Task<string> GerarRecomendacaoAsync(
             string systemPrompt,
